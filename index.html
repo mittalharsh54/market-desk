@@ -1,0 +1,856 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Market Desk — Indian stock market research: global and national factors, intraday, swing and long-term buy/sell calls.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='9' fill='white'/%3E%3Cpath d='M7 28 L15 19 L21 24 L33 11' stroke='%232a78d6' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<title>Market Desk</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f4f5fa; --surface: #ffffff; --surface-2: #eef0f7; --elevated: #ffffff;
+    --line: #e2e5ef; --line-strong: #ccd1e0;
+    --text: #191c26; --text-dim: #5a6072; --text-faint: #8b91a4;
+    --accent: #2563eb; --accent-soft: #e8f0ff; --accent-text: #1d4ed8;
+    --shadow: 0 1px 2px rgba(20,22,35,.06), 0 8px 24px rgba(20,22,35,.06);
+    --radius: 14px; --radius-sm: 9px;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+    --sans: "Inter var", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    /* data colours: diverging pair (bullish blue ↔ bearish red, grey midpoint) + three overlay slots */
+    --bull: #2a78d6; --bear: #e34948; --mid: #e6e5e1;
+    --s1: #eb6834; --s2: #4a3aa7; --s3: #1baf7a;
+    --grid: #eceef3; --warn: #b8820a; --warn-bg: #fbf0d3;
+  }
+  :root[data-theme="light"] { color-scheme: light; }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0f1017; --surface: #171923; --surface-2: #1e212e; --elevated: #1c1f2b;
+    --line: #262a39; --line-strong: #333849;
+    --text: #eceef4; --text-dim: #9ca2b6; --text-faint: #6b7185;
+    --accent: #3b82f6; --accent-soft: #16233f; --accent-text: #8ab4ff;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+    --bull: #3987e5; --bear: #e66767; --mid: #383835;
+    --s1: #d95926; --s2: #9085e9; --s3: #199e70;
+    --grid: #232634; --warn: #f2c14e; --warn-bg: #33290f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1017; --surface: #171923; --surface-2: #1e212e; --elevated: #1c1f2b;
+      --line: #262a39; --line-strong: #333849;
+      --text: #eceef4; --text-dim: #9ca2b6; --text-faint: #6b7185;
+      --accent: #3b82f6; --accent-soft: #16233f; --accent-text: #8ab4ff;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+      --bull: #3987e5; --bear: #e66767; --mid: #383835;
+      --s1: #d95926; --s2: #9085e9; --s3: #199e70;
+      --grid: #232634; --warn: #f2c14e; --warn-bg: #33290f;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent-text); }
+  h1, h2, h3 { letter-spacing: -.01em; margin: 0; }
+  h2 { font-size: 16px; } h3 { font-size: 14px; }
+  .num { font-variant-numeric: tabular-nums; }
+  .dim { color: var(--text-dim); } .faint { color: var(--text-faint); } .small { font-size: 12.5px; } .tiny { font-size: 11.5px; }
+  .wrap { max-width: 1320px; margin: 0 auto; padding: 18px 16px 60px; }
+
+  .head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .head h1 { font-size: 22px; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 650; background: var(--surface-2); color: var(--text-dim); border: 1px solid var(--line); }
+  .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-faint); }
+  .pill.open .dot { background: var(--bull); box-shadow: 0 0 0 3px color-mix(in oklab, var(--bull) 25%, transparent); }
+  .spacer { flex: 1; }
+  .settings { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .settings label { font-size: 12px; color: var(--text-dim); display: flex; align-items: center; gap: 6px; }
+  input, select, textarea { font: inherit; color: var(--text); background: var(--elevated); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); padding: 7px 10px; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid color-mix(in oklab, var(--accent) 45%, transparent); border-color: var(--accent); }
+  .settings input { width: 110px; padding: 5px 8px; }
+  .btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line-strong); background: var(--elevated); color: var(--text); font: inherit; font-weight: 650; cursor: pointer; white-space: nowrap; }
+  .btn:hover { border-color: var(--accent); color: var(--accent-text); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { filter: brightness(1.08); color: #fff; }
+  .btn-sm { padding: 5px 10px; font-size: 12.5px; }
+  .btn:disabled { opacity: .55; cursor: progress; }
+
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 16px; overflow-x: auto; }
+  .tab { padding: 9px 14px; border: 0; background: none; font: inherit; font-weight: 650; color: var(--text-dim); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
+  .tab.on { color: var(--text); border-bottom-color: var(--accent); }
+  .panel { display: none; } .panel.on { display: block; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; min-width: 0; }
+  .card > h2, .card > .ch { margin-bottom: 10px; }
+  .ch { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .ch h2 { flex: 1; }
+  .grid { display: grid; gap: 14px; }
+  .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tiles { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); margin-bottom: 14px; }
+  .tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 13px 14px; box-shadow: var(--shadow); min-width: 0; }
+  .tile .k { font-size: 11.5px; font-weight: 650; text-transform: uppercase; letter-spacing: .04em; color: var(--text-faint); }
+  .tile .v { font-size: 24px; font-weight: 750; margin: 2px 0; font-variant-numeric: tabular-nums; }
+  .tile .s { font-size: 12.5px; color: var(--text-dim); }
+  .mt { margin-top: 14px; }
+  @media (max-width: 980px) { .g2, .g3 { grid-template-columns: minmax(0, 1fr); } }
+
+  /* verdict badges: icon + label + pole colour, never colour alone */
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 8px; font-weight: 750; font-size: 13px; letter-spacing: .02em; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--text); }
+  .badge .ico { font-size: 11px; }
+  .badge.bull { background: color-mix(in oklab, var(--bull) 14%, var(--surface)); border-color: color-mix(in oklab, var(--bull) 45%, var(--surface)); }
+  .badge.bull .ico { color: var(--bull); }
+  .badge.bear { background: color-mix(in oklab, var(--bear) 14%, var(--surface)); border-color: color-mix(in oklab, var(--bear) 45%, var(--surface)); }
+  .badge.bear .ico { color: var(--bear); }
+  .chg { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .chg .a { font-size: 9px; margin-right: 2px; }
+  .chg.up .a { color: var(--bull); } .chg.dn .a { color: var(--bear); }
+
+  /* diverging score meter: bar grows from the centre */
+  .meter { position: relative; height: 10px; background: var(--surface-2); border-radius: 5px; min-width: 60px; }
+  .meter::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--line-strong); }
+  .meter i { position: absolute; top: 0; bottom: 0; }
+  .meter i.p { left: 50%; background: var(--bull); border-radius: 0 4px 4px 0; }
+  .meter i.n { right: 50%; background: var(--bear); border-radius: 4px 0 0 4px; }
+  .meter.big { height: 14px; border-radius: 7px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-faint); font-weight: 650; white-space: nowrap; }
+  td.r, th.r { text-align: right; }
+  .tbl { overflow-x: auto; }
+  tr.click { cursor: pointer; } tr.click:hover td { background: var(--surface-2); }
+  th.sort { cursor: pointer; } th.sort:hover { color: var(--text); }
+  .grp td { background: var(--surface-2); font-weight: 700; font-size: 12px; color: var(--text-dim); }
+
+  .factor { display: grid; grid-template-columns: minmax(150px, 1.1fr) 120px minmax(0, 2.4fr); gap: 10px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .factor:last-child { border-bottom: 0; }
+  .factor .fl { font-weight: 650; font-size: 13px; }
+  .factor .fl small { display: block; color: var(--text-faint); font-weight: 500; }
+  .factor .note { font-size: 12.5px; color: var(--text-dim); }
+  @media (max-width: 700px) { .factor { grid-template-columns: 1fr 90px; } .factor .note { grid-column: 1 / -1; } }
+
+  .verdict h3 { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .verdict .sc { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 12.5px; color: var(--text-dim); }
+  .verdict .sc .meter { flex: 1; }
+  .plan { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 8px; margin: 10px 0; }
+  .plan div { background: var(--surface-2); border-radius: 8px; padding: 7px 9px; }
+  .plan b { display: block; font-size: 15px; font-variant-numeric: tabular-nums; }
+  .plan span { font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: .04em; }
+  .warnbox { background: var(--warn-bg); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; margin-top: 8px; }
+  .warnbox li { margin: 2px 0; }
+  ul.plain { margin: 6px 0 0; padding-left: 18px; } ul.plain li { margin: 3px 0; font-size: 13px; }
+
+  .heat { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  .heat div { border-radius: 10px; padding: 9px 10px; min-height: 70px; cursor: default; }
+  .heat b { display: block; font-size: 13px; }
+  .heat span { font-size: 12px; font-variant-numeric: tabular-nums; }
+  .heat.dark-text div { color: #111; }
+
+  .chart { position: relative; width: 100%; }
+  .chart svg { display: block; width: 100%; overflow: visible; }
+  .tip { position: absolute; pointer-events: none; background: var(--elevated); border: 1px solid var(--line-strong); border-radius: 8px; padding: 7px 9px; font-size: 12px; box-shadow: var(--shadow); white-space: nowrap; z-index: 5; display: none; }
+  .tip .row { display: flex; gap: 8px; justify-content: space-between; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--text-dim); margin: 4px 0 6px; }
+  .legend i { display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin-right: 5px; border-radius: 1px; }
+  .legend i.box { height: 10px; width: 10px; border-radius: 2px; }
+
+  .news li { list-style: none; padding: 8px 0; border-bottom: 1px solid var(--line); display: flex; gap: 10px; }
+  .news ul { margin: 0; padding: 0; }
+  .news .sd { flex: none; width: 8px; height: 8px; border-radius: 50%; margin-top: 7px; background: var(--mid); }
+  .news .sd.p { background: var(--bull); } .news .sd.n { background: var(--bear); }
+  .news a { color: var(--text); text-decoration: none; font-weight: 550; } .news a:hover { color: var(--accent-text); }
+  .chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--text-dim); border: 1px solid var(--line); margin: 2px 4px 2px 0; cursor: pointer; white-space: nowrap; }
+  .chip.on { border-color: var(--accent); color: var(--accent-text); background: var(--accent-soft); }
+
+  .search { position: relative; flex: 1; min-width: 220px; max-width: 460px; }
+  .search input { width: 100%; font-size: 15px; padding: 10px 12px; }
+  .sugg { position: absolute; top: 100%; left: 0; right: 0; background: var(--elevated); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); margin-top: 4px; z-index: 20; box-shadow: var(--shadow); display: none; max-height: 320px; overflow: auto; }
+  .sugg div { padding: 8px 12px; cursor: pointer; display: flex; justify-content: space-between; gap: 10px; }
+  .sugg div:hover, .sugg div.act { background: var(--surface-2); }
+
+  .loading { padding: 40px 10px; text-align: center; color: var(--text-dim); }
+  .spin { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--line-strong); border-top-color: var(--accent); border-radius: 50%; animation: sp 0.8s linear infinite; vertical-align: -3px; margin-right: 8px; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+  .err { background: color-mix(in oklab, var(--bear) 12%, var(--surface)); border: 1px solid color-mix(in oklab, var(--bear) 40%, var(--surface)); padding: 10px 12px; border-radius: 10px; margin: 10px 0; }
+  .disclaimer { font-size: 12px; color: var(--text-faint); border-top: 1px solid var(--line); margin-top: 26px; padding-top: 12px; }
+  .note-md h2 { font-size: 15px; margin: 14px 0 6px; } .note-md ul { padding-left: 18px; margin: 4px 0; } .note-md p { margin: 6px 0; }
+  .kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+  .kv div { background: var(--surface-2); border-radius: 8px; padding: 6px 9px; }
+  .kv span { display: block; font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: .03em; }
+  .kv b { font-variant-numeric: tabular-nums; font-size: 13.5px; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .form-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--text-dim); font-weight: 600; }
+  .quick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  details summary { cursor: pointer; font-weight: 650; }
+  .icon-btn { width: 34px; height: 34px; padding: 0; justify-content: center; }
+  #login { position: fixed; inset: 0; background: var(--bg); display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+  #login .card { width: 100%; max-width: 360px; }
+  #login input { width: 100%; margin: 12px 0; font-size: 15px; padding: 10px 12px; }
+  #login .btn { width: 100%; justify-content: center; }
+  body.locked .wrap { display: none; }
+  .method h3 { margin: 16px 0 6px; } .method p, .method li { font-size: 13.5px; color: var(--text-dim); } .method code { font-family: var(--mono); font-size: 12px; }
+</style>
+</head>
+<body class="locked">
+<div id="login"><form class="card" id="loginForm">
+  <h2>Market Desk</h2>
+  <p class="dim small" id="loginMsg">Indian stock market research. Enter your password.</p>
+  <input type="password" id="loginPw" placeholder="Password" autocomplete="current-password">
+  <button class="btn primary" type="submit" id="loginGo">Sign in</button>
+</form></div>
+<div class="wrap">
+  <div class="head">
+    <h1>Market Desk</h1>
+    <span class="pill" id="mktPill"><span class="dot"></span><span id="mktPhase">…</span></span>
+    <span class="spacer"></span>
+    <div class="settings">
+      <label title="Used to size every trade plan">Capital ₹ <input id="capital" type="number" min="1000" step="1000" inputmode="numeric"></label>
+      <label title="Most you are willing to lose on one trade, as % of capital">Risk / trade % <input id="riskPct" type="number" min="0.1" max="5" step="0.1" style="width:70px"></label>
+      <button class="btn btn-sm icon-btn" id="themeBtn" title="Light / dark" aria-label="Toggle light or dark theme">◐</button>
+      <button class="btn btn-sm" id="logoutBtn" title="Sign out of Market Desk">Sign out</button>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab on" data-tab="pulse">Market pulse</button>
+    <button class="tab" data-tab="stock">Analyze a stock</button>
+    <button class="tab" data-tab="scan">Scanner</button>
+    <button class="tab" data-tab="inputs">India macro inputs</button>
+    <button class="tab" data-tab="method">How it works</button>
+  </div>
+
+  <!-- ================= MARKET PULSE ================= -->
+  <section class="panel on" id="p-pulse">
+    <div class="ch" style="margin-bottom:10px">
+      <span class="dim small" id="pulseAsOf"></span>
+      <span class="spacer"></span>
+      <button class="btn btn-sm" id="pulseAi">✨ AI market outlook</button>
+      <button class="btn btn-sm" id="pulseRefresh">↻ Refresh</button>
+    </div>
+    <div id="pulseBody"><div class="loading"><span class="spin"></span>Reading 90+ instruments: world indices, Nifty 50, sectors, rupee, crude, yields, VIX, flows, options and news…</div></div>
+  </section>
+
+  <!-- ================= STOCK ================= -->
+  <section class="panel" id="p-stock">
+    <div class="ch" style="margin-bottom:12px; gap:10px">
+      <div class="search">
+        <input id="symIn" placeholder="NSE symbol or company — e.g. RELIANCE, TCS, HDFCBANK" autocomplete="off" spellcheck="false">
+        <div class="sugg" id="sugg"></div>
+      </div>
+      <button class="btn primary" id="symGo">Analyze</button>
+      <button class="btn btn-sm" id="stockAi" disabled>✨ AI research note</button>
+      <button class="btn btn-sm" id="stockRefresh" disabled>↻</button>
+    </div>
+    <div class="quick" id="recent"></div>
+    <div id="stockBody" class="mt"><div class="card dim">Type a symbol above. You'll get an intraday call (5-minute bars), a 2–6 week swing call and a 6–18 month long-term rating — each with entry, stop-loss, targets and position size — plus the technical, fundamental, sector, macro and news evidence behind them, and backtests of the same rules on this stock.</div></div>
+  </section>
+
+  <!-- ================= SCANNER ================= -->
+  <section class="panel" id="p-scan">
+    <div class="card">
+      <div class="ch">
+        <label class="small dim">Universe
+          <select id="scanU"></select>
+        </label>
+        <span class="spacer"></span>
+        <button class="btn primary" id="scanGo">Run scan</button>
+      </div>
+      <div id="customBox" style="display:none" class="mt">
+        <textarea id="watch" rows="2" style="width:100%" placeholder="Your watchlist — NSE symbols separated by spaces or commas (up to 60)"></textarea>
+      </div>
+    </div>
+    <div id="scanBody" class="mt"></div>
+  </section>
+
+  <!-- ================= INPUTS ================= -->
+  <section class="panel" id="p-inputs">
+    <div class="card">
+      <div class="ch"><h2>India macro inputs</h2><span class="dim small" id="inAsOf"></span></div>
+      <p class="dim small">There is no free live feed for India's official macro numbers, so type the latest ones in here (from RBI, MOSPI, S&amp;P Global PMI, GST Council, IMD, NSDL). Each is scored against sensible Indian ranges and feeds the market regime; leave a box blank to skip it. They are saved on the server, so every device you sign in from sees them.</p>
+      <div class="form-grid" id="inForm"></div>
+      <div class="ch mt"><span class="spacer"></span><button class="btn primary" id="inSave">Save inputs</button></div>
+      <div id="inScored" class="mt"></div>
+    </div>
+  </section>
+
+  <!-- ================= METHOD ================= -->
+  <section class="panel" id="p-method">
+    <div class="card method">
+      <h2>How Market Desk decides</h2>
+      <p>Every call is the output of explicit, weighted rules — no black box. Each factor gets a score from −1 (bearish) to +1 (bullish) and a one-line reason; the page shows all of them so you can disagree with any.</p>
+      <h3>1 · Market regime (national + international)</h3>
+      <ul>
+        <li><b>Global equities</b> (S&amp;P 500, Nasdaq, Dow, FTSE, DAX) 16% and <b>Asia</b> (Nikkei, Hang Seng, Shanghai, KOSPI) 9% — set the opening tone and FII risk appetite.</li>
+        <li><b>Volatility</b>: US VIX 7%, India VIX 9% — fear spikes go with sell-offs.</li>
+        <li><b>Rates &amp; dollar</b>: US 10-year yield 8%, Dollar Index 6% — higher yields and a strong dollar pull money out of India.</li>
+        <li><b>Rupee</b> (USD/INR) 8% and <b>crude</b> (Brent/WTI) 10% — India imports ~85% of its oil; costly crude hurts the deficit, inflation and the rupee.</li>
+        <li><b>Gold</b> 2% (safe-haven demand) and <b>copper</b> 2% (global growth).</li>
+        <li><b>Domestic</b>: Nifty's own trend 10%, breadth across the Nifty 50 5%, FII/DII flows 6%, Nifty option-chain PCR 3%, news sentiment 5%, and your India macro inputs (RBI, CPI, GDP, PMI, GST, monsoon, fiscal &amp; current-account deficits) 8%.</li>
+      </ul>
+      <p>Each instrument's move is measured against its own volatility (a 2% move in the VIX is not a 2% move in the Dow), mixing today's move (60%) with the one-month trend (40%). Missing inputs are dropped and the rest re-weighted. ≥ +0.35 strong risk-on · ≥ +0.12 risk-on · between ±0.12 neutral · ≤ −0.12 risk-off · ≤ −0.35 strong risk-off.</p>
+      <h3>2 · Sector tailwinds</h3>
+      <p>Each of 28 sectors has a sensitivity to each driver (e.g. IT +0.6 to USD/INR; OMCs −0.8 to crude; metals +0.8 to copper; realty −0.5 to yields). Today's driver moves × sensitivities give a macro tailwind, blended 55/45 with the sector index's 1- and 3-month strength against the Nifty.</p>
+      <h3>3 · Technical score (daily)</h3>
+      <p>Moving-average trend 18% · momentum (3m/6m) 12% · relative strength vs Nifty 12% · Supertrend 10% · RSI 10% · MACD 10% · ADX 8% · accumulation/distribution volume 8% · 52-week range position 7% · Money Flow Index 5%. Also shown: support/resistance zones from clustered swing points, trend structure (higher highs/lows), candlestick patterns, pivots, Bollinger squeeze, beta, volatility, drawdown.</p>
+      <h3>4 · Fundamentals</h3>
+      <p>Value (P/E and P/B against Indian sector norms, forward P/E, PEG, dividend yield), quality (ROE, margins, ROA), growth (revenue and earnings YoY), health (debt/equity, current ratio, free cash flow — skipped for banks and NBFCs), ownership (promoter and institutional holding) and the street (analyst target upside and consensus). Source: Yahoo Finance.</p>
+      <h3>5 · The three calls</h3>
+      <ul>
+        <li><b>Intraday</b> (5-minute bars): VWAP 20%, EMA 9/21 15%, Supertrend 15%, RSI 10%, MACD 10%, opening-range breakout 10%, strength vs Nifty 10%, day structure 5%, CPR 5%; then tilted by the daily trend, the market regime and the 15-minute timeframe. BUY ≥ +0.35, SELL ≤ −0.35 (sell = intraday short). No fresh entries before 9:30 or after 2:30 PM. Stop = the wider of 1.5×ATR and the nearest swing/VWAP/opening-range level (capped at 2.5×ATR); targets at 1.5R and 2.5R.</li>
+        <li><b>Swing</b> (2–6 weeks): the daily technical score plus a small regime tilt. BUY ≥ +0.30. Targets at 1.5R and 3R.</li>
+        <li><b>Long-term</b> (6–18 months): fundamentals 40% · trend 25% · momentum &amp; relative strength 17% · sector tailwind 10% · macro regime 8%. STRONG BUY ≥ 0.40 · BUY ≥ 0.20 · ACCUMULATE ≥ 0.07 · HOLD · REDUCE ≤ −0.12 · SELL ≤ −0.30. Target blends the analyst mean target with a volatility-scaled projection; stop sits under the 200-DMA / major support, never looser than −20%.</li>
+      </ul>
+      <p>Position size = capital × risk% ÷ (entry − stop), capped at your capital. Confidence reflects how strong the score is and how many factors agree; it is capped at 92% on purpose.</p>
+      <h3>6 · Backtests</h3>
+      <p>The same scoring code is replayed bar by bar over history, using only data available at each bar. Swing: 2 years of daily bars, enter the day after the score crosses +0.30, 2-ATR stop / 4-ATR target / exit on a negative score or after 30 sessions, 0.25% costs. Intraday: 60 days of 15-minute bars, long and short, 1.2-ATR stop / 2-ATR target, square-off 3:15 PM, 0.08% costs. If a stock's backtest is poor, trust that stock's signals less.</p>
+      <h3>Sources &amp; limits</h3>
+      <ul>
+        <li>Prices, fundamentals and analyst data: Yahoo Finance (NSE prices can lag by a few minutes). Flows and option chain: NSE (often blocked from hosting servers — type flows into <i>India macro inputs</i> if so). News: ET, Moneycontrol, Mint, Business Standard, Google News.</li>
+        <li>News sentiment is a finance word list, not a reader: it can misjudge sarcasm or context. The optional ✨ AI note (Claude) reads the same data and headlines and writes it up.</li>
+        <li>NSE holidays are not modelled; index constituent lists live in <code>market.php</code> and may need updating after rebalances.</li>
+        <li>Nothing here is investment advice or a SEBI-registered recommendation. Markets can ignore every factor on a given day. Use stops and size small.</li>
+      </ul>
+    </div>
+  </section>
+
+  <p class="disclaimer">Market Desk is a rule-based research tool, not investment advice. Signals are probabilities, not promises; past backtests do not guarantee future results. Always use a stop-loss and position sizes you can afford to lose. Data: Yahoo Finance, NSE, public RSS feeds.</p>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const API = "api.php";
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const store = { get(k, d) { try { const v = localStorage.getItem("mkt-" + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+                  set(k, v) { try { localStorage.setItem("mkt-" + k, JSON.stringify(v)); } catch (e) {} } };
+  const inr = (v, d) => v == null || isNaN(v) ? "—" : "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: d == null ? 2 : d, minimumFractionDigits: d == null ? 2 : 0 });
+  const fmt = (v, d) => v == null || isNaN(v) ? "—" : Number(v).toLocaleString("en-IN", { maximumFractionDigits: d == null ? 2 : d });
+  const pct = (v, d) => v == null || isNaN(v) ? "—" : (v > 0 ? "+" : "") + Number(v).toFixed(d == null ? 2 : d) + "%";
+  const chg = (v, d, suffix) => v == null || isNaN(v) ? '<span class="faint">—</span>' :
+    `<span class="chg ${v > 0 ? "up" : v < 0 ? "dn" : ""}"><span class="a">${v > 0 ? "▲" : v < 0 ? "▼" : "●"}</span>${(v > 0 ? "+" : "") + Number(v).toFixed(d == null ? 2 : d)}${suffix == null ? "%" : suffix}</span>`;
+  const sc = v => v == null ? "—" : (v > 0 ? "+" : "") + Number(v).toFixed(2);
+  const meter = (v, big) => { v = Math.max(-1, Math.min(1, Number(v) || 0)); const w = Math.abs(v) * 50;
+    return `<div class="meter${big ? " big" : ""}" role="img" aria-label="score ${sc(v)}"><i class="${v >= 0 ? "p" : "n"}" style="width:${w}%"></i></div>`; };
+  const ago = ts => { if (!ts) return ""; const s = Math.round(Date.now() / 1000 - ts); return s < 60 ? "just now" : s < 3600 ? Math.round(s / 60) + " min ago" : Math.round(s / 3600) + " h ago"; };
+  const istTime = ts => new Date(ts * 1000).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  const istDate = ts => new Date(ts * 1000).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "2-digit" });
+  function badge(action) {
+    const a = String(action || "—"); const up = /BUY|LONG|ACCUMULATE/.test(a) && !/SELL/.test(a); const dn = /SELL|REDUCE|SHORT|WEAK|AVOID/.test(a);
+    return `<span class="badge ${up ? "bull" : dn ? "bear" : ""}"><span class="ico">${up ? "▲" : dn ? "▼" : "●"}</span>${esc(a)}</span>`;
+  }
+  /* score → tile colour on the diverging ramp (bear ← grey → bull) */
+  const heatBg = v => { v = Math.max(-1, Math.min(1, v || 0)); const p = Math.round(Math.min(1, Math.abs(v) * 1.4) * 85); return `color-mix(in oklab, var(${v >= 0 ? "--bull" : "--bear"}) ${p}%, var(--mid))`; };
+  const heatFg = v => Math.abs(v || 0) * 1.4 * 85 > 48 ? "#fff" : "var(--text)";
+
+  async function api(action, params, body) {
+    const qs = new URLSearchParams(Object.assign({ action }, params || {})).toString();
+    const r = await fetch(API + "?" + qs, { credentials: "same-origin", method: body ? "POST" : "GET", headers: body ? { "Content-Type": "application/json" } : undefined, body: body ? JSON.stringify(body) : undefined });
+    let j = null; try { j = await r.json(); } catch (e) {}
+    if (r.status === 401 && action.indexOf("mkt_") === 0) { showLogin(); throw new Error("Please sign in."); }
+    if (!r.ok || !j || !j.ok) throw new Error(esc((j && j.error) || ("Server error " + r.status)));
+    return j;
+  }
+  const money = () => ({ capital: Number($("#capital").value) || 100000, risk: Number($("#riskPct").value) || 1 });
+
+  /* ---------- tabs & settings ---------- */
+  $("#capital").value = store.get("capital", 100000); $("#riskPct").value = store.get("risk", 1);
+  $("#capital").onchange = () => store.set("capital", Number($("#capital").value) || 100000);
+  $("#riskPct").onchange = () => store.set("risk", Number($("#riskPct").value) || 1);
+  function showTab(t) {
+    $$(".tab").forEach(b => b.classList.toggle("on", b.dataset.tab === t)); $$(".panel").forEach(p => p.classList.toggle("on", p.id === "p-" + t));
+    store.set("tab", t); if (t === "inputs") loadInputs(); if (t === "pulse" && !pulseLoaded) loadPulse();
+    if (t === "stock" || t === "pulse") setTimeout(redrawAll, 30);
+  }
+  $$(".tab").forEach(b => b.onclick = () => showTab(b.dataset.tab));
+
+  /* =====================================================================
+     CHARTS — plain SVG. Candles + overlays + volume, indicator panels,
+     crosshair tooltip. One y-axis per panel; panels stack instead of
+     sharing a second axis.
+     ===================================================================== */
+  const charts = [];
+  function redrawAll() { charts.forEach(c => { if (c.host.isConnected && c.host.offsetParent !== null) c.draw(); }); }
+  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(redrawAll, 120); });
+  const NS = "http://www.w3.org/2000/svg";
+  function niceTicks(lo, hi, n) {
+    const span = hi - lo || Math.abs(hi) || 1; const raw = span / n; const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => span / s <= n) || raw; const out = [];
+    for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(+v.toFixed(10)); return out;
+  }
+  /* spec: {t,o,h,l,c,v, overlays:[{label,color,data}], band:{up,lo}, hlines:[{y,label,color}], panels:[{label,height,lines:[{label,color,data}],hist,min,max,refs}], intraday} */
+  function makeChart(host, spec) {
+    const ch = { host, spec, draw: () => drawChart(host, spec) }; charts.push(ch); ch.draw(); return ch;
+  }
+  function drawChart(host, S) {
+    host.innerHTML = ""; host.classList.add("chart");
+    const W = Math.max(320, host.clientWidth || 700); const padL = 6, padR = 62, padT = 8, gap = 14;
+    const mainH = S.height || 300; const volH = S.v && S.v.some(x => x > 0) ? Math.round(mainH * 0.2) : 0;
+    const panels = S.panels || []; const axisH = 20;
+    const H = padT + mainH + panels.reduce((a, p) => a + gap + p.height, 0) + axisH;
+    const n = S.c.length; const plotW = W - padL - padR; const xw = plotW / n; const cw = Math.max(1, Math.min(xw * 0.66, 10));
+    const X = i => padL + xw * (i + 0.5);
+    const svg = document.createElementNS(NS, "svg"); svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("height", H); svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", S.aria || "Price chart");
+    const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); (parent || svg).appendChild(e); return e; };
+    const txt = (x, y, s, attrs) => { const e = el("text", Object.assign({ x, y, "font-size": 11, fill: "var(--text-faint)", "font-family": "var(--sans)" }, attrs || {})); e.textContent = s; return e; };
+    /* main price range */
+    let lo = Infinity, hi = -Infinity;
+    for (let i = 0; i < n; i++) { if (S.l[i] != null) lo = Math.min(lo, S.l[i]); if (S.h[i] != null) hi = Math.max(hi, S.h[i]); }
+    (S.overlays || []).forEach(o => o.data.forEach(v => { if (v != null) { lo = Math.min(lo, v); hi = Math.max(hi, v); } }));
+    if (S.band) [S.band.up, S.band.lo].forEach(a => a.forEach(v => { if (v != null) { lo = Math.min(lo, v); hi = Math.max(hi, v); } }));
+    (S.hlines || []).forEach(h => { if (h.y != null && h.y > lo - (hi - lo) * 0.6 && h.y < hi + (hi - lo) * 0.6) { lo = Math.min(lo, h.y); hi = Math.max(hi, h.y); } });
+    const padV = (hi - lo) * 0.04 || 1; lo -= padV; hi += padV;
+    const top = padT, bot = padT + mainH;
+    const Y = v => top + (hi - v) / (hi - lo) * (mainH - volH - 4);
+    niceTicks(lo, hi, 5).forEach(t => { const y = Y(t); if (y < top || y > bot - volH) return; el("line", { x1: padL, x2: W - padR, y1: y, y2: y, stroke: "var(--grid)", "stroke-width": 1 }); txt(W - padR + 6, y + 4, fmt(t, t >= 1000 ? 0 : 2)); });
+    /* Bollinger wash */
+    if (S.band) {
+      let d = "", d2 = ""; for (let i = 0; i < n; i++) if (S.band.up[i] != null) d += (d ? "L" : "M") + X(i).toFixed(1) + "," + Y(S.band.up[i]).toFixed(1);
+      for (let i = n - 1; i >= 0; i--) if (S.band.lo[i] != null) d2 += "L" + X(i).toFixed(1) + "," + Y(S.band.lo[i]).toFixed(1);
+      if (d) el("path", { d: d + d2 + "Z", fill: "var(--s2)", opacity: 0.08 });
+    }
+    /* volume */
+    if (volH) { const vmax = Math.max(...S.v) || 1;
+      for (let i = 0; i < n; i++) { const h = S.v[i] / vmax * (volH - 2); if (h <= 0) continue; const up = S.c[i] >= S.o[i];
+        el("rect", { x: X(i) - cw / 2, y: bot - h, width: cw, height: h, fill: up ? "var(--bull)" : "var(--bear)", opacity: 0.28 }); } }
+    /* candles */
+    for (let i = 0; i < n; i++) {
+      if (S.c[i] == null) continue; const up = S.c[i] >= S.o[i]; const col = up ? "var(--bull)" : "var(--bear)";
+      el("line", { x1: X(i), x2: X(i), y1: Y(S.h[i]), y2: Y(S.l[i]), stroke: col, "stroke-width": 1 });
+      const y1 = Y(Math.max(S.o[i], S.c[i])), y2 = Y(Math.min(S.o[i], S.c[i]));
+      el("rect", { x: X(i) - cw / 2, y: y1, width: cw, height: Math.max(1, y2 - y1), fill: col, rx: cw > 5 ? 1 : 0 });
+    }
+    /* overlays */
+    (S.overlays || []).forEach(o => { let d = "", pen = false;
+      o.data.forEach((v, i) => { if (v == null) { pen = false; return; } d += (pen ? "L" : "M") + X(i).toFixed(1) + "," + Y(v).toFixed(1); pen = true; });
+      if (d) el("path", { d, fill: "none", stroke: o.color, "stroke-width": o.width || 2, "stroke-linejoin": "round", "stroke-linecap": "round", opacity: o.opacity || 1 }); });
+    /* level lines with a label chip on the price axis */
+    (S.hlines || []).forEach(h => { if (h.y == null) return; const y = Y(h.y); if (y < top - 2 || y > bot - volH + 2) return;
+      el("line", { x1: padL, x2: W - padR, y1: y, y2: y, stroke: h.color, "stroke-width": 1, opacity: 0.85 });
+      const t = h.label + " " + fmt(h.y, h.y >= 1000 ? 0 : 2); const w = t.length * 5.9 + 8;
+      el("rect", { x: W - padR - w - 2, y: y - 8, width: w, height: 15, rx: 3, fill: "var(--surface)", stroke: h.color, "stroke-width": 1 });
+      txt(W - padR - w + 2, y + 3.5, t, { fill: "var(--text)", "font-size": 10.5 }); });
+    /* indicator panels */
+    let py = bot; const panelY = [];
+    panels.forEach(p => {
+      py += gap; const pt = py, pb = py + p.height; panelY.push([pt, pb, p]);
+      let plo = p.min, phi = p.max;
+      if (plo == null || phi == null) { plo = Infinity; phi = -Infinity; (p.lines || []).concat(p.hist ? [{ data: p.hist }] : []).forEach(l => l.data.forEach(v => { if (v != null) { plo = Math.min(plo, v); phi = Math.max(phi, v); } }));
+        const m = Math.max(Math.abs(plo), Math.abs(phi)) || 1; if (p.symmetric) { plo = -m; phi = m; } }
+      const PY = v => pt + (phi - v) / (phi - plo || 1) * p.height; p._Y = PY;
+      el("rect", { x: padL, y: pt, width: plotW, height: p.height, fill: "none", stroke: "var(--grid)", "stroke-width": 1 });
+      (p.refs || []).forEach(r => { el("line", { x1: padL, x2: W - padR, y1: PY(r), y2: PY(r), stroke: "var(--grid)", "stroke-width": 1 }); txt(W - padR + 6, PY(r) + 4, String(r)); });
+      if (p.hist) { const z = PY(0); p.hist.forEach((v, i) => { if (v == null) return; const y = PY(v);
+        el("rect", { x: X(i) - cw / 2, y: Math.min(y, z), width: cw, height: Math.max(1, Math.abs(y - z)), fill: v >= 0 ? "var(--bull)" : "var(--bear)", opacity: 0.55 }); }); }
+      (p.lines || []).forEach(o => { let d = "", pen = false; o.data.forEach((v, i) => { if (v == null) { pen = false; return; } d += (pen ? "L" : "M") + X(i).toFixed(1) + "," + PY(v).toFixed(1); pen = true; });
+        if (d) el("path", { d, fill: "none", stroke: o.color, "stroke-width": 1.6, "stroke-linejoin": "round" }); });
+      txt(padL + 6, pt + 13, p.label, { fill: "var(--text-dim)", "font-weight": 600 });
+      py = pb;
+    });
+    /* time axis */
+    const ticks = Math.max(2, Math.floor(plotW / 110)); const every = Math.max(1, Math.round(n / ticks));
+    for (let i = 0; i < n; i += every) {
+      const t = S.t[i]; const lab = S.intraday ? new Date(t * 1000).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }) : istDate(t);
+      txt(X(i), H - 5, lab, { "text-anchor": "middle" });
+    }
+    /* crosshair + tooltip */
+    const cross = el("line", { x1: 0, x2: 0, y1: top, y2: py, stroke: "var(--text-faint)", "stroke-width": 1, opacity: 0 });
+    const hit = el("rect", { x: padL, y: top, width: plotW, height: py - top, fill: "transparent" });
+    host.appendChild(svg);
+    const tip = document.createElement("div"); tip.className = "tip"; host.appendChild(tip);
+    const move = ev => {
+      const r = svg.getBoundingClientRect(); const sx = (ev.clientX - r.left) * (W / r.width);
+      const i = Math.max(0, Math.min(n - 1, Math.floor((sx - padL) / xw))); cross.setAttribute("x1", X(i)); cross.setAttribute("x2", X(i)); cross.setAttribute("opacity", 0.6);
+      const when = S.intraday ? istTime(S.t[i]) : istDate(S.t[i]);
+      let h = `<b>${when}</b><div class="row"><span class="dim">O / H</span><span class="num">${fmt(S.o[i])} / ${fmt(S.h[i])}</span></div><div class="row"><span class="dim">L / C</span><span class="num">${fmt(S.l[i])} / ${fmt(S.c[i])}</span></div>`;
+      if (i > 0 && S.c[i - 1]) h += `<div class="row"><span class="dim">Change</span>${chg((S.c[i] / S.c[i - 1] - 1) * 100)}</div>`;
+      (S.overlays || []).forEach(o => { if (o.data[i] != null) h += `<div class="row"><span class="dim"><i style="display:inline-block;width:10px;height:2px;background:${o.color};vertical-align:middle;margin-right:4px"></i>${esc(o.label)}</span><span class="num">${fmt(o.data[i])}</span></div>`; });
+      if (volH) h += `<div class="row"><span class="dim">Volume</span><span class="num">${fmt(S.v[i], 0)}</span></div>`;
+      panels.forEach(p => { (p.lines || []).forEach(o => { if (o.data[i] != null) h += `<div class="row"><span class="dim">${esc(o.label)}</span><span class="num">${fmt(o.data[i])}</span></div>`; }); });
+      tip.innerHTML = h; tip.style.display = "block";
+      const px = X(i) * (r.width / W); const tw = tip.offsetWidth; tip.style.left = (px + 14 + tw > r.width ? px - tw - 14 : px + 14) + "px"; tip.style.top = "8px";
+    };
+    hit.addEventListener("mousemove", move); hit.addEventListener("touchstart", e => move(e.touches[0]), { passive: true });
+    hit.addEventListener("mouseleave", () => { tip.style.display = "none"; cross.setAttribute("opacity", 0); });
+  }
+  function spark(data, w, h) {
+    w = w || 90; h = h || 26; const v = (data || []).filter(x => x != null); if (v.length < 2) return "";
+    const lo = Math.min(...v), hi = Math.max(...v); const X = i => 1 + i / (v.length - 1) * (w - 6); const Y = x => 3 + (hi - x) / (hi - lo || 1) * (h - 6);
+    const d = v.map((x, i) => (i ? "L" : "M") + X(i).toFixed(1) + "," + Y(x).toFixed(1)).join("");
+    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><path d="${d}" fill="none" stroke="var(--text-dim)" stroke-width="1.5" stroke-linejoin="round"/><circle cx="${X(v.length - 1)}" cy="${Y(v[v.length - 1])}" r="2.6" fill="var(--text)" stroke="var(--surface)" stroke-width="1.5"/></svg>`;
+  }
+  function factorRows(fs, showWeight) {
+    return (fs || []).map(f => `<div class="factor"><div class="fl">${esc(f.label)}<small>${esc(f.value == null ? "" : f.value)}${showWeight && f.weight ? " · weight " + Math.round(f.weight * 100) + "%" : ""}</small></div>
+      <div style="display:flex;align-items:center;gap:8px">${meter(f.score)}<span class="num small" style="width:38px;text-align:right">${sc(f.score)}</span></div><div class="note">${esc(f.note || "")}</div></div>`).join("");
+  }
+  function markdown(md) {
+    const lines = esc(md).split(/\r?\n/); let out = "", inList = false;
+    const inline = s => s.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\*(.+?)\*/g, "<i>$1</i>").replace(/`(.+?)`/g, "<code>$1</code>");
+    lines.forEach(l => {
+      const m = l.match(/^\s*[-*•]\s+(.*)/); if (m) { if (!inList) { out += "<ul>"; inList = true; } out += "<li>" + inline(m[1]) + "</li>"; return; }
+      if (inList) { out += "</ul>"; inList = false; }
+      const h = l.match(/^#{1,4}\s+(.*)/); if (h) { out += "<h2>" + inline(h[1]) + "</h2>"; return; }
+      if (l.trim()) out += "<p>" + inline(l) + "</p>";
+    });
+    return out + (inList ? "</ul>" : "");
+  }
+  function newsList(news, max, filterTopic) {
+    if (!news || !news.items || !news.items.length) return '<p class="dim small">No headlines could be fetched right now.</p>';
+    let items = news.items; if (filterTopic) items = items.filter(n => (n.tags || []).includes(filterTopic));
+    return "<ul>" + items.slice(0, max || 25).map(n => `<li><span class="sd ${n.sentiment > 0.15 ? "p" : n.sentiment < -0.15 ? "n" : ""}" title="sentiment ${sc(n.sentiment)}"></span><div>
+      <a href="${esc(n.link)}" target="_blank" rel="noopener">${esc(n.title)}</a><div class="tiny faint">${esc(n.source || "")}${n.ts ? " · " + ago(n.ts) : ""}${(n.tags || []).length ? " · " + n.tags.map(esc).join(", ") : ""} · sentiment ${sc(n.sentiment)}</div></div></li>`).join("") + "</ul>";
+  }
+
+  /* =====================================================================
+     MARKET PULSE
+     ===================================================================== */
+  let pulseLoaded = false, MACRO = null, newsTopic = null;
+  async function loadPulse(refresh) {
+    pulseLoaded = true; const body = $("#pulseBody"); $("#pulseRefresh").disabled = true;
+    if (refresh || !MACRO) body.innerHTML = '<div class="loading"><span class="spin"></span>Reading 90+ instruments: world indices, Nifty 50, sectors, rupee, crude, yields, VIX, flows, options and news…</div>';
+    try { MACRO = await api("mkt_macro", refresh ? { refresh: 1 } : {}); renderPulse(); setMarket(MACRO.market); }
+    catch (e) { body.innerHTML = `<div class="err">${e.message}</div>`; }
+    $("#pulseRefresh").disabled = false;
+  }
+  function setMarket(m) { if (!m) return; $("#mktPill").classList.toggle("open", !!m.open); $("#mktPhase").textContent = "NSE " + m.phase + " · " + m.ist + " IST"; }
+  function renderPulse() {
+    const M = MACRO, R = M.regime; $("#pulseAsOf").textContent = "Updated " + istTime(M.as_of) + " IST" + (M.cached ? " (cached)" : "");
+    const n = M.nifty, b = M.breadth, f = M.flows, o = M.options;
+    const vixIns = (M.instruments || []).find(x => x.driver === "india_vix");
+    let h = `<div class="tiles">
+      <div class="tile" style="grid-column:span 2;min-width:0"><div class="k">Market regime for Indian equities</div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div class="v">${sc(R.score)}</div>${badge(R.label.toUpperCase())}</div>
+        ${meter(R.score, true)}<div class="s" style="margin-top:6px">${esc(R.advice)}</div></div>
+      <div class="tile"><div class="k">Nifty 50</div><div class="v">${n ? fmt(n.price, 0) : "—"}</div><div class="s">${n ? chg(n.change_pct) + " · trend " + sc(n.score) : "unavailable"}</div><div class="s">${n ? esc(n.structure.label) : ""}</div></div>
+      <div class="tile"><div class="k">India VIX</div><div class="v">${vixIns ? fmt(vixIns.last) : "—"}</div><div class="s">${vixIns ? chg(vixIns.chg_1d) + " · " + (vixIns.last > 20 ? "elevated fear — size down" : vixIns.last < 13 ? "calm — complacency risk" : "normal range") : ""}</div></div>
+      <div class="tile"><div class="k">Breadth · Nifty 50</div><div class="v">${b ? b.advances + " ▲ " + b.declines + " ▼" : "—"}</div><div class="s">${b ? b.pct_above_50dma + "% above 50-DMA · " + b.pct_above_20dma + "% above 20-DMA" : ""}</div></div>
+      <div class="tile"><div class="k">FII / DII (₹ cr)</div><div class="v" style="font-size:19px">${f ? fmt(f.fii_net, 0) + " / " + fmt(f.dii_net, 0) : "—"}</div><div class="s">${f ? esc((f.source || "") + (f.date ? " · " + f.date : "")) : 'NSE unreachable — <a href="#" data-goto="inputs">enter by hand</a>'}</div></div>
+      <div class="tile"><div class="k">Nifty options</div><div class="v" style="font-size:19px">${o ? "PCR " + o.pcr : "—"}</div><div class="s">${o ? "Max pain " + fmt(o.max_pain, 0) + " · call wall " + fmt(o.call_wall, 0) + " · put wall " + fmt(o.put_wall, 0) : "Option chain unavailable from this server"}</div></div>
+    </div>`;
+    /* what's moving the market */
+    const comps = R.components.slice().sort((a, b) => b.weight * b.score - a.weight * a.score);
+    h += `<div class="grid g2"><div class="card"><div class="ch"><h2>What's moving the market</h2><span class="dim small">factor score · weight</span></div>
+      ${comps.map(c => `<div class="factor" style="grid-template-columns:minmax(140px,1fr) 150px 70px"><div class="fl">${esc(c.label)}<small>weight ${Math.round(c.weight * 100)}%</small></div><div>${meter(c.score)}</div><div class="num small r" style="text-align:right">${sc(c.score)}</div></div>`).join("")}
+      </div>`;
+    /* sectors */
+    h += `<div class="card"><div class="ch"><h2>Sector tailwinds today</h2><span class="dim small">macro drivers × sensitivity, + index momentum</span></div>
+      <div class="legend"><span><i class="box" style="background:var(--bear)"></i>headwind</span><span><i class="box" style="background:var(--mid)"></i>neutral</span><span><i class="box" style="background:var(--bull)"></i>tailwind</span></div>
+      <div class="heat">${M.sectors.map(s => `<div style="background:${heatBg(s.score)};color:${heatFg(s.score)}" title="${esc(s.story + (s.why.length ? " — " + s.why.join("; ") : ""))}"><b>${esc(s.label)}</b><span>${sc(s.score)}${s.momentum ? " · RS 1m " + pct(s.momentum.rs_1m, 1) : ""}</span></div>`).join("")}</div></div></div>`;
+    /* global cues */
+    const groups = {}; (M.instruments || []).forEach(x => { (groups[x.group] = groups[x.group] || []).push(x); });
+    h += `<div class="card mt"><div class="ch"><h2>National &amp; international cues</h2><span class="dim small">"For India" = this move's effect on Indian equities</span></div><div class="tbl"><table>
+      <thead><tr><th>Instrument</th><th class="r">Last</th><th class="r">1 day</th><th class="r">5 days</th><th class="r">1 month</th><th>30 days</th><th>For India</th><th>Why it matters</th></tr></thead><tbody>`;
+    Object.keys(groups).forEach(g => { h += `<tr class="grp"><td colspan="8">${esc(g)}</td></tr>`;
+      groups[g].forEach(x => { h += `<tr><td><b>${esc(x.label)}</b><div class="tiny faint">${esc(x.sym)}${x.trend ? " · " + esc(x.trend) : ""}</div></td><td class="r num">${fmt(x.last, x.last > 1000 ? 0 : 2)}</td>
+        <td class="r">${chg(x.chg_1d)}</td><td class="r">${chg(x.chg_5d)}</td><td class="r">${chg(x.chg_1m)}</td><td>${spark(x.spark)}</td>
+        <td style="min-width:120px">${x.sign ? meter(x.impact) + `<div class="tiny faint">${Math.abs(x.impact) < 0.1 ? "neutral" : x.impact > 0 ? "positive" : "negative"} (${sc(x.impact)})</div>` : '<span class="tiny faint">context only</span>'}</td>
+        <td class="small dim" style="min-width:220px">${esc(x.why)}</td></tr>`; }); });
+    h += `</tbody></table></div>${M.missing && M.missing.length ? `<p class="tiny faint">Not available right now: ${M.missing.map(esc).join(", ")}</p>` : ""}</div>`;
+    /* sector indices + nifty levels */
+    h += `<div class="grid g2 mt"><div class="card"><h2>Sector indices vs Nifty</h2><div class="tbl"><table><thead><tr><th>Index</th><th class="r">Last</th><th class="r">1 day</th><th class="r">RS 1m</th><th class="r">RS 3m</th><th>Momentum</th></tr></thead><tbody>
+      ${(M.sector_indices || []).map(s => `<tr><td><b>${esc(s.label)}</b></td><td class="r num">${fmt(s.last, 0)}</td><td class="r">${chg(s.chg_1d)}</td><td class="r">${chg(s.rs_1m, 1, " pts")}</td><td class="r">${chg(s.rs_3m, 1, " pts")}</td><td style="min-width:90px">${meter(s.score)}</td></tr>`).join("")}
+      </tbody></table></div></div>`;
+    h += `<div class="card"><h2>Nifty levels &amp; movers</h2>${n ? `<div class="kv mt">
+      ${["S2", "S1", "BC", "P", "TC", "R1", "R2"].map(k => `<div><span>${k === "P" ? "Pivot" : k}</span><b>${fmt(n.pivots[k], 0)}</b></div>`).join("")}
+      <div><span>RSI</span><b>${fmt(n.indicators.rsi, 1)}</b></div><div><span>ADX</span><b>${fmt(n.indicators.adx, 1)}</b></div><div><span>50-DMA</span><b>${fmt(n.indicators.sma50, 0)}</b></div><div><span>200-DMA</span><b>${fmt(n.indicators.sma200, 0)}</b></div>
+      </div><p class="small dim">Support ${n.levels.support.map(s => fmt(s.level, 0)).join(" · ") || "—"} &nbsp;|&nbsp; Resistance ${n.levels.resistance.map(s => fmt(s.level, 0)).join(" · ") || "—"}</p>` : ""}
+      ${b ? `<div class="grid g2" style="gap:10px"><div><h3 class="small">Top gainers</h3>${b.top.map(x => `<div class="small" style="display:flex;justify-content:space-between"><a href="#" data-sym="${esc(x.symbol)}">${esc(x.symbol)}</a>${chg(x.chg)}</div>`).join("")}</div>
+      <div><h3 class="small">Top losers</h3>${b.bottom.map(x => `<div class="small" style="display:flex;justify-content:space-between"><a href="#" data-sym="${esc(x.symbol)}">${esc(x.symbol)}</a>${chg(x.chg)}</div>`).join("")}</div></div>` : ""}
+      ${o ? `<p class="small dim mt">${esc(o.read)} Expiry ${esc(o.expiry || "")}.</p>` : ""}</div></div>`;
+    /* news + events + india inputs */
+    const topics = (M.news && M.news.topics) || [];
+    h += `<div class="grid g2 mt"><div class="card news"><div class="ch"><h2>News flow</h2><span class="dim small">sentiment ${sc(M.news && M.news.score)} · ${(M.news && M.news.scored) || 0} scored headlines</span></div>
+      <div>${topics.map(t => `<span class="chip${newsTopic === t.topic ? " on" : ""}" data-topic="${esc(t.topic)}">${esc(t.topic)} · ${t.count} · ${sc(t.sentiment)}</span>`).join("")}</div>
+      <div id="newsList">${newsList(M.news, 25, newsTopic)}</div></div>
+      <div><div class="card"><h2>Event radar · next 60 days</h2>${(M.events || []).length ? `<table><tbody>${M.events.map(e => `<tr><td class="num" style="white-space:nowrap">${esc(e.date)}</td><td class="small">${esc(e.what)}</td><td class="r tiny faint" style="white-space:nowrap">${e.days === 0 ? "today" : "in " + e.days + "d"}</td></tr>`).join("")}</tbody></table>` : '<p class="dim small">No events in range.</p>'}
+        <p class="tiny faint">FOMC and expiry dates are built in; add RBI dates and your own in <a href="#" data-goto="inputs">India macro inputs</a>.</p></div>
+      <div class="card mt"><div class="ch"><h2>India macro</h2><a href="#" data-goto="inputs" class="small">edit</a></div>${M.india_inputs.scored.factors.length ? factorRows(M.india_inputs.scored.factors) : '<p class="dim small">No India macro numbers entered yet. Add RBI rate, CPI, GDP, PMI… in <a href="#" data-goto="inputs">India macro inputs</a> so the regime includes them.</p>'}</div></div></div>`;
+    h += `<div id="pulseNote"></div>`;
+    $("#pulseBody").innerHTML = h;
+  }
+  $("#pulseBody").addEventListener("click", e => {
+    const t = e.target.closest("[data-topic]"); if (t) { newsTopic = newsTopic === t.dataset.topic ? null : t.dataset.topic; $$("#pulseBody .chip").forEach(c => c.classList.toggle("on", c.dataset.topic === newsTopic)); $("#newsList").innerHTML = newsList(MACRO.news, 25, newsTopic); return; }
+    const g = e.target.closest("[data-goto]"); if (g) { e.preventDefault(); showTab(g.dataset.goto); return; }
+    const s = e.target.closest("[data-sym]"); if (s) { e.preventDefault(); analyze(s.dataset.sym); }
+  });
+  $("#pulseRefresh").onclick = () => loadPulse(true);
+  $("#pulseAi").onclick = async () => {
+    const btn = $("#pulseAi"); btn.disabled = true; const box = $("#pulseNote") || $("#pulseBody");
+    box.innerHTML = '<div class="card mt"><span class="spin"></span>Claude is reading the market data and headlines…</div>';
+    try { const j = await api("mkt_ai", money()); box.innerHTML = `<div class="card mt note-md"><div class="ch"><h2>✨ AI market outlook</h2><span class="tiny faint">${esc(j.model)}</span></div>${markdown(j.note)}</div>`; box.scrollIntoView({ behavior: "smooth" }); }
+    catch (e) { box.innerHTML = `<div class="err">${e.message}</div>`; }
+    btn.disabled = false;
+  };
+
+  /* =====================================================================
+     STOCK ANALYSIS
+     ===================================================================== */
+  let STOCK = null, curSym = null;
+  function recent(sym) { let r = store.get("recent", []); if (sym) { r = [sym].concat(r.filter(x => x !== sym)).slice(0, 10); store.set("recent", r); }
+    $("#recent").innerHTML = (r.length ? '<span class="small faint" style="align-self:center">Recent:</span>' : '<span class="small faint" style="align-self:center">Try:</span>') +
+      (r.length ? r : ["RELIANCE", "HDFCBANK", "TCS", "INFY", "SBIN", "TATASTEEL", "BHARTIARTL", "^NSEI"]).map(s => `<span class="chip" data-sym="${esc(s)}">${esc(s.replace(/\.NS$/, ""))}</span>`).join(""); }
+  $("#recent").onclick = e => { const c = e.target.closest("[data-sym]"); if (c) analyze(c.dataset.sym); };
+  async function analyze(sym, refresh) {
+    sym = String(sym || "").trim(); if (!sym) return; showTab("stock"); $("#symIn").value = sym.replace(/\.NS$/, ""); hideSugg(); curSym = sym;
+    $("#stockBody").innerHTML = `<div class="loading"><span class="spin"></span>Analyzing ${esc(sym)} — 2 years of daily bars, 5- and 15-minute bars, fundamentals, sector, macro, news, backtests…</div>`;
+    $("#stockAi").disabled = $("#stockRefresh").disabled = true;
+    try { const p = money(); STOCK = await api("mkt_analyze", Object.assign({ symbol: sym }, p, refresh ? { refresh: 1 } : {})); recent(STOCK.symbol.replace(/\.NS$/, "")); renderStock(); setMarket(STOCK.market);
+      history.replaceState(null, "", "#stock=" + encodeURIComponent(STOCK.symbol.replace(/\.NS$/, ""))); }
+    catch (e) { $("#stockBody").innerHTML = `<div class="err">${e.message}</div>`; }
+    $("#stockAi").disabled = $("#stockRefresh").disabled = false;
+  }
+  function planBlock(p, note) {
+    if (!p) return `<p class="small dim">${note || "No trade plan — the edge isn't strong enough."}</p>`;
+    return `<div class="plan"><div><span>${p.side === "SHORT" ? "Sell / short at" : "Entry"}</span><b>${inr(p.entry)}</b></div><div><span>Stop-loss</span><b>${inr(p.stop)}</b></div>
+      ${p.targets.map((t, i) => `<div><span>Target ${i + 1} (${p.rr[i]}R)</span><b>${inr(t)}</b></div>`).join("")}
+      <div><span>Qty</span><b>${p.qty == null ? "—" : fmt(p.qty, 0)}</b></div><div><span>Max loss</span><b>${inr(p.max_loss, 0)}</b></div></div>
+      <div class="tiny faint">Risk ${inr(p.risk_per_share)}/share (${p.risk_pct}%) · capital used ${inr(p.capital_used, 0)}</div>`;
+  }
+  function renderStock() {
+    const A = STOCK, V = A.verdicts, T = A.technical, F = A.fundamental, I = V.intraday, S = V.swing, L = V.long;
+    charts.length = 0;
+    const isIdx = A.symbol[0] === "^";
+    let h = `<div class="card"><div class="ch" style="align-items:center"><div style="flex:1;min-width:220px"><h2 style="font-size:20px">${esc(A.name)}</h2>
+      <div class="small dim">${esc(A.symbol)} · ${esc(A.exchange || "")} · ${esc(A.sector.label)}${A.sector.industry ? " · " + esc(A.sector.industry) : ""}${A.stale ? ' · <b>showing cached data — live fetch failed</b>' : ""}</div></div>
+      <div style="text-align:right"><div style="font-size:26px;font-weight:750" class="num">${inr(T.price)}</div><div>${chg(T.change_pct)} <span class="tiny faint">· ${istTime(A.as_of)} IST</span></div></div></div>
+      <div class="small dim" style="margin-top:6px">Market regime: <b>${esc(A.macro.label || "—")}</b> (${sc(A.macro.score)}) · India VIX ${fmt(A.macro.india_vix)} · Sector ${esc(A.sector.label)} ${A.sector.view ? "tailwind " + sc(A.sector.view.score) : ""}</div></div>`;
+    /* three verdicts */
+    const iPlan = I && !I.error ? I : null;
+    h += `<div class="grid g3 mt">
+      <div class="card verdict"><h3>Intraday <span class="spacer"></span>${iPlan ? badge(I.action) : badge("NO DATA")}</h3>
+        ${iPlan ? `<div class="sc">score ${meter(I.score)} <b class="num">${sc(I.score)}</b> · ${I.confidence}% conf.</div>
+        <div class="tiny faint">Session ${esc(I.session.date)}${I.session.is_today ? "" : " (last session)"} · last bar ${esc(I.session.last_bar_ist)} IST · VWAP ${fmt(I.session.vwap)} · ORB ${fmt(I.session.or_low)}–${fmt(I.session.or_high)}${I.session.rvol ? " · RVOL " + I.session.rvol + "x" : ""}</div>
+        ${planBlock(I.plan, "No intraday edge right now — wait for price to clear VWAP / the opening range with volume.")}
+        ${I.context.length ? `<ul class="plain">${I.context.map(c => `<li class="small">${esc(c)}</li>`).join("")}</ul>` : ""}
+        ${I.warnings.length ? `<div class="warnbox"><b>⚠ Before you trade</b><ul class="plain">${I.warnings.map(w => `<li>${esc(w)}</li>`).join("")}</ul></div>` : ""}` : `<p class="dim small">${esc((I && I.error) || "No intraday data.")}</p>`}</div>
+      <div class="card verdict"><h3>Swing · 2–6 weeks <span class="spacer"></span>${badge(S.action)}</h3>
+        <div class="sc">score ${meter(S.score)} <b class="num">${sc(S.score)}</b> · ${S.confidence}% conf.</div>
+        ${planBlock(S.plan, S.score <= -0.3 ? "Trend and momentum are negative — avoid fresh longs; holders can exit or trail a tight stop." : "No swing entry — wait for the daily score to turn clearly positive.")}
+        <p class="tiny faint">Daily technical score ${sc(T.score)} · ${esc(T.structure.label)}</p></div>
+      <div class="card verdict"><h3>Long-term · 6–18 months <span class="spacer"></span>${badge(L.rating)}</h3>
+        <div class="sc">score ${meter(L.score)} <b class="num">${sc(L.score)}</b> · ${L.confidence}% conf.</div>
+        <div class="plan"><div><span>Target</span><b>${inr(L.target)}</b></div><div><span>Upside</span><b>${pct(L.target_upside_pct, 1)}</b></div><div><span>Stop</span><b>${inr(L.stop)}</b></div><div><span>Qty</span><b>${L.qty == null ? "—" : fmt(L.qty, 0)}</b></div></div>
+        <p class="small">${esc(L.entry_plan)}</p>
+        ${L.components.map(c => `<div class="factor" style="grid-template-columns:1fr 90px 44px;padding:4px 0"><div class="small">${esc(c.label)} <span class="faint">${Math.round(c.weight * 100)}%</span></div>${meter(c.score)}<div class="num small" style="text-align:right">${sc(c.score)}</div></div>`).join("")}</div>
+    </div>`;
+    /* pros / cons */
+    h += `<div class="grid g2 mt"><div class="card"><h2>▲ What's working for it</h2><ul class="plain">${L.pros.length ? L.pros.map(p => `<li>${esc(p)}</li>`).join("") : "<li class='dim'>Nothing strongly positive.</li>"}</ul></div>
+      <div class="card"><h2>▼ What's against it</h2><ul class="plain">${L.cons.length ? L.cons.map(p => `<li>${esc(p)}</li>`).join("") : "<li class='dim'>Nothing strongly negative.</li>"}</ul></div></div>`;
+    /* charts */
+    h += `<div class="card mt"><div class="ch"><h2>Daily chart</h2><span class="dim small">last ${A.chart.c.length} sessions · hover for values</span></div>
+      <div class="legend"><span><i class="box" style="background:var(--bull)"></i>up day</span><span><i class="box" style="background:var(--bear)"></i>down day</span><span><i style="background:var(--s1)"></i>20-DMA</span><span><i style="background:var(--s2)"></i>50-DMA</span><span><i style="background:var(--s3)"></i>200-DMA</span><span><i class="box" style="background:var(--s2);opacity:.25"></i>Bollinger (20,2)</span></div>
+      <div id="chDaily"></div></div>`;
+    if (A.intraday_chart) h += `<div class="card mt"><div class="ch"><h2>Intraday · 5-minute</h2><span class="dim small">plan levels drawn on the chart</span></div>
+      <div class="legend"><span><i style="background:var(--s1)"></i>${iPlan && I.session.vwap_is_volume ? "VWAP" : "Session avg"}</span><span><i style="background:var(--s2)"></i>EMA 9</span><span><i style="background:var(--s3)"></i>EMA 21</span></div><div id="chIntra"></div></div>`;
+    /* technicals */
+    const ind = T.indicators;
+    h += `<div class="grid g2 mt"><div class="card"><div class="ch"><h2>Technical factors</h2><span class="dim small">score ${sc(T.score)}</span></div>${factorRows(T.factors, true)}</div>
+      <div class="card"><h2>Indicators &amp; levels</h2><div class="kv mt">
+        <div><span>RSI 14</span><b>${fmt(ind.rsi, 1)}</b></div><div><span>MACD / signal</span><b>${fmt(ind.macd)} / ${fmt(ind.macd_signal)}</b></div><div><span>ADX / +DI / −DI</span><b>${fmt(ind.adx, 0)} / ${fmt(ind.plus_di, 0)} / ${fmt(ind.minus_di, 0)}</b></div>
+        <div><span>Supertrend</span><b>${fmt(ind.supertrend)} ${ind.supertrend_dir > 0 ? "▲" : "▼"}</b></div><div><span>20 / 50 / 200 DMA</span><b>${fmt(ind.sma20, 0)} / ${fmt(ind.sma50, 0)} / ${fmt(ind.sma200, 0)}</b></div>
+        <div><span>Bollinger %B</span><b>${fmt(ind.boll_pctb)}${ind.boll_squeeze ? " · squeeze" : ""}</b></div><div><span>ATR 14</span><b>${fmt(ind.atr)} (${fmt(ind.atr_pct)}%)</b></div>
+        <div><span>Stoch %K / %D</span><b>${fmt(ind.stoch_k, 0)} / ${fmt(ind.stoch_d, 0)}</b></div><div><span>MFI / CCI</span><b>${fmt(ind.mfi, 0)} / ${fmt(ind.cci, 0)}</b></div><div><span>Williams %R</span><b>${fmt(ind.willr, 0)}</b></div>
+        <div><span>Volume vs 20d</span><b>${ind.volume_ratio == null ? "—" : ind.volume_ratio + "x"}</b></div><div><span>52-wk high / low</span><b>${fmt(T.range52.high, 0)} / ${fmt(T.range52.low, 0)}</b></div>
+        <div><span>Beta vs Nifty</span><b>${fmt(T.risk.beta)}</b></div><div><span>Volatility (ann.)</span><b>${fmt(T.risk.volatility_ann_pct, 1)}%</b></div><div><span>Max drawdown 1y</span><b>${fmt(T.risk.max_drawdown_1y_pct, 1)}%</b></div>
+        ${Object.entries(T.returns).map(([k, v]) => `<div><span>Return ${k}</span><b>${pct(v, 1)}</b></div>`).join("")}
+      </div>
+      <h3 class="mt small">Support / resistance zones</h3>
+      <table class="small"><thead><tr><th>Support</th><th class="r">dist</th><th class="r">touches</th><th>Resistance</th><th class="r">dist</th><th class="r">touches</th></tr></thead><tbody>
+      ${[0, 1, 2, 3].map(i => { const s = T.levels.support[i], r = T.levels.resistance[i]; if (!s && !r) return ""; return `<tr><td class="num">${s ? fmt(s.level) : ""}</td><td class="r num">${s ? pct(s.dist_pct, 1) : ""}</td><td class="r">${s ? s.touches : ""}</td><td class="num">${r ? fmt(r.level) : ""}</td><td class="r num">${r ? pct(r.dist_pct, 1) : ""}</td><td class="r">${r ? r.touches : ""}</td></tr>`; }).join("")}
+      </tbody></table>
+      ${T.pivots_daily ? `<p class="small dim">Today's pivots: S2 ${fmt(T.pivots_daily.S2)} · S1 ${fmt(T.pivots_daily.S1)} · P ${fmt(T.pivots_daily.P)} · R1 ${fmt(T.pivots_daily.R1)} · R2 ${fmt(T.pivots_daily.R2)} · CPR ${fmt(T.pivots_daily.BC)}–${fmt(T.pivots_daily.TC)}</p>` : ""}
+      <p class="small"><b>Structure:</b> ${esc(T.structure.label)}${T.patterns.length ? "<br><b>Candles:</b> " + T.patterns.map(p => `${p.bias > 0 ? "▲" : p.bias < 0 ? "▼" : "●"} ${esc(p.name)} — ${esc(p.note)}`).join("<br>") : ""}</p></div></div>`;
+    /* fundamentals */
+    if (!isIdx) {
+      if (F && F.available) {
+        const v = F.values; const rt = v.rec_trend;
+        h += `<div class="grid g2 mt"><div class="card"><div class="ch"><h2>Fundamentals</h2><span class="dim small">score ${sc(F.score)} · coverage ${Math.round(F.coverage * 100)}%</span></div>
+          <div class="kv" style="margin-bottom:10px">${Object.entries(F.group_scores).map(([g, s]) => `<div><span>${esc(g)}</span><b>${sc(s)}</b>${meter(s)}</div>`).join("")}</div>${factorRows(F.factors, true)}</div>
+          <div class="card"><h2>Key numbers</h2><div class="kv mt">
+            <div><span>Market cap</span><b>${v.market_cap ? "₹" + fmt(v.market_cap / 1e7, 0) + " cr" : "—"}</b></div><div><span>P/E · fwd P/E</span><b>${fmt(v.pe, 1)} · ${fmt(v.forward_pe, 1)}</b></div>
+            <div><span>P/B · PEG</span><b>${fmt(v.pb)} · ${fmt(v.peg)}</b></div><div><span>EV/EBITDA</span><b>${fmt(v.ev_ebitda, 1)}</b></div>
+            <div><span>ROE · ROA</span><b>${pct(v.roe == null ? null : v.roe * 100, 1)} · ${pct(v.roa == null ? null : v.roa * 100, 1)}</b></div>
+            <div><span>Op. / net margin</span><b>${pct(v.op_margin == null ? null : v.op_margin * 100, 1)} · ${pct(v.net_margin == null ? null : v.net_margin * 100, 1)}</b></div>
+            <div><span>Revenue / EPS growth</span><b>${pct(v.rev_growth == null ? null : v.rev_growth * 100, 1)} · ${pct(v.earn_growth == null ? null : v.earn_growth * 100, 1)}</b></div>
+            <div><span>Debt/Equity</span><b>${v.de == null ? "—" : fmt(v.de > 10 ? v.de / 100 : v.de)}</b></div><div><span>Dividend yield</span><b>${pct(v.div_yield == null ? null : v.div_yield * 100, 2)}</b></div>
+            <div><span>Promoter / inst.</span><b>${pct(v.insiders == null ? null : v.insiders * 100, 0)} · ${pct(v.institutions == null ? null : v.institutions * 100, 0)}</b></div>
+            <div><span>Analyst target</span><b>${v.target_mean ? inr(v.target_mean, 0) : "—"}</b></div><div><span>Consensus</span><b>${v.rec_mean ? fmt(v.rec_mean) + " " + esc(v.rec_key || "") : "—"}</b></div>
+            <div><span>Next results</span><b>${esc(v.next_earnings || "—")}</b></div><div><span>EPS ttm / fwd</span><b>${fmt(v.eps_ttm)} / ${fmt(v.eps_fwd)}</b></div>
+          </div>
+          ${rt ? `<p class="small dim mt">Analysts: ${rt.strong_buy} strong buy · ${rt.buy} buy · ${rt.hold} hold · ${rt.sell} sell · ${rt.strong_sell} strong sell</p>` : ""}
+          ${v.summary ? `<details class="mt"><summary class="small">About the business</summary><p class="small dim">${esc(v.summary)}…</p></details>` : ""}</div></div>`;
+      } else h += `<div class="card mt"><h2>Fundamentals</h2><p class="dim small">Yahoo Finance didn't return fundamentals for this symbol right now, so the long-term rating leans on trend, momentum, sector and macro only. Try ↻ later.</p></div>`;
+    }
+    /* sector & macro fit */
+    const sv = A.sector.view;
+    h += `<div class="grid g2 mt"><div class="card"><div class="ch"><h2>Sector &amp; macro fit — ${esc(A.sector.label)}</h2>${sv ? `<span class="dim small">tailwind ${sc(sv.score)}</span>` : ""}</div>
+      <p class="small dim">${esc(A.sector.story || "")}</p>
+      ${A.sector.exposure.length ? `<table class="small"><thead><tr><th>Driver</th><th class="r">Sensitivity</th><th class="r">Move now</th><th>Effect</th><th>Reading</th></tr></thead><tbody>${A.sector.exposure.map(x => `<tr><td><b>${esc(x.driver)}</b></td><td class="r num">${sc(x.sensitivity)}</td><td class="r num">${sc(x.driver_move)}</td><td style="min-width:80px">${meter(x.effect == null ? 0 : x.effect * 2)}</td><td class="dim">${esc(x.note)}</td></tr>`).join("")}</tbody></table>` : ""}
+      ${sv && sv.momentum ? `<p class="small">Sector index vs Nifty: 1 month ${pct(sv.momentum.rs_1m, 1)} pts · 3 months ${pct(sv.momentum.rs_3m, 1)} pts.</p>` : ""}
+      <p class="small">Market regime ${sc(A.macro.score)} — ${esc(A.macro.advice || "")}</p></div>`;
+    /* backtests */
+    const bt = A.backtest; const btCard = b => !b ? "" : b.trades ? `<h3 class="small mt">${esc(b.label)}</h3><p class="tiny faint">${esc(b.period || "")}</p><div class="kv">
+      <div><span>Trades</span><b>${b.trades}</b></div><div><span>Win rate</span><b>${b.win_rate}%</b></div><div><span>Avg trade</span><b>${pct(b.avg_ret)}</b></div><div><span>Avg win / loss</span><b>${pct(b.avg_win)} / ${pct(b.avg_loss)}</b></div>
+      <div><span>Profit factor</span><b>${b.profit_factor == null ? "—" : b.profit_factor}</b></div><div><span>Total (compounded)</span><b>${pct(b.total_ret, 1)}</b></div><div><span>Max drawdown</span><b>${pct(b.max_dd, 1)}</b></div>
+      ${b.benchmark_ret != null ? `<div><span>Buy &amp; hold</span><b>${pct(b.benchmark_ret, 1)}</b></div>` : ""}${b.long_win_rate != null ? `<div><span>Long / short wins</span><b>${b.long_win_rate ?? "—"}% / ${b.short_win_rate ?? "—"}%</b></div>` : ""}</div>
+      <details><summary class="small">Recent trades</summary><table class="small"><tbody>${b.recent.map(t => `<tr><td>${esc(t.date)}</td><td>${esc(t.side)}</td><td class="r">${chg(t.ret)}</td><td class="r faint">${t.bars} bars</td></tr>`).join("")}</tbody></table></details>`
+      : `<h3 class="small mt">${esc(b.label)}</h3><p class="small dim">${esc(b.note || "No trades.")}</p>`;
+    const verdictBt = b => !b || !b.trades ? "" : (b.profit_factor >= 1.3 && b.win_rate >= 45 ? "✔ These rules have worked on this stock — signals deserve more weight." : b.profit_factor != null && b.profit_factor < 1 ? "✖ These rules have lost money on this stock — treat its signals with caution." : "● Mixed record — use the signals with other confirmation.");
+    h += `<div class="card"><h2>Backtest — same rules, this stock's history</h2>${btCard(bt.swing)}<p class="small">${verdictBt(bt.swing)}</p>${btCard(bt.intraday)}<p class="small">${verdictBt(bt.intraday)}</p>
+      <p class="tiny faint">Costs included (0.25% swing, 0.08% intraday). Past results do not guarantee future ones.</p></div></div>`;
+    /* news */
+    if (A.news) h += `<div class="card mt news"><div class="ch"><h2>News · ${esc(A.name)}</h2><span class="dim small">sentiment ${sc(A.news.score)} · ${A.news.scored} scored</span></div>${newsList(A.news, 15)}</div>`;
+    h += `<div id="stockNote"></div>`;
+    $("#stockBody").innerHTML = h;
+    /* draw charts */
+    const C = A.chart;
+    makeChart($("#chDaily"), { t: C.t, o: C.o, h: C.h, l: C.l, c: C.c, v: C.v, aria: "Daily candlestick chart of " + A.symbol, height: 330,
+      overlays: [{ label: "20-DMA", color: "var(--s1)", data: C.sma20 }, { label: "50-DMA", color: "var(--s2)", data: C.sma50 }, { label: "200-DMA", color: "var(--s3)", data: C.sma200 }],
+      band: { up: C.bb_up, lo: C.bb_lo },
+      hlines: [].concat(S.plan ? [{ y: S.plan.stop, label: "Swing SL", color: "var(--bear)" }, { y: S.plan.targets[0], label: "T1", color: "var(--bull)" }] : [], [{ y: L.target, label: "LT target", color: "var(--bull)" }]),
+      panels: [{ label: "RSI 14", height: 70, min: 0, max: 100, refs: [30, 70], lines: [{ label: "RSI", color: "var(--s2)", data: C.rsi }] },
+               { label: "MACD (12,26,9)", height: 80, symmetric: true, hist: C.macd_hist, lines: [{ label: "MACD", color: "var(--s1)", data: C.macd }, { label: "Signal", color: "var(--s2)", data: C.macd_signal }] }] });
+    if (A.intraday_chart) { const X = A.intraday_chart, P = iPlan && I.plan; const pv = iPlan && I.session.pivots;
+      makeChart($("#chIntra"), { t: X.t, o: X.o, h: X.h, l: X.l, c: X.c, v: X.v, intraday: true, aria: "5-minute chart of " + A.symbol, height: 300,
+        overlays: [{ label: "VWAP", color: "var(--s1)", data: X.vwap }, { label: "EMA 9", color: "var(--s2)", data: X.ema9, width: 1.5 }, { label: "EMA 21", color: "var(--s3)", data: X.ema21, width: 1.5 }],
+        hlines: [].concat(P ? [{ y: P.entry, label: "Entry", color: "var(--text-dim)" }, { y: P.stop, label: "SL", color: "var(--bear)" }, { y: P.targets[0], label: "T1", color: "var(--bull)" }, { y: P.targets[1], label: "T2", color: "var(--bull)" }] : [],
+          pv ? [{ y: pv.R1, label: "R1", color: "var(--text-faint)" }, { y: pv.S1, label: "S1", color: "var(--text-faint)" }] : []) }); }
+  }
+  $("#symGo").onclick = () => analyze($("#symIn").value);
+  $("#stockRefresh").onclick = () => curSym && analyze(curSym, true);
+  $("#stockAi").onclick = async () => {
+    if (!STOCK) return; const btn = $("#stockAi"); btn.disabled = true; const box = $("#stockNote");
+    box.innerHTML = '<div class="card mt"><span class="spin"></span>Claude is writing a research note from this analysis…</div>'; box.scrollIntoView({ behavior: "smooth" });
+    try { const j = await api("mkt_ai", Object.assign({ symbol: STOCK.symbol }, money())); box.innerHTML = `<div class="card mt note-md"><div class="ch"><h2>✨ AI research note — ${esc(STOCK.name)}</h2><span class="tiny faint">${esc(j.model)}</span></div>${markdown(j.note)}</div>`; }
+    catch (e) { box.innerHTML = `<div class="err">${e.message}</div>`; }
+    btn.disabled = false;
+  };
+  /* autocomplete */
+  let sugT, suggIdx = -1;
+  function hideSugg() { clearTimeout(sugT); $("#sugg").style.display = "none"; suggIdx = -1; }
+  $("#symIn").addEventListener("input", () => { clearTimeout(sugT); const q = $("#symIn").value.trim(); if (q.length < 2) return hideSugg();
+    sugT = setTimeout(async () => { try { const j = await api("mkt_search", { q }); const box = $("#sugg");
+      if (!j.results.length) return hideSugg();
+      box.innerHTML = j.results.map(r => `<div data-sym="${esc(r.symbol)}"><span><b>${esc(r.symbol)}</b> <span class="dim small">${esc(r.name || "")}</span></span><span class="tiny faint">${esc(r.exchange || "")}</span></div>`).join(""); box.style.display = "block"; } catch (e) { hideSugg(); } }, 250); });
+  $("#symIn").addEventListener("keydown", e => {
+    const items = $$("#sugg div");
+    if (e.key === "ArrowDown" && items.length) { suggIdx = Math.min(items.length - 1, suggIdx + 1); items.forEach((d, i) => d.classList.toggle("act", i === suggIdx)); e.preventDefault(); }
+    else if (e.key === "ArrowUp" && items.length) { suggIdx = Math.max(0, suggIdx - 1); items.forEach((d, i) => d.classList.toggle("act", i === suggIdx)); e.preventDefault(); }
+    else if (e.key === "Enter") { const pick = suggIdx >= 0 && items[suggIdx] ? items[suggIdx].dataset.sym : $("#symIn").value; analyze(pick); }
+    else if (e.key === "Escape") hideSugg();
+  });
+  $("#sugg").onclick = e => { const d = e.target.closest("[data-sym]"); if (d) analyze(d.dataset.sym); };
+  document.addEventListener("click", e => { if (!e.target.closest(".search")) hideSugg(); });
+  $("#stockBody").addEventListener("click", e => { const s = e.target.closest("[data-sym]"); if (s) { e.preventDefault(); analyze(s.dataset.sym); } });
+
+  /* =====================================================================
+     SCANNER
+     ===================================================================== */
+  let SCAN = null, scanSort = { k: "tech_score", dir: -1 };
+  async function initScan() {
+    try { const j = await api("mkt_status"); setMarket(j.market);
+      $("#scanU").innerHTML = Object.entries(j.universes).map(([k, u]) => `<option value="${k}">${esc(u.label)} (${u.count})</option>`).join("") + '<option value="custom">Your watchlist</option>';
+      $("#scanU").value = store.get("scanU", "nifty50"); $("#customBox").style.display = $("#scanU").value === "custom" ? "block" : "none";
+    } catch (e) { $("#scanBody").innerHTML = `<div class="err">${e.message}</div>`; }
+  }
+  $("#watch").value = store.get("watch", "");
+  $("#watch").onchange = () => store.set("watch", $("#watch").value);
+  $("#scanU").onchange = () => { store.set("scanU", $("#scanU").value); $("#customBox").style.display = $("#scanU").value === "custom" ? "block" : "none"; };
+  $("#scanGo").onclick = async () => {
+    const u = $("#scanU").value; $("#scanGo").disabled = true;
+    $("#scanBody").innerHTML = `<div class="loading"><span class="spin"></span>Scanning ${esc($("#scanU").selectedOptions[0].text)} — daily and 5-minute bars for every stock…</div>`;
+    try { SCAN = await api("mkt_scan", Object.assign({ universe: u, symbols: $("#watch").value }, money())); renderScan(); }
+    catch (e) { $("#scanBody").innerHTML = `<div class="err">${e.message}</div>`; }
+    $("#scanGo").disabled = false;
+  };
+  function renderScan() {
+    const R = SCAN.rows; const top = (arr, f, n) => arr.filter(f.filter).sort(f.sort).slice(0, n || 6);
+    const list = (title, rows, fmtRow, empty) => `<div class="card"><h3>${title}</h3>${rows.length ? `<table class="small"><tbody>${rows.map(r => `<tr class="click" data-sym="${esc(r.symbol)}">${fmtRow(r)}</tr>`).join("")}</tbody></table>` : `<p class="small dim">${empty}</p>`}</div>`;
+    const il = top(R, { filter: r => r.intraday && /^BUY/.test(r.intraday.action), sort: (a, b) => b.intraday.score - a.intraday.score });
+    const is = top(R, { filter: r => r.intraday && /^SELL/.test(r.intraday.action), sort: (a, b) => a.intraday.score - b.intraday.score });
+    const sw = top(R, { filter: r => r.swing.action === "BUY", sort: (a, b) => b.swing.score - a.swing.score });
+    const lt = top(R, { filter: r => /BUY|ACCUMULATE/.test(r.long.rating), sort: (a, b) => b.long.score - a.long.score });
+    const weak = top(R, { filter: r => r.tech_score < -0.3, sort: (a, b) => a.tech_score - b.tech_score });
+    const ip = r => r.intraday.plan ? `<td class="num">${inr(r.intraday.plan.entry)}</td><td class="num faint">SL ${fmt(r.intraday.plan.stop)}</td><td class="num faint">T ${fmt(r.intraday.plan.targets[0])}</td>` : "<td></td><td></td><td></td>";
+    let h = `<p class="small dim">${esc(SCAN.label)} · ${R.length} stocks · ${istTime(SCAN.as_of)} IST${SCAN.macro ? " · regime " + esc(SCAN.macro.label) + " (" + sc(SCAN.macro.score) + ")" : " · open Market pulse once to include the macro regime"} · ${esc(SCAN.note)}${SCAN.failed.length ? " · no data: " + SCAN.failed.map(esc).join(", ") : ""}</p>
+      <div class="grid g3">
+      ${list("▲ Intraday buys", il, r => `<td><b>${esc(r.symbol)}</b></td><td>${sc(r.intraday.score)}</td>${ip(r)}`, "No intraday longs meet the bar right now.")}
+      ${list("▼ Intraday sells (short)", is, r => `<td><b>${esc(r.symbol)}</b></td><td>${sc(r.intraday.score)}</td>${ip(r)}`, "No intraday shorts meet the bar right now.")}
+      ${list("▲ Swing buys · 2–6 weeks", sw, r => `<td><b>${esc(r.symbol)}</b></td><td>${sc(r.swing.score)}</td><td class="num">${inr(r.price)}</td><td class="num faint">${r.swing.plan ? "SL " + fmt(r.swing.plan.stop) : ""}</td>`, "No swing buys right now.")}
+      ${list("▲ Long-term candidates", lt, r => `<td><b>${esc(r.symbol)}</b></td><td>${esc(r.long.rating)}</td><td class="num faint">tgt ${fmt(r.long.target, 0)}</td>`, "No long-term buys on technicals + sector alone.")}
+      ${list("▼ Weakest — avoid / exit", weak, r => `<td><b>${esc(r.symbol)}</b></td><td>${sc(r.tech_score)}</td><td>${chg(r.ret_1m, 1)} 1m</td>`, "Nothing badly broken.")}
+      </div>`;
+    const cols = [["symbol", "Stock"], ["price", "Price", 1], ["change_pct", "Day", 1], ["tech_score", "Tech score", 1], ["intraday", "Intraday"], ["swing", "Swing"], ["long", "Long-term"], ["rsi", "RSI", 1], ["ret_1m", "1m", 1], ["ret_3m", "3m", 1], ["from_52w_high", "vs 52w high", 1], ["vol_ratio", "Vol x", 1], ["sector_score", "Sector", 1]];
+    const val = (r, k) => k === "intraday" ? (r.intraday ? r.intraday.score : -9) : k === "swing" ? r.swing.score : k === "long" ? r.long.score : r[k];
+    const rows = R.slice().sort((a, b) => { const x = val(a, scanSort.k), y = val(b, scanSort.k); return (typeof x === "string" ? String(x).localeCompare(y) : ((x == null ? -9 : x) - (y == null ? -9 : y))) * scanSort.dir; });
+    h += `<div class="card mt"><div class="ch"><h2>All stocks</h2><span class="dim small">click a row for the full analysis · click a header to sort</span></div><div class="tbl"><table><thead><tr>${cols.map(c => `<th class="sort${c[2] ? " r" : ""}" data-k="${c[0]}">${c[1]}${scanSort.k === c[0] ? (scanSort.dir > 0 ? " ↑" : " ↓") : ""}</th>`).join("")}</tr></thead><tbody>
+      ${rows.map(r => `<tr class="click" data-sym="${esc(r.symbol)}" title="${esc(r.why.join("\n"))}"><td><b>${esc(r.symbol)}</b><div class="tiny faint">${esc(r.sector)}</div></td><td class="r num">${fmt(r.price)}</td><td class="r">${chg(r.change_pct)}</td>
+        <td class="r" style="min-width:110px"><div style="display:flex;gap:6px;align-items:center">${meter(r.tech_score)}<span class="num small">${sc(r.tech_score)}</span></div></td>
+        <td>${r.intraday ? badge(r.intraday.action) : "—"}</td><td>${badge(r.swing.action)}</td><td>${badge(r.long.rating)}</td>
+        <td class="r num">${fmt(r.rsi, 0)}</td><td class="r">${chg(r.ret_1m, 1)}</td><td class="r">${chg(r.ret_3m, 1)}</td><td class="r num">${pct(r.from_52w_high, 1)}</td><td class="r num">${r.vol_ratio == null ? "—" : r.vol_ratio}</td><td class="r num">${sc(r.sector_score)}</td></tr>`).join("")}
+      </tbody></table></div></div>`;
+    $("#scanBody").innerHTML = h;
+  }
+  $("#scanBody").addEventListener("click", e => {
+    const th = e.target.closest("th[data-k]"); if (th) { const k = th.dataset.k; scanSort = { k, dir: scanSort.k === k ? -scanSort.dir : (k === "symbol" ? 1 : -1) }; renderScan(); return; }
+    const tr = e.target.closest("[data-sym]"); if (tr) analyze(tr.dataset.sym);
+  });
+
+  /* =====================================================================
+     INDIA MACRO INPUTS
+     ===================================================================== */
+  async function loadInputs() {
+    try { const j = await api("mkt_inputs"); const v = j.values || {};
+      $("#inForm").innerHTML = Object.entries(j.fields).map(([k, label]) => k === "events"
+        ? `<label style="grid-column:1/-1">${esc(label)}<textarea data-k="${k}" rows="3">${esc(v[k] || "")}</textarea></label>`
+        : `<label>${esc(label)}<input data-k="${k}" value="${esc(v[k] || "")}" ${k === "rbi_stance" ? 'list="stances"' : ""}></label>`).join("") + '<datalist id="stances"><option>Easing</option><option>Neutral</option><option>Tightening</option></datalist>';
+      $("#inAsOf").textContent = v.updated_at ? "Last updated " + v.updated_at + (v.updated_by ? " by " + v.updated_by : "") : "Not filled in yet";
+      if (MACRO) $("#inScored").innerHTML = MACRO.india_inputs.scored.factors.length ? `<h3>How these score right now</h3>${factorRows(MACRO.india_inputs.scored.factors)}` : "";
+    } catch (e) { $("#inForm").innerHTML = `<div class="err">${e.message}</div>`; }
+  }
+  $("#inSave").onclick = async () => {
+    const body = {}; $$("#inForm [data-k]").forEach(i => body[i.dataset.k] = i.value); $("#inSave").disabled = true;
+    try { await api("mkt_inputs_set", {}, body); $("#inAsOf").textContent = "Saved — Market pulse will re-score with these numbers."; MACRO = null; pulseLoaded = false; }
+    catch (e) { $("#inAsOf").innerHTML = e.message; }
+    $("#inSave").disabled = false;
+  };
+
+  /* ---------- theme ---------- */
+  const savedTheme = store.get("theme", null); if (savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
+  $("#themeBtn").onclick = () => {
+    const cur = document.documentElement.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    const next = cur === "dark" ? "light" : "dark"; document.documentElement.setAttribute("data-theme", next); store.set("theme", next); setTimeout(redrawAll, 30);
+  };
+
+  /* ---------- login ---------- */
+  function showLogin(msg) { document.body.classList.add("locked"); $("#login").style.display = "flex"; if (msg) $("#loginMsg").innerHTML = msg; setTimeout(() => $("#loginPw").focus(), 30); }
+  function hideLogin() { document.body.classList.remove("locked"); $("#login").style.display = "none"; }
+  $("#loginForm").onsubmit = async e => {
+    e.preventDefault(); $("#loginGo").disabled = true;
+    try { await api("login", {}, { password: $("#loginPw").value }); $("#loginPw").value = ""; hideLogin(); start(); }
+    catch (err) { $("#loginMsg").innerHTML = '<span style="color:var(--bear)">' + err.message + "</span>"; }
+    $("#loginGo").disabled = false;
+  };
+  $("#logoutBtn").onclick = async () => { try { await api("logout"); } catch (e) {} location.reload(); };
+
+  /* ---------- boot ---------- */
+  let started = false;
+  (async () => {
+    let st; try { st = await api("auth_status"); } catch (e) { showLogin('<span style="color:var(--bear)">' + e.message + "</span>"); return; }
+    if (!st.configured) { showLogin("Almost there: copy <code>config.sample.php</code> to <code>config.php</code> on the server and set a password, then reload."); $("#loginPw").disabled = $("#loginGo").disabled = true; return; }
+    if (!st.signed_in) { showLogin(); return; }
+    hideLogin(); start();
+  })();
+  function start() {
+  if (started) return; started = true;
+  recent(); initScan();
+  const hs = location.hash.match(/^#stock=(.+)$/);
+  if (hs) analyze(decodeURIComponent(hs[1]));
+  else showTab(store.get("tab", "pulse") === "stock" ? "stock" : store.get("tab", "pulse"));
+  if (!hs && !pulseLoaded && store.get("tab", "pulse") !== "pulse") loadPulse();  // warm the macro cache so stock calls include the regime
+  }
+})();
+</script>
+</body>
+</html>

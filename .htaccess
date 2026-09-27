@@ -1,0 +1,21 @@
+# Market Desk — Apache / LiteSpeed rules (Hostinger reads these)
+
+# Never serve the settings file, the data folder, tools or git files.
+<FilesMatch "^(config\.php|config\.sample\.php|lib\.php|market\.php|market_engine\.php|README\.md)$">
+  Require all denied
+</FilesMatch>
+RedirectMatch 404 ^/?(.*/)?(data|tools|\.git|\.github)(/.*)?$
+
+DirectoryIndex index.html
+
+# Always fetch the page fresh after an update.
+<FilesMatch "\.(html)$">
+  <IfModule mod_headers.c>
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+  </IfModule>
+</FilesMatch>
+<IfModule LiteSpeed>
+  <FilesMatch "\.(html)$">
+    CacheDisable public /
+  </FilesMatch>
+</IfModule>

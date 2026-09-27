@@ -1,0 +1,5 @@
+# secrets and server data — never commit
+config.php
+data/
+.DS_Store
+*.log
