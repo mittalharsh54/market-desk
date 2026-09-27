@@ -1,0 +1,67 @@
+name: Deploy to server (FTP)
+
+# Uploads Market Desk to your host on every push to main, or by hand from the
+# Actions tab. It writes config.php on the server from repository secrets, so
+# the password and API key never live in git.
+#
+# Secrets (Settings -> Secrets and variables -> Actions -> Secrets):
+#   FTP_SERVER, FTP_USERNAME, FTP_PASSWORD   your FTP account (hPanel -> Files -> FTP Accounts)
+#   APP_PASSWORD                             the Market Desk sign-in password
+#   ANTHROPIC_API_KEY                        optional, for the AI notes
+# Variable (same page -> Variables):
+#   FTP_DIR   folder on the server to deploy into, ending in / (default: market-desk/)
+#
+# Until FTP_SERVER is set, the workflow just says so and exits green.
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      FTP_SERVER: ${{ secrets.FTP_SERVER }}
+    steps:
+      - name: Not set up yet
+        if: env.FTP_SERVER == ''
+        run: echo "::notice::Add the FTP_SERVER, FTP_USERNAME, FTP_PASSWORD and APP_PASSWORD secrets to deploy. Nothing uploaded."
+
+      - name: Checkout
+        if: env.FTP_SERVER != ''
+        uses: actions/checkout@v4
+
+      - name: Write config.php from secrets
+        if: env.FTP_SERVER != ''
+        env:
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$APP_PASSWORD" ]; then echo "::error::Set the APP_PASSWORD secret first — the app refuses to run without a password."; exit 1; fi
+          php -r '
+            $out = "<?php\n/* written by the deploy workflow from repository secrets */\n";
+            $out .= "\$APP_PASSWORD_HASH = " . var_export(password_hash(getenv("APP_PASSWORD"), PASSWORD_DEFAULT), true) . ";\n";
+            $out .= "\$ANTHROPIC_API_KEY = " . var_export((string) getenv("ANTHROPIC_API_KEY"), true) . ";\n";
+            file_put_contents("config.php", $out);'
+          php -l config.php
+
+      - name: Engine checks
+        if: env.FTP_SERVER != ''
+        run: php tools/test-market-engine.php
+
+      - name: Upload over FTP
+        if: env.FTP_SERVER != ''
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ${{ vars.FTP_DIR || 'market-desk/' }}
+          timeout: 120000
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.github/**
+            data/**
+            README.md

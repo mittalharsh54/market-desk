@@ -31,6 +31,7 @@ market_engine.php   the maths: indicators, scores, signals, backtests (no I/O)
 config.sample.php   copy to config.php and set your password
 tools/test-market-engine.php   43 offline checks: php tools/test-market-engine.php
 tools/dev-server.php           offline demo with synthetic data
+.github/workflows/deploy.yml   optional FTP deploy with config from secrets
 ```
 
 ## Put it online (Hostinger or any PHP 8 host)
@@ -43,6 +44,22 @@ tools/dev-server.php           offline demo with synthetic data
 
 The app creates a `data/` folder for its cache and your inputs. `.htaccess` blocks
 web access to `data/`, `config.php` and `tools/`.
+
+### Or let GitHub deploy it for you
+
+`.github/workflows/deploy.yml` uploads the app over FTP on every push to `main`
+and writes `config.php` on the server from secrets. In the repo on GitHub, open
+**Settings → Secrets and variables → Actions** and add:
+
+| Secret | Value |
+|---|---|
+| `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD` | your FTP account (hPanel → Files → FTP Accounts). The same ones Creative Desk uses will work. |
+| `APP_PASSWORD` | the password you'll sign in with (stored on the server only as a hash) |
+| `ANTHROPIC_API_KEY` | optional, for the AI notes |
+
+Add a **Variable** named `FTP_DIR` for the server folder to deploy into, ending in `/`
+(default `market-desk/`). Then run **Actions → Deploy to server → Run workflow**.
+Until the FTP secrets exist, the workflow does nothing and stays green.
 
 ## Run it on your computer
 
