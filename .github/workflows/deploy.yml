@@ -5,11 +5,15 @@ name: Deploy to server (FTP)
 # the password and API key never live in git.
 #
 # Secrets (Settings -> Secrets and variables -> Actions -> Secrets):
-#   FTP_SERVER, FTP_USERNAME, FTP_PASSWORD   your FTP account (hPanel -> Files -> FTP Accounts)
+#   FTP_SERVER, FTP_USERNAME, FTP_PASSWORD   a DEDICATED FTP account for Market Desk
+#       (hPanel -> Files -> FTP Accounts -> create one whose directory is the
+#       app's folder, e.g. public_html/markets). Don't reuse another site's
+#       account: it could reach, overwrite or delete that site's files.
 #   APP_PASSWORD                             the Market Desk sign-in password
 #   ANTHROPIC_API_KEY                        optional, for the AI notes
 # Variable (same page -> Variables):
-#   FTP_DIR   folder on the server to deploy into, ending in / (default: market-desk/)
+#   FTP_DIR   only if the FTP account's home is NOT the app folder: the sub-folder
+#             to deploy into, ending in / (default ./ = the account's home folder)
 #
 # Until FTP_SERVER is set, the workflow just says so and exits green.
 
@@ -57,7 +61,7 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ${{ vars.FTP_DIR || 'market-desk/' }}
+          server-dir: ${{ vars.FTP_DIR || './' }}
           timeout: 120000
           exclude: |
             **/.git*

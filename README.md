@@ -53,12 +53,19 @@ and writes `config.php` on the server from secrets. In the repo on GitHub, open
 
 | Secret | Value |
 |---|---|
-| `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD` | your FTP account (hPanel → Files → FTP Accounts). The same ones Creative Desk uses will work. |
+| `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD` | a **dedicated** FTP account for Market Desk (see below) |
 | `APP_PASSWORD` | the password you'll sign in with (stored on the server only as a hash) |
 | `ANTHROPIC_API_KEY` | optional, for the AI notes |
 
-Add a **Variable** named `FTP_DIR` for the server folder to deploy into, ending in `/`
-(default `market-desk/`). Then run **Actions → Deploy to server → Run workflow**.
+**Use an FTP account of its own.** In hPanel → Files → FTP Accounts, create a new
+account and set its directory to the app's folder (for a subdomain like
+`markets.yourdomain.com`, that subdomain's folder). The account can then only
+touch Market Desk. Don't reuse another site's FTP account, because a deploy could
+overwrite or delete that site's files.
+
+The workflow uploads into the account's home folder. Only if you point it
+somewhere else, add a **Variable** named `FTP_DIR` with the sub-folder, ending in `/`.
+Then run **Actions → Deploy to server → Run workflow**.
 Until the FTP secrets exist, the workflow does nothing and stays green.
 
 ## Run it on your computer
