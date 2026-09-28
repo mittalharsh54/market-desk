@@ -569,10 +569,10 @@ function mk_intraday_score_at(array $A, $i) {
     $add('orb', 'Opening-range breakout (15 min)', 0.10, $s, round($orl, 2) . '–' . round($orh, 2),
       $s > 0 ? 'Broke above the opening range high ' . round($orh, 2) . '.' : ($s < 0 ? 'Broke below the opening range low ' . round($orl, 2) . '.' : 'Still inside the opening range — no breakout yet.'));
   }
-  if ($A['volume_weighted'] && $i >= 6 && ($GLOBALS['MK_VOLP'] ?? true)) {
+  if ($A['volume_weighted'] && $i >= 6) { /* shown for context only: weight 0 — the volume study found it adds no edge (the entry gate does) */
     $sv = 0.0; $tv = 0.0; for ($j = $i - 5; $j <= $i; $j++) { $sv += $A['sv'][$j]; $tv += $C['v'][$j]; }
     if ($tv > 0) { $press = $sv / $tv; $vr = $A['vavg'][$i - 1] ? $C['v'][$i] / $A['vavg'][$i - 1] : null;
-      $add('volp', 'Volume pressure (last 30 min)', 0.12, mk_clamp($press * 1.6), round($press, 2),
+      $add('volp', 'Volume pressure (last 30 min)', ($GLOBALS['MK_VOLP'] ?? false) ? 0.12 : 0.0, mk_clamp($press * 1.6), round($press, 2),
         ($press >= 0 ? 'Buyers' : 'Sellers') . ' in control: volume is concentrated on ' . ($press >= 0 ? 'up-closes' : 'down-closes') . ' (' . sprintf('%+.2f', $press) . ')' . ($vr ? '; last bar ' . round($vr, 1) . 'x normal volume.' : '.')); }
   }
   $pdc = $A['pdc'][$i]; $dop = $A['dopen'][$i];
@@ -596,10 +596,11 @@ function mk_intraday_score_at(array $A, $i) {
   return ['score' => $w > 0 ? round($s / $w, 3) : 0.0, 'factors' => $F];
 }
 
-/* Entry needs participation: the trigger bar trades at least 1.2x the last 20 bars' average
-   (skipped for instruments that report no volume, like indices) */
+/* Entry needs participation: the trigger bar trades at least 1.5x the last 20 bars' average
+   (skipped for instruments that report no volume, like indices). Chosen from a replay of
+   253 NSE stocks over ~34 sessions: no gate +9R gross, 1.2x +367R, 1.5x +375R on fewer trades. */
 function mk_vol_ok(array $A, $i, $mult = null) {
-  $mult = $mult ?? ($GLOBALS['MK_VOL_MULT'] ?? 1.2);
+  $mult = $mult ?? ($GLOBALS['MK_VOL_MULT'] ?? 1.5);
   if (!$mult || !$A['volume_weighted'] || $i < 21 || !$A['vavg'][$i - 1]) return true;
   return $A['C']['v'][$i] >= $mult * $A['vavg'][$i - 1];
 }

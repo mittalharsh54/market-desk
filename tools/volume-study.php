@@ -1,7 +1,7 @@
 <?php
 /* Does the volume rule earn its place? Replays the live intraday rules day by day
    on real 5-minute NSE data (Upstox), with and without the volume checks.
-     php tools/volume-study.php [stocks=120] [shard=0] [shards=1]
+     php tools/volume-study.php [stocks=120] [shard=0] [shards=1] [grid]
    Prints one JSON line per variant with trades, win rate, average R, profit
    factor and net rupees after charges. Needs internet; run it from GitHub Actions. */
 
@@ -11,13 +11,24 @@ require_once __DIR__ . '/../market.php';
 ini_set('memory_limit', '1024M'); set_time_limit(0);
 
 $max = (int) ($argv[1] ?? 120); $shard = (int) ($argv[2] ?? 0); $shards = max(1, (int) ($argv[3] ?? 1));
-$VARIANTS = [
-  'no volume rules (before)'        => [false, 0],
-  'volume pressure factor only'     => [true, 0],
-  'factor + gate 1.0x'              => [true, 1.0],
-  'factor + gate 1.2x (live now)'   => [true, 1.2],
-  'gate 1.2x only'                  => [false, 1.2],
-  'factor + gate 1.5x'              => [true, 1.5],
+/* [volume-pressure factor in the score, volume gate (x average, 0 = off), entry threshold, max trades per stock a day] */
+$GRID = ($argv[4] ?? '') === 'grid';
+$VARIANTS = $GRID ? [
+  'gate 1.5x, th 0.40, 2/day (live)' => [false, 1.5, 0.40, 2],
+  'gate 1.5x, th 0.40, 1/day'        => [false, 1.5, 0.40, 1],
+  'gate 1.5x, th 0.55, 2/day'        => [false, 1.5, 0.55, 2],
+  'gate 1.5x, th 0.55, 1/day'        => [false, 1.5, 0.55, 1],
+  'gate 2.0x, th 0.40, 2/day'        => [false, 2.0, 0.40, 2],
+  'gate 2.0x, th 0.55, 1/day'        => [false, 2.0, 0.55, 1],
+  'gate 1.2x, th 0.55, 1/day'        => [false, 1.2, 0.55, 1],
+  'no gate, th 0.55, 1/day'          => [false, 0, 0.55, 1],
+] : [
+  'no volume rules (before)'        => [false, 0, 0.40, 2],
+  'volume pressure factor only'     => [true, 0, 0.40, 2],
+  'factor + gate 1.0x'              => [true, 1.0, 0.40, 2],
+  'factor + gate 1.2x'              => [true, 1.2, 0.40, 2],
+  'gate 1.2x only'                  => [false, 1.2, 0.40, 2],
+  'factor + gate 1.5x'              => [true, 1.5, 0.40, 2],
 ];
 
 $today = date('Y-m-d', time() + 19800);
@@ -58,19 +69,27 @@ foreach ($data as $s => $C) {
     $W = slice_c($C, $a, $b); $BW = align_bench($W, $bench);
     foreach ($VARIANTS as $name => $v) {
       $GLOBALS['MK_VOLP'] = $v[0]; $GLOBALS['MK_VOL_MULT'] = $v[1];
-      $R = mk_intraday_replay($W, $BW, ['now' => end($W['t']) + 3600, 'bias' => 'BOTH', 'capital' => 100000, 'risk_pct' => 1]);
+      $R = mk_intraday_replay($W, $BW, ['now' => end($W['t']) + 3600, 'bias' => 'BOTH', 'th' => $v[2], 'max_trades' => $v[3], 'capital' => 100000, 'risk_pct' => 1]);
       $out[$name]['days']++;
-      foreach ($R['trades'] as $t) $out[$name]['trades'][] = ['r' => $t['r'], 'pnl' => $t['pnl'], 'half' => $k < count($starts) / 2 + 3 ? 1 : 2];
+      /* past-edge filter, no look-ahead: trade this stock today only if these rules made money on it (after charges) over its last 10 sessions */
+      $hist = $out[$name]['by'][$s] ?? []; $past = array_sum(array_slice($hist, -10)); $okEdge = count($hist) >= 10 && $past > 0;
+      $out[$name]['by'][$s][] = array_sum(array_column($R['trades'], 'pnl'));
+      foreach ($R['trades'] as $t) $out[$name]['trades'][] = ['r' => $t['r'], 'pnl' => $t['pnl'], 'half' => $k < count($starts) / 2 + 3 ? 1 : 2, 'edge' => $okEdge, 'warm' => count($hist) >= 10];
     }
   }
 }
+function stats(array $T) {
+  $r = array_column($T, 'r'); $p = array_column($T, 'pnl'); $n = count($T);
+  $gain = array_sum(array_filter($p, function ($x) { return $x > 0; })); $loss = -array_sum(array_filter($p, function ($x) { return $x < 0; }));
+  $H1 = array_filter($T, function ($t) { return $t['half'] === 1; }); $H2 = array_filter($T, function ($t) { return $t['half'] === 2; });
+  return ['trades' => $n, 'win_pct' => $n ? round(count(array_filter($p, function ($x) { return $x > 0; })) / $n * 100, 1) : 0,
+    'gross_r_per_trade' => $n ? round(array_sum($r) / $n, 3) : 0, 'net_r_per_trade' => $n ? round(array_sum($p) / 1000 / $n, 3) : 0,
+    'net_pf' => $loss > 0 ? round($gain / $loss, 2) : null, 'net_r' => round(array_sum($p) / 1000, 1),
+    'half1_net_r' => round(array_sum(array_column($H1, 'pnl')) / 1000, 1), 'half2_net_r' => round(array_sum(array_column($H2, 'pnl')) / 1000, 1)];
+}
 foreach ($out as $name => $o) {
-  $T = $o['trades']; $row = ['variant' => $name, 'shard' => $shard, 'stock_days' => $o['days'], 'trades' => count($T)];
-  $row['wins'] = count(array_filter($T, function ($t) { return $t['pnl'] > 0; }));
-  $row['sum_r'] = round(array_sum(array_column($T, 'r')), 2);
-  $row['gain_r'] = round(array_sum(array_filter(array_column($T, 'r'), function ($x) { return $x > 0; })), 2);
-  $row['loss_r'] = round(-array_sum(array_filter(array_column($T, 'r'), function ($x) { return $x < 0; })), 2);
-  $row['net_pnl'] = array_sum(array_column($T, 'pnl'));
-  foreach ([1, 2] as $h) { $H = array_filter($T, function ($t) use ($h) { return $t['half'] === $h; }); $row["half{$h}_trades"] = count($H); $row["half{$h}_r"] = round(array_sum(array_column($H, 'r')), 2); }
-  echo json_encode($row), "\n";
+  $T = $o['trades']; $W = array_values(array_filter($T, function ($t) { return $t['warm']; }));
+  echo json_encode(['variant' => $name, 'stock_days' => $o['days']] + stats($T)), "\n";
+  echo json_encode(['variant' => "$name, same days", 'stock_days' => $o['days']] + stats($W)), "\n";
+  echo json_encode(['variant' => "$name + past-edge filter", 'stock_days' => $o['days']] + stats(array_values(array_filter($W, function ($t) { return $t['edge']; })))), "\n";
 }

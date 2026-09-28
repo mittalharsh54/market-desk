@@ -9,6 +9,10 @@ on:
       stocks:
         description: "How many stocks from the universe"
         default: "260"
+      grid:
+        description: "Run the parameter grid instead of the volume comparison"
+        type: boolean
+        default: true
 
 jobs:
   study:
@@ -19,9 +23,9 @@ jobs:
       - name: Replay with and without volume rules
         run: |
           php -v | head -1
-          php tools/volume-study.php "${{ inputs.stocks }}" | tee study.jsonl
+          php tools/volume-study.php "${{ inputs.stocks }}" 0 1 ${{ inputs.grid && 'grid' || '' }} | tee study.jsonl
           {
-            echo "| Variant | Trades | Win % | Avg R | Profit factor (R) | Net ₹ at ₹1L, 1% risk | 1st half R | 2nd half R |"
-            echo "|---|---|---|---|---|---|---|---|"
-            jq -r '"| \(.variant) | \(.trades) | \(if .trades>0 then (.wins*1000/.trades|round/10) else 0 end) | \(if .trades>0 then (.sum_r*100/.trades|round/100) else 0 end) | \(if .loss_r>0 then (.gain_r*100/.loss_r|round/100) else "-" end) | \(.net_pnl) | \(.half1_r) | \(.half2_r) |"' study.jsonl
+            echo "| Variant | Trades | Win % | Gross R/trade | Net R/trade | Net PF | Net R | 1st half | 2nd half |"
+            echo "|---|---|---|---|---|---|---|---|---|"
+            jq -r '"| \(.variant) | \(.trades) | \(.win_pct) | \(.gross_r_per_trade) | \(.net_r_per_trade) | \(.net_pf) | \(.net_r) | \(.half1_net_r) | \(.half2_net_r) |"' study.jsonl
           } >> "$GITHUB_STEP_SUMMARY"
