@@ -565,6 +565,15 @@ function mkt_diag() {
   /* CNBC quotes + chart bars (global cues) */
   $out['cnbc quote'] = $probe('https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=' . rawurlencode('.SPX|.VIX|@LCO.1|US10Y|.N225|INR=') . '&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&events=1');
   $out['cnbc chart'] = $probe('https://ts-api.cnbc.com/harmony/app/charts/1Y.json?symbol=.SPX');
+  foreach (['RELIANCE-IN', 'TCS-IN', 'HDFCBANK-IN', '.NSEI', '.BSESN', 'BTC.CB=', '.SSEC', '@HG.1', 'US3M', '.DXY'] as $cs) {
+    $r = mkt_http('https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=' . rawurlencode($cs) . '&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&events=1');
+    $out['cnbc q ' . $cs] = ['code' => $r['code'], 'body' => mb_substr($r['body'], 0, $cs === 'RELIANCE-IN' ? 3000 : 400)];
+  }
+  $r = mkt_http('https://ts-api.cnbc.com/harmony/app/charts/1Y.json?symbol=US10Y'); $out['cnbc chart US10Y'] = ['code' => $r['code'], 'body' => mb_substr($r['body'], 0, 300)];
+  $r = mkt_http('https://ts-api.cnbc.com/harmony/app/charts/1Y.json?symbol=RELIANCE-IN'); $out['cnbc chart RELIANCE-IN'] = ['code' => $r['code'], 'body' => mb_substr($r['body'], 0, 300)];
+  $r = mkt_http('https://api.upstox.com/v3/historical-candle/intraday/' . rawurlencode('NSE_EQ|INE002A01018') . '/minutes/5'); $out['upstox intraday today'] = ['code' => $r['code'], 'body' => mb_substr($r['body'], 0, 300)];
+  $r = mkt_http('https://api.upstox.com/v2/historical-candle/' . rawurlencode('BSE_INDEX|SENSEX') . '/day/' . date('Y-m-d') . '/' . date('Y-m-d', strtotime('-10 days'))); $out['upstox sensex'] = ['code' => $r['code'], 'body' => mb_substr($r['body'], 0, 200)];
+  $r = mkt_http('https://api.upstox.com/v2/historical-candle/' . rawurlencode('NSE_EQ|INE002A01018') . '/day/' . date('Y-m-d') . '/' . date('Y-m-d', strtotime('-740 days'))); $out['upstox 2y'] = ['code' => $r['code'], 'bytes' => strlen($r['body']), 'body' => mb_substr($r['body'], -200)];
   $out['google_finance'] = $probe('https://www.google.com/finance/quote/RELIANCE:NSE');
   return $out;
 }
