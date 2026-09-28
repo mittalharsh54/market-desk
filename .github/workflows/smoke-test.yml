@@ -1,0 +1,64 @@
+name: Smoke test live site
+
+# Signs in to the deployed app and checks it end to end from the outside:
+# the page loads, private files are blocked, and the server can reach Yahoo
+# Finance, NSE and the news feeds. Run it from the Actions tab with the site URL,
+# or set a repository variable SITE_URL. Uses the APP_PASSWORD secret; prints no secrets.
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Site URL, e.g. https://example.com/markets/"
+        required: false
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      URL: ${{ inputs.url || vars.SITE_URL }}
+      APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+    steps:
+      - name: Check the live site
+        run: |
+          set -u
+          if [ -z "$URL" ]; then echo "::error::Pass the site URL as the 'url' input or set the SITE_URL variable."; exit 1; fi
+          U="${URL%/}/"; J=$(mktemp); FAIL=0
+          code() { curl -s -o /dev/null -w "%{http_code}" -m 30 "$1"; }
+
+          echo "== Page"
+          c=$(code "$U"); echo "GET / -> $c"
+          if curl -s -m 30 "$U" | grep -q "<title>Market Desk</title>"; then echo "ok: Market Desk page served"; else echo "::error::Market Desk page not found at $U"; FAIL=1; fi
+
+          echo "== Private files must not be served"
+          for f in config.php config.sample.php lib.php market.php market_engine.php README.md .ftp-deploy-sync-state.json tools/test-market-engine.php tools/dev-server.php data/inputs.json; do
+            c=$(code "$U$f"); if [ "$c" = "200" ]; then echo "::error::$f is publicly readable (HTTP 200)"; FAIL=1; else echo "ok: $f -> $c"; fi
+          done
+
+          echo "== Login"
+          curl -s -m 30 "${U}api.php?action=auth_status"; echo
+          curl -s -m 30 -c "$J" -b "$J" -X POST -H "Content-Type: application/json" \
+            -d "$(jq -n --arg p "$APP_PASSWORD" '{password:$p}')" "${U}api.php?action=login" | jq -c . || FAIL=1
+          st=$(curl -s -m 30 -b "$J" "${U}api.php?action=mkt_status"); echo "$st" | jq -c '{ok, market}' || { echo "::error::mkt_status failed: $st"; FAIL=1; }
+
+          echo "== Market pulse (server fetching ~90 instruments, flows, options, news)"
+          m=$(curl -s -m 170 -b "$J" "${U}api.php?action=mkt_macro&refresh=1")
+          echo "$m" | jq '{error, regime: .regime.label, score: .regime.score, instruments: (.instruments|length), missing, nifty: .nifty.price,
+                          india_vix, breadth_total: .breadth.total, sectors_with_index: (.sector_indices|length),
+                          flows: .flows, options: (.options|if . then {pcr, max_pain, expiry} else null end),
+                          news_items: (.news.items|length), news_sources_ok: .news.sources_ok}' || { echo "::error::macro not JSON: ${m:0:300}"; FAIL=1; }
+          n=$(echo "$m" | jq '.instruments|length' 2>/dev/null || echo 0); [ "${n:-0}" -ge 10 ] || { echo "::error::Server could fetch only ${n:-0} instruments from Yahoo"; FAIL=1; }
+
+          echo "== Stock analysis (RELIANCE)"
+          a=$(curl -s -m 170 -b "$J" "${U}api.php?action=mkt_analyze&symbol=RELIANCE")
+          echo "$a" | jq '{error, symbol, name, price: .technical.price, tech_score: .technical.score,
+                          intraday: .verdicts.intraday.action, swing: .verdicts.swing.action, long: .verdicts.long.rating,
+                          fundamentals: (.fundamental.available // false), fund_score: .fundamental.score, pe: .fundamental.values.pe,
+                          backtest_swing_trades: .backtest.swing.trades, backtest_intraday_trades: .backtest.intraday.trades,
+                          news_items: (.news.items|length)}' || { echo "::error::analyze not JSON: ${a:0:300}"; FAIL=1; }
+          echo "$a" | jq -e '.technical.price > 0' >/dev/null || { echo "::error::No RELIANCE price from the server"; FAIL=1; }
+
+          echo "== Search"
+          curl -s -m 30 -b "$J" "${U}api.php?action=mkt_search&q=infos" | jq -c '[.results[]?.symbol]'
+
+          rm -f "$J"; exit $FAIL
