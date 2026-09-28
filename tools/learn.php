@@ -1,7 +1,7 @@
 <?php
 /* The weekly learning step. Reads the latest study results and updates rules.json,
    which the app uses for its live rules and for what it tells you about them.
-     php tools/learn.php intraday.jsonl swing.jsonl
+     php tools/learn.php intraday.jsonl swing.jsonl lab.jsonl
    A change is adopted only when it made money AFTER charges in BOTH halves of the
    test period, on enough trades, and beats the current rule by a clear margin.
    Otherwise the current rule stays and the app says there is no tested edge. */
@@ -54,6 +54,24 @@ if ($net) {
     $log['swing'] = $best ? 'kept current rule (tested edge holds)' : 'kept current rule; it did not beat the Nifty after charges in both halves';
   }
   $rules['swing']['evidence'] = ['net_2500' => $ev['all'], 'first_half' => $ev['first_half'], 'second_half' => $ev['second_half'], 'account' => $acct($ev['th']), 'tested' => $today];
+}
+
+/* ---- positional strategies from the strategy lab (tools/strategy-lab.php) ---- */
+$L = $read($argv[3] ?? null);
+if ($L) {
+  $base = array_values(array_filter($L, function ($r) { return !empty($r['baseline']); }));
+  $bar = function ($part) use ($base) { return max(array_map(function ($b) use ($part) { return $b[$part]['cagr_pct']; }, $base)); };
+  $rows = array_values(array_filter($L, function ($r) { return empty($r['baseline']); }));
+  /* must beat BOTH baselines (Nifty and equal-weight of the same stocks) in the tuning period AND the hold-out,
+     with a drawdown a small account can live with */
+  $ok = function ($r) use ($bar) { return $r['train']['cagr_pct'] > $bar('train') && $r['holdout']['cagr_pct'] > $bar('holdout') && $r['holdout']['max_dd_pct'] > -30 && $r['train']['max_dd_pct'] > -35; };
+  $valid = array_values(array_filter($rows, $ok));
+  usort($valid, function ($a, $b) { return $b['holdout']['cagr_pct'] <=> $a['holdout']['cagr_pct']; });
+  $best = $valid[0] ?? null;
+  $rules['positional'] = ['tradeable' => (bool) $best, 'strategy' => $best['strategy'] ?? null, 'slots' => $best['slots'] ?? null,
+    'evidence' => ['tested' => $today, 'baselines' => $base, 'results' => array_map(function ($r) { return array_intersect_key($r, array_flip(['strategy', 'slots', 'train', 'holdout', 'end_value'])); }, $rows)]];
+  $log['positional'] = $best ? 'best tested: ' . $best['strategy'] . ' with ' . $best['slots'] . ' positions (hold-out ' . $best['holdout']['cagr_pct'] . '% a year vs baselines ' . $bar('holdout') . '%)'
+                             : 'no strategy beat buy-and-hold in both the tuning period and the hold-out';
 }
 
 $rules['updated'] = $today;
