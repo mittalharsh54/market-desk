@@ -23,12 +23,6 @@ jobs:
         run: |
           set -euo pipefail
           lf() { lftp -u "$U,$P" -e "set ssl:verify-certificate no; set net:max-retries 2; set net:timeout 20; $1; bye" "$H"; }
-          echo "== FTP home"; lf "cls -1"
-          echo "== Candidate folder"; list=$(lf "cls -1 public_html/markets/" || true); echo "$list"
-          for f in index.html api.php market_engine.php market.php lib.php; do
-            echo "$list" | grep -qx "public_html/markets/$f" || { echo "::error::public_html/markets/ does not look like the misplaced Market Desk copy (no $f). Not deleting anything."; exit 1; }
-          done
-          lf "rm -r public_html/markets"
-          echo "Removed public_html/markets (the misplaced copy)."
-          left=$(lf "cls -1a public_html/" | grep -v '/\.\{1,2\}$' || true)
-          if [ -z "$left" ]; then lf "rmdir public_html"; echo "Removed the empty extra public_html/ folder."; else echo "Extra public_html/ still has files, left alone:"; echo "$left"; fi
+          echo "== Remove the now-empty extra public_html/ (rmdir refuses if anything is inside)"
+          lf "cls -1a public_html/" || true
+          lf "rmdir public_html" && echo "Removed." || echo "Not removed (already gone or not empty) - nothing else touched."
