@@ -544,7 +544,19 @@ function mkt_diag() {
   if ($a) $out['yahoo_q2_chart_with_cookie'] = $probe(str_replace('query1.', 'query2.', mkt_chart_url('RELIANCE.NS', '5d', '1d')) . '&crumb=' . rawurlencode($a['crumb']), ['cookie' => $a['cookie']]);
   $out['stooq_csv'] = $probe('https://stooq.com/q/d/l/?s=reliance.in&i=d');
   $out['stooq_spx'] = $probe('https://stooq.com/q/d/l/?s=%5Espx&i=d');
-  $out['nse_quote'] = ['ok' => (bool) mkt_nse_json('/api/quote-equity?symbol=RELIANCE')];
+  /* NSE endpoints, with the same cookie the flows call uses */
+  mkt_flows(); $ck = mkt_cache_get('nse_cookie', null);
+  $to = date('d-m-Y'); $from = date('d-m-Y', strtotime('-60 days'));
+  $nse = ['/api/quote-equity?symbol=RELIANCE', '/api/quote-equity?symbol=RELIANCE&section=trade_info', '/api/allIndices',
+          '/api/historical/cm/equity?symbol=RELIANCE&series=%5B%22EQ%22%5D&from=' . $from . '&to=' . $to,
+          '/api/historical/securityArchives?from=' . $from . '&to=' . $to . '&symbol=RELIANCE&dataType=priceVolumeDeliverable&series=ALL',
+          '/api/chart-databyindex?index=RELIANCEEQN', '/api/chart-databyindex?index=NIFTY%2050&indices=true',
+          '/api/historical/indicesHistory?indexType=NIFTY%2050&from=' . $from . '&to=' . $to, '/api/equity-stockIndices?index=NIFTY%2050', '/api/search/autocomplete?q=infos'];
+  foreach ($nse as $pth) $out['nse ' . $pth] = $probe('https://www.nseindia.com' . $pth, ['cookie' => $ck, 'headers' => ['Referer: https://www.nseindia.com/get-quotes/equity?symbol=RELIANCE', 'X-Requested-With: XMLHttpRequest']]);
+  /* FRED (US Federal Reserve) daily series: no key needed */
+  foreach (['DGS10', 'DEXINUS', 'DCOILBRENTEU', 'SP500', 'VIXCLS', 'NIKKEI225'] as $id) $out['fred ' . $id] = $probe('https://fred.stlouisfed.org/graph/fredgraph.csv?id=' . $id);
+  $out['google_finance'] = $probe('https://www.google.com/finance/quote/RELIANCE:NSE');
+  $out['investing_rss'] = $probe('https://www.investing.com/rss/news_25.rss');
   return $out;
 }
 
