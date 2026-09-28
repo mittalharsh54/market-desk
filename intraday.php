@@ -97,9 +97,12 @@ function id_join(array $a = null, array $b = null) {
 function id_news(array $picks) {
   $reqs = []; $out = [];
   foreach ($picks as $sym => $name) {
-    $ck = "idnews|$sym|" . id_today(); $hit = mkt_cache_get($ck, 3600); if ($hit) { $out[$sym] = $hit; continue; }
-    $clean = trim(preg_replace('/\b(limited|ltd\.?|corporation|corp\.?|industries)\b/i', '', (string) $name)) ?: $sym;
-    $reqs[$sym] = ['url' => 'https://news.google.com/rss/search?q=' . rawurlencode('"' . $clean . '" (share OR stock OR NSE) when:3d') . '&hl=en-IN&gl=IN&ceid=IN:en', 'ck' => $ck];
+    $ck = "idnews2|$sym|" . id_today(); $hit = mkt_cache_get($ck, 3600); if ($hit) { $out[$sym] = $hit; continue; }
+    /* exchange names are truncated upper-case ("CHOLAMANDALAM IN & FIN CO L"): search the ticker or the first real word of the name */
+    $words = preg_split('/[^A-Za-z]+/', (string) $name, -1, PREG_SPLIT_NO_EMPTY); $w = $words[0] ?? $sym;
+    if (strlen($w) < 5 && isset($words[1])) $w .= ' ' . $words[1];
+    $q = '(' . $sym . ' OR "' . ucwords(strtolower($w)) . '") (share OR stock OR NSE OR results) when:3d';
+    $reqs[$sym] = ['url' => 'https://news.google.com/rss/search?q=' . rawurlencode($q) . '&hl=en-IN&gl=IN&ceid=IN:en', 'ck' => $ck];
   }
   if ($reqs) {
     $res = mkt_http_multi($reqs, 12, 8);
@@ -160,7 +163,7 @@ function id_select($date, $phase) {
     $cands[$sym] = ['sym' => $sym, 'name' => $x['name'], 'sector' => $sk, 'setup' => $st, 'pre' => $P['quality']];
   }
   uasort($cands, function ($a, $b) { return $b['pre'] <=> $a['pre']; });
-  $deep = array_slice($cands, 0, 30, true);
+  $deep = array_slice($cands, 0, 40, true);
   /* stage 2: the deep look */
   $E = id_fetch(array_keys($deep), $live ? ['p5', 'h15', 'h15b', 't5'] : ['p5', 'h15', 'h15b'], $date);
   $news = id_news(array_map(function ($c) { return $c['name']; }, $deep));
@@ -177,6 +180,8 @@ function id_select($date, $phase) {
     }
     $nw = $news[$sym] ?? null;
     if ($nw && $nw['results_risk']) { $rejected[$sym] = 'results / board meeting due — event risk'; continue; }
+    /* the method must have worked on this stock: no picks where the rules have been losing money */
+    if ($edge && ($edge['trades'] ?? 0) >= 20 && $edge['profit_factor'] !== null && $edge['profit_factor'] < 0.9) { $rejected[$sym] = 'rules lost money here over 60 days (PF ' . $edge['profit_factor'] . ', ' . $edge['trades'] . ' trades)'; continue; }
     $P = mk_pick_score($c['setup'], $edge, $liveS, $nw, $ctx['sectors'][$c['sector']] ?? null, $ctx['regime']);
     $scored[$sym] = $c + ['dir' => $P['dir'], 'quality' => $P['quality'], 'factors' => $P['factors'], 'edge' => $edge ? array_diff_key($edge, ['recent' => 1]) : null, 'news' => $nw, 'live_at_pick' => $liveS];
   }

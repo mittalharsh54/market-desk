@@ -15,6 +15,11 @@ on:
     - cron: '10 4 * * 1-5'    # 09:40 IST
     - cron: '12 10 * * 1-5'   # 15:42 IST
   workflow_dispatch:
+    inputs:
+      repick:
+        description: "Research again and replace the current list"
+        type: boolean
+        default: false
 
 jobs:
   run:
@@ -23,6 +28,7 @@ jobs:
     env:
       URL: ${{ vars.SITE_URL || 'https://markets.adlouis.com/' }}
       APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+      REPICK: ${{ inputs.repick && '1' || '' }}
     steps:
       - name: Build / lock / record today's list
         run: |
@@ -31,7 +37,7 @@ jobs:
           curl -s -m 30 -c "$J" -b "$J" -X POST -H "Content-Type: application/json" \
             -d "$(jq -n --arg p "$APP_PASSWORD" '{password:$p}')" "${U}api.php?action=login" | jq -c . || { echo "::error::login failed"; exit 1; }
           for try in 1 2 3; do
-            r=$(curl -s -m 280 -b "$J" "${U}api.php?action=mkt_top10")
+            r=$(curl -s -m 280 -b "$J" "${U}api.php?action=mkt_top10${REPICK:+&refresh=1}")
             if echo "$r" | jq -e '.ok' >/dev/null 2>&1; then
               echo "$r" | jq '{phase: .phase.label, date: .day.date, locked: .day.locked, built_now, entries_from, book, track: (.track | del(.recent)),
                               screened: .day.screened, researched: .day.researched, universe: .day.universe, rejected: (.day.rejected | length),

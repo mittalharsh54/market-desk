@@ -246,7 +246,7 @@
       <button class="btn btn-sm" id="t10Refresh">↻ Refresh</button>
     </div>
     <div id="t10Flash"></div>
-    <div id="t10Body"><div class="loading"><span class="spin"></span>Researching today's list — screening ~170 liquid F&amp;O stocks, then studying the best 30 in depth…</div></div>
+    <div id="t10Body"><div class="loading"><span class="spin"></span>Researching today's list — screening ~170 liquid F&amp;O stocks, then studying the best 40 in depth…</div></div>
   </section>
 
   <section class="panel" id="p-pulse">
@@ -309,8 +309,8 @@
       <p>Every call is the output of explicit, weighted rules — no black box. Each factor gets a score from −1 (bearish) to +1 (bullish) and a one-line reason; the page shows all of them so you can disagree with any.</p>
       <h3>0 · Intraday Top 10 — how the list and the signals are made</h3>
       <ul>
-        <li><b>Screen (~170 liquid F&amp;O stocks):</b> drop anything under ₹50, under ₹25 cr average daily turnover, moving under 0.8% a day, gapping more than 5% (too extended to chase), or with results / a board meeting due today or tomorrow.</li>
-        <li><b>Research the best 30, one by one:</b> daily trend; strength vs Nifty over 5 and 20 days; setup (NR7, inside day, where yesterday closed in its range, distance to 20-day high/low); liquidity; daily range (ATR); Central Pivot Range width; a 60-day backtest of the exact intraday rules on that stock; its own news and event flags (results, block deals, order wins, regulatory trouble, broker actions); sector tailwind; market regime. After the open: gap and whether it holds, opening range, VWAP, relative volume and the live 5-minute score.</li>
+        <li><b>Screen (~170 liquid F&amp;O stocks):</b> drop anything under ₹50, under ₹25 cr average daily turnover, moving under 0.8% a day, gapping more than 5% (too extended to chase), or with results / a board meeting due today or tomorrow. After the deep research, any stock where the exact intraday rules have lost money over the last 60 days (profit factor under 0.9 on 20+ trades) is also dropped.</li>
+        <li><b>Research the best 40, one by one:</b> daily trend; strength vs Nifty over 5 and 20 days; setup (NR7, inside day, where yesterday closed in its range, distance to 20-day high/low); liquidity; daily range (ATR); Central Pivot Range width; a 60-day backtest of the exact intraday rules on that stock; its own news and event flags (results, block deals, order wins, regulatory trouble, broker actions); sector tailwind; market regime. After the open: gap and whether it holds, opening range, VWAP, relative volume and the live 5-minute score.</li>
         <li><b>Pick 10</b> by quality, at most 3 per sector, each with a LONG or SHORT bias. Before 9:15 the list is a provisional watchlist; it <b>locks at 9:25 AM</b> once the opening range is known. <i>Re-pick</i> rebuilds it.</li>
         <li><b>Entry:</b> on a completed 5-minute bar between 9:30 and 2:25 PM, the score must cross +0.40 (−0.40 for a short) with price above (below) both VWAP and the opening range. Trading against the day's bias needs ±0.55. At most 2 trades per stock a day.</li>
         <li><b>Exit:</b> stop from ATR and structure (swing/VWAP/opening range, capped at 2.5 ATR). Target 1 = 1.5R: book half and move the stop to cost. Then trail on the Supertrend line. Target 2 = 2.5R. Exit early if the score reverses past −0.15 against you. Everything squares off at 3:15 PM.</li>
