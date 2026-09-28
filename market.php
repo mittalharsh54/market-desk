@@ -527,6 +527,27 @@ function mkt_ai_note($sym, $capital, $riskPct) {
   return md_claude($system, $ask . "\n\nDATA:\n" . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 }
 
+/* ---------- diagnostics: what each data source returns to THIS server ---------- */
+function mkt_diag() {
+  $probe = function ($url, $opts = []) {
+    $r = mkt_http($url, $opts + ['want_headers' => true]);
+    $h = []; foreach (['retry-after', 'content-type', 'set-cookie', 'location'] as $k) if (preg_match('/^' . $k . ':\s*([^\r\n]{0,80})/im', (string) ($r['headers'] ?? ''), $m)) $h[$k] = $m[1];
+    return ['url' => preg_replace('/crumb=[^&]+/', 'crumb=…', $url), 'code' => $r['code'], 'bytes' => strlen($r['body']), 'error' => $r['error'],
+            'headers' => $h, 'body' => mb_substr(preg_replace('/\s+/', ' ', strip_tags($r['body'])), 0, 160)];
+  };
+  $out = ['php' => PHP_VERSION, 'curl' => curl_version()['version'] ?? null, 'ssl' => curl_version()['ssl_version'] ?? null];
+  $out['yahoo_q1_chart'] = $probe(mkt_chart_url('RELIANCE.NS', '5d', '1d'));
+  $out['yahoo_q2_chart'] = $probe(str_replace('query1.', 'query2.', mkt_chart_url('RELIANCE.NS', '5d', '1d')));
+  $out['yahoo_cookie'] = $probe('https://fc.yahoo.com/', ['headers' => ['Accept: text/html']]);
+  $a = mkt_yahoo_auth(true);
+  $out['yahoo_crumb'] = $a ? 'ok' : 'failed';
+  if ($a) $out['yahoo_q2_chart_with_cookie'] = $probe(str_replace('query1.', 'query2.', mkt_chart_url('RELIANCE.NS', '5d', '1d')) . '&crumb=' . rawurlencode($a['crumb']), ['cookie' => $a['cookie']]);
+  $out['stooq_csv'] = $probe('https://stooq.com/q/d/l/?s=reliance.in&i=d');
+  $out['stooq_spx'] = $probe('https://stooq.com/q/d/l/?s=%5Espx&i=d');
+  $out['nse_quote'] = ['ok' => (bool) mkt_nse_json('/api/quote-equity?symbol=RELIANCE')];
+  return $out;
+}
+
 /* ---------- router ---------- */
 function mkt_dispatch($action) {
   $b = $_SERVER['REQUEST_METHOD'] === 'POST' ? (json_decode(file_get_contents('php://input'), true) ?: []) : [];
@@ -547,6 +568,7 @@ function mkt_dispatch($action) {
         md_store_set('inputs', json_encode($in, JSON_UNESCAPED_UNICODE));
         md_store_set('macro_v1', ''); // next Market Pulse load re-scores with the new numbers
         $out = ['values' => $in]; break;
+      case 'mkt_diag': $out = mkt_diag(); break;
       case 'mkt_ai': $out = mkt_ai_note((string) $g('symbol', ''), $capital, $risk); break;
       default: fail(400, 'Unknown market action.');
     }
