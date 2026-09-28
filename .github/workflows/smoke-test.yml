@@ -41,6 +41,9 @@ jobs:
             -d "$(jq -n --arg p "$APP_PASSWORD" '{password:$p}')" "${U}api.php?action=login" | jq -c . || FAIL=1
           st=$(curl -s -m 30 -b "$J" "${U}api.php?action=mkt_status"); echo "$st" | jq -c '{ok, market}' || { echo "::error::mkt_status failed: $st"; FAIL=1; }
 
+          echo "== Telegram (configured = token on the server, chat = someone has messaged the bot)"
+          curl -s -m 30 -b "$J" "${U}api.php?action=mkt_tg_status" | jq -c . || true
+
           echo "== Data-source diagnostics (from the server)"
           curl -s -m 120 -b "$J" "${U}api.php?action=mkt_diag" | jq . || true
 
