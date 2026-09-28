@@ -1,0 +1,41 @@
+name: Live alerts (Telegram)
+
+# Runs through market hours and calls the app every minute. The app works out the
+# day's signals and sends anything new to Telegram — so alerts reach your phone
+# even when the page is closed. Two overlapping windows (09:08 and 12:02 IST) keep
+# each job well under GitHub's 6-hour limit; the app de-duplicates, so the overlap
+# never double-sends. Needs the APP_PASSWORD and TELEGRAM_BOT_TOKEN secrets.
+
+on:
+  schedule:
+    - cron: '38 3 * * 1-5'    # 09:08 IST
+    - cron: '32 6 * * 1-5'    # 12:02 IST
+  workflow_dispatch:
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      URL: ${{ vars.SITE_URL || 'https://markets.adlouis.com/' }}
+      APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+    steps:
+      - name: Check for signals every minute until 3:40 PM IST
+        run: |
+          set -u
+          U="${URL%/}/"; J=$(mktemp)
+          login() { curl -s -m 30 -c "$J" -b "$J" -X POST -H "Content-Type: application/json" -d "$(jq -n --arg p "$APP_PASSWORD" '{password:$p}')" "${U}api.php?action=login" >/dev/null; }
+          login
+          end_ist=$((15 * 60 + 40)); started_ist=$(( ( $(date -u +%s) + 19800 ) % 86400 / 60 ))
+          while true; do
+            now_ist=$(( ( $(date -u +%s) + 19800 ) % 86400 / 60 ))
+            [ "$now_ist" -ge "$end_ist" ] && { echo "Market day over."; break; }
+            [ "$started_ist" -lt $((11 * 60)) ] && [ "$now_ist" -ge $((12 * 60 + 30)) ] && { echo "Handing over to the afternoon window."; break; }
+            r=$(curl -s -m 110 -b "$J" "${U}api.php?action=mkt_tick")
+            if echo "$r" | jq -e '.ok' >/dev/null 2>&1; then
+              echo "$(date -u -d @$(( $(date -u +%s) + 19800 )) +%H:%M) IST $(echo "$r" | jq -c '{phase, sent: [.sent[]? | ((.text // .queued_no_chat) | .[0:90])], open, pnl: .book.pnl}')"
+            else
+              echo "tick: ${r:0:200}"; echo "$r" | grep -qi "sign in" && login
+            fi
+            sleep 55
+          done

@@ -18,6 +18,11 @@ if ($path !== '/api.php') {
   http_response_code(404); echo 'not found'; return true;
 }
 define('MD_DEV', true);
+$GLOBALS['MD_TG_MOCK'] = function ($method, $params) { // Telegram: log what would be sent
+  if ($method === 'getUpdates') return ['ok' => true, 'result' => [['message' => ['chat' => ['id' => 12345]]]]];
+  file_put_contents(sys_get_temp_dir() . '/market-desk-dev-telegram.log', ($params['text'] ?? '') . "\n---\n", FILE_APPEND);
+  return ['ok' => true];
+};
 $GLOBALS['MD_CLAUDE_MOCK'] = function ($system, $user) {
   return ['model' => 'dev-mock', 'note' => "## Bottom line\n- **Dev server**: placeholder note. With a real key in config.php, Claude writes it from the computed data.\n- Data sent: " . strlen($user) . " bytes.\n\nNot investment advice — rule-based analysis; verify before trading."];
 };

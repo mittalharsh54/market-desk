@@ -35,6 +35,7 @@ tools/test-market-engine.php   43 offline checks: php tools/test-market-engine.p
 tools/dev-server.php           offline demo with synthetic data
 .github/workflows/deploy.yml   FTP deploy with config from secrets
 .github/workflows/daily-desk.yml    locks the Top 10 at 9:27 IST and records results at 15:42 IST (Mon–Fri)
+.github/workflows/live-alerts.yml   checks every minute 09:08–15:40 IST and sends new signals to Telegram
 .github/workflows/smoke-test.yml    signs in to the live site and checks every data source
 intraday.php        Intraday Top 10: universe, research, locking, desk rules, track record
 ```
@@ -61,6 +62,7 @@ and writes `config.php` on the server from secrets. In the repo on GitHub, open
 | `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD` | a **dedicated** FTP account for Market Desk (see below) |
 | `APP_PASSWORD` | the password you'll sign in with (stored on the server only as a hash) |
 | `ANTHROPIC_API_KEY` | optional, for the AI notes |
+| `TELEGRAM_BOT_TOKEN` | optional, for phone alerts: create a bot with @BotFather, paste its token here, redeploy, then send your bot any message and press 📱 Telegram → test on the page |
 
 **Use an FTP account of its own.** In hPanel → Files → FTP Accounts, create a new
 account and set its directory to the app's folder (for a subdomain like

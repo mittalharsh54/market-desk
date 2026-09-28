@@ -1222,6 +1222,18 @@ function mk_pick_score(array $st, $edge = null, $live = null, $news = null, $sec
   return ['dir' => $d > 0 ? 'LONG' : 'SHORT', 'dir_score' => round($dirScore, 3), 'quality' => $tw ? round($q / $tw, 3) : 0.0, 'factors' => $F];
 }
 
+/* Indian intraday equity charges for one round trip (discount-broker pricing).
+   $orders = [[side 'B'|'S', value], ...]. Brokerage 0.03% or ₹20 per order,
+   whichever is lower; STT 0.025% on the sell side; NSE transaction 0.00297%;
+   SEBI ₹10/crore; stamp 0.003% on the buy side; GST 18% on brokerage + fees. */
+function mk_charges(array $orders) {
+  $brok = 0.0; $buy = 0.0; $sell = 0.0;
+  foreach ($orders as $o) { $v = abs($o[1]); $brok += min(20.0, 0.0003 * $v); if ($o[0] === 'B') $buy += $v; else $sell += $v; }
+  $turn = $buy + $sell; $exch = 0.0000297 * $turn; $sebi = 0.000001 * $turn;
+  $total = $brok + 0.00025 * $sell + $exch + $sebi + 0.00003 * $buy + 0.18 * ($brok + $exch + $sebi);
+  return round($total, 2);
+}
+
 /* The live signal engine. $C5 = 5-minute bars (earlier sessions + today, for
    indicator warm-up). Replays today bar by bar, so the same data always gives
    the same signals — on any device, at any time.
@@ -1249,9 +1261,13 @@ function mk_intraday_replay(array $C5, array $bench5 = null, array $o = []) {
     $side = $pos['side']; $risk = $pos['risk']; $half = (int) floor($pos['qty'] / 2);
     $r = $pos['t1_hit'] ? 0.5 * ($pos['t1'] - $pos['entry']) * $side / $risk + 0.5 * ($exit - $pos['entry']) * $side / $risk : ($exit - $pos['entry']) * $side / $risk;
     $pnl = $pos['t1_hit'] ? $half * ($pos['t1'] - $pos['entry']) * $side + ($pos['qty'] - $half) * ($exit - $pos['entry']) * $side : $pos['qty'] * ($exit - $pos['entry']) * $side;
+    $in = $side > 0 ? 'B' : 'S'; $outS = $side > 0 ? 'S' : 'B';
+    $ord = [[$in, $pos['qty'] * $pos['entry']]];
+    if ($pos['t1_hit']) { $ord[] = [$outS, $half * $pos['t1']]; $ord[] = [$outS, ($pos['qty'] - $half) * $exit]; } else $ord[] = [$outS, $pos['qty'] * $exit];
+    $chg = mk_charges($ord); $gross = $pnl; $pnl = $gross - $chg;
     $out['trades'][] = ['side' => $side > 0 ? 'LONG' : 'SHORT', 'entry' => round($pos['entry'], 2), 'entry_time' => $pos['time'], 'exit' => round($exit, 2), 'exit_time' => gmdate('H:i', $GLOBALS['__mk_t'] + MK_IST),
-                        'reason' => $reason, 'r' => round($r, 2), 'pnl' => round($pnl), 'qty' => $pos['qty'], 't1_hit' => $pos['t1_hit']];
-    $ev($i, $r > 0.05 ? 'EXIT — PROFIT' : ($r < -0.05 ? 'EXIT — LOSS' : 'EXIT — FLAT'), $exit, $reason . sprintf(' (%+.2fR, ₹%s)', $r, number_format(round($pnl))));
+                        'reason' => $reason, 'r' => round($r, 2), 'pnl' => round($pnl), 'gross' => round($gross), 'charges' => round($chg, 2), 'qty' => $pos['qty'], 't1_hit' => $pos['t1_hit'], 'value' => round($pos['qty'] * $pos['entry'])];
+    $ev($i, $pnl > 0 ? 'EXIT — PROFIT' : ($pnl < 0 ? 'EXIT — LOSS' : 'EXIT — FLAT'), $exit, $reason . sprintf(' (%+.2fR, net ₹%s after ₹%s charges)', $r, number_format(round($pnl)), number_format($chg, 2)));
     $out['day_r'] += $r; $out['day_pnl'] += $pnl; $pos = null; $lastExit = $i;
   };
   for ($i = $first; $i <= $last; $i++) {
@@ -1287,7 +1303,7 @@ function mk_intraday_replay(array $C5, array $bench5 = null, array $o = []) {
       if ($P && !empty($o['max_position'])) $P['qty'] = min($P['qty'], (int) floor($o['max_position'] / $px));
       if ($P && $P['qty'] > 0) {
         $pos = ['side' => $side, 'entry' => $px, 'stop' => $P['stop'], 't1' => $P['targets'][0], 't2' => $P['targets'][1], 'risk' => $P['risk_per_share'], 'qty' => $P['qty'], 't1_hit' => false, 'time' => gmdate('H:i', $C5['t'][$i] + 300 + MK_IST), 'init_stop' => $P['stop']];
-        $ev($i, $side > 0 ? 'BUY' : 'SELL (SHORT)', $px, 'Score ' . sprintf('%+.2f', $sc($i)) . ', ' . ($side > 0 ? 'above' : 'below') . ' VWAP and the opening range. Stop ₹' . $P['stop'] . ', T1 ₹' . $P['targets'][0] . ', T2 ₹' . $P['targets'][1] . ', qty ' . $P['qty'] . '.');
+        $ev($i, $side > 0 ? 'BUY' : 'SELL (SHORT)', $px, 'Score ' . sprintf('%+.2f', $sc($i)) . ', ' . ($side > 0 ? 'above' : 'below') . ' VWAP and the opening range. Stop ₹' . $P['stop'] . ', T1 ₹' . $P['targets'][0] . ', T2 ₹' . $P['targets'][1] . ', qty ' . $P['qty'] . ' (₹' . number_format(round($P['qty'] * $px)) . ').');
       }
     }
     $prevL = $L; $prevS = $S;
@@ -1304,7 +1320,8 @@ function mk_intraday_replay(array $C5, array $bench5 = null, array $o = []) {
   if ($pos) {
     $u = ($px - $pos['entry']) * $pos['side']; $half = (int) floor($pos['qty'] / 2);
     $open = $pos['t1_hit'] ? $half * ($pos['t1'] - $pos['entry']) * $pos['side'] + ($pos['qty'] - $half) * $u : $pos['qty'] * $u;
-    $out['position'] = ['side' => $pos['side'] > 0 ? 'LONG' : 'SHORT', 'entry' => round($pos['entry'], 2), 'entry_time' => $pos['time'], 'stop' => round($pos['stop'], 2), 'init_stop' => $pos['init_stop'],
+    $open -= mk_charges([[$pos['side'] > 0 ? 'B' : 'S', $pos['qty'] * $pos['entry']], [$pos['side'] > 0 ? 'S' : 'B', $pos['qty'] * $px]]);
+    $out['position'] = ['side' => $pos['side'] > 0 ? 'LONG' : 'SHORT', 'entry' => round($pos['entry'], 2), 'entry_time' => $pos['time'], 'stop' => round($pos['stop'], 2), 'init_stop' => $pos['init_stop'], 'value' => round($pos['qty'] * $pos['entry']),
                         't1' => $pos['t1'], 't2' => $pos['t2'], 't1_hit' => $pos['t1_hit'], 'qty' => $pos['qty'], 'risk' => $pos['risk'],
                         'open_r' => round(($pos['t1_hit'] ? 0.5 * ($pos['t1'] - $pos['entry']) * $pos['side'] + 0.5 * $u : $u) / $pos['risk'], 2), 'open_pnl' => round($open)];
     $out['status'] = $pos['side'] > 0 ? 'LONG ACTIVE' : 'SHORT ACTIVE';

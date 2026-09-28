@@ -10,12 +10,13 @@
 function md_config() {
   static $cfg = null;
   if ($cfg !== null) return $cfg;
-  $cfg = ['password' => '', 'password_hash' => '', 'anthropic_key' => '', 'claude_model' => 'claude-sonnet-5', 'data_dir' => __DIR__ . '/data', 'dev' => false];
-  if (defined('MD_DEV')) { $cfg['dev'] = true; $cfg['data_dir'] = sys_get_temp_dir() . '/market-desk-dev'; $cfg['password'] = 'dev'; $cfg['anthropic_key'] = 'dev'; return $cfg; }
+  $cfg = ['password' => '', 'password_hash' => '', 'anthropic_key' => '', 'claude_model' => 'claude-sonnet-5', 'data_dir' => __DIR__ . '/data', 'dev' => false, 'telegram_token' => ''];
+  if (defined('MD_DEV')) { $cfg['dev'] = true; $cfg['data_dir'] = sys_get_temp_dir() . '/market-desk-dev'; $cfg['password'] = 'dev'; $cfg['anthropic_key'] = 'dev'; $cfg['telegram_token'] = 'dev'; return $cfg; }
   $f = __DIR__ . '/config.php';
   if (is_file($f)) {
-    $APP_PASSWORD = $APP_PASSWORD_HASH = $ANTHROPIC_API_KEY = $CLAUDE_MODEL = $DATA_DIR = null;
+    $APP_PASSWORD = $APP_PASSWORD_HASH = $ANTHROPIC_API_KEY = $CLAUDE_MODEL = $DATA_DIR = $TELEGRAM_BOT_TOKEN = null;
     include $f;
+    if ($TELEGRAM_BOT_TOKEN !== null) $cfg['telegram_token'] = trim((string) $TELEGRAM_BOT_TOKEN);
     if ($APP_PASSWORD !== null) $cfg['password'] = (string) $APP_PASSWORD;
     if ($APP_PASSWORD_HASH !== null) $cfg['password_hash'] = (string) $APP_PASSWORD_HASH;
     if ($ANTHROPIC_API_KEY !== null) $cfg['anthropic_key'] = trim((string) $ANTHROPIC_API_KEY);

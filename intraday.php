@@ -28,6 +28,19 @@
 const ID_MAX_OPEN = 5;          // positions at once
 const ID_DAY_STOP_R = -3.0;     // no new entries once the day is down this much
 const ID_POS_CAP = 0.20;        // max share of capital in one position
+const ID_DAY_TARGET_R = 3.0;    // stop opening new trades once the day is up this much — protect a good day
+const ID_MIN_QTY = 3;           // a stock must be affordable in at least this many shares per position
+
+/* ---------- desk settings (saved on the server so the 9:27 lock uses them) ---------- */
+function id_settings() {
+  $j = json_decode((string) md_store_get('desk_settings'), true); $j = is_array($j) ? $j : [];
+  return ['capital' => max(1000, (float) ($j['capital'] ?? 10000)), 'risk_pct' => min(5, max(0.1, (float) ($j['risk_pct'] ?? 1))), 'leverage' => in_array($lv = (int) ($j['leverage'] ?? 1), [1, 2, 3, 4, 5], true) ? $lv : 1];
+}
+function id_settings_set(array $in) {
+  $cur = id_settings(); foreach (['capital', 'risk_pct', 'leverage'] as $k) if (isset($in[$k]) && is_numeric($in[$k])) $cur[$k] = $in[$k] + 0;
+  md_store_set('desk_settings', json_encode($cur)); return id_settings();
+}
+function id_pos_budget(array $st) { return $st['capital'] * ID_POS_CAP * $st['leverage']; }
 
 function id_universe() {
   $n50 = mkt_universes()['nifty50']['symbols'];
@@ -41,7 +54,25 @@ function id_universe() {
     'MANAPPURAM', 'LICHSGFIN', 'M&MFIN', 'ANGELONE', 'BSE', 'CDSL', 'MCX', 'KALYANKJIL', 'NYKAA', 'PAYTM', 'POLICYBZR', 'DELHIVERY', 'SUZLON', 'RVNL', 'IREDA',
     'MAZDOCK', 'BDL', 'COCHINSHIP', 'GMRAIRPORT', 'PRESTIGE', 'OBEROIRLTY', 'GODREJPROP', 'PHOENIXLTD', 'TATACOMM', 'INDUSTOWER', 'OFSS', 'LTF', 'ABCAPITAL',
     'SONACOMS', 'UNOMINDA', 'TIINDIA', 'SOLARINDS', 'KEI', 'CGPOWER', 'BHARATFORG', 'APLAPOLLO', 'JUBLFOOD', 'SUPREMEIND', 'TORNTPOWER', 'MANKIND', 'HUDCO', 'NBCC'];
-  return array_values(array_unique(array_merge($n50, $more)));
+  return array_values(array_unique(array_merge($n50, $more, id_darkhorse_pool())));
+}
+/* less-followed midcaps and smallcaps with enough liquidity to day-trade — where dark horses come from */
+function id_darkhorse_pool() {
+  return ['HBLENGINE', 'GRSE', 'KAYNES', 'NETWEB', 'CAMS', 'KFINTECH', 'ZENTEC', 'DATAPATTNS', 'IRCON', 'RAILTEL', 'NLCINDIA', 'SJVN', 'HINDCOPPER', 'JBMA', 'OLECTRA',
+    'RADICO', 'AMBER', 'CYIENT', 'SONATSOFTW', 'INTELLECT', 'TRIDENT', 'ANANTRAJ', 'NCC', 'ENGINERSIN', 'BEML', 'TITAGARH', 'JWL', 'SCHNEIDER', 'INOXWIND', 'KPIGREEN',
+    'WAAREEENER', 'PREMIERENE', 'SWIGGY', 'HYUNDAI', 'OLAELEC', 'BAJAJHFL', 'PNBHOUSING', 'CGCL', 'CHAMBLFERT', 'RCF', 'FACT', 'GNFC', 'NATCOPHARM', 'GRANULES',
+    'JUBLPHARMA', 'ZENSARTECH', 'BSOFT', 'RBLBANK', 'IDBI', 'IOB', 'UCOBANK', 'CENTRALBK', 'MAHABANK', 'KARURVYSYA', 'EQUITASBNK', 'ASTERDM', 'CESC', 'NBCC', 'HUDCO', 'IRB'];
+}
+function id_darkhorse(array $st, $sym) {
+  static $n50 = null; if ($n50 === null) $n50 = array_flip(mkt_universes()['nifty50']['symbols']);
+  if (isset($n50[$sym]) || ($st['vol_ratio'] ?? 0) < 1.5) return null;
+  $up = ($st['ret_5d'] ?? 0) + ($st['rs_5d'] ?? 0) >= 0;
+  $brk = $up ? ($st['dist_20h'] > -1.5 ? 1 : 0) : ($st['dist_20l'] < 1.5 ? 1 : 0);
+  $score = 0.35 * tanh(($st['vol_ratio'] - 1) / 1.2) + 0.25 * tanh(abs($st['rs_5d'] ?? 0) / 5) + 0.2 * $brk + 0.2 * tanh(abs($st['ret_1d'] ?? 0) / 3);
+  $why = [round($st['vol_ratio'], 1) . 'x normal volume yesterday', sprintf('%+.1f pts vs Nifty in 5 days', $st['rs_5d'] ?? 0)];
+  if ($brk) $why[] = $up ? 'at a 20-day breakout' : 'at a 20-day breakdown';
+  if (abs($st['ret_1d'] ?? 0) >= 2) $why[] = sprintf('moved %+.1f%% yesterday', $st['ret_1d']);
+  return ['score' => round($score, 3), 'dir' => $up ? 'LONG' : 'SHORT', 'why' => $why];
 }
 
 /* ---------- dates & phases (IST) ---------- */
@@ -141,14 +172,23 @@ function id_market_context(array $nifty) {
 function id_select($date, $phase) {
   @set_time_limit(240);
   $U = id_universe(); $live = in_array($phase, ['opening', 'live'], true) && $date === id_today();
+  $SET = id_settings(); $budget = id_pos_budget($SET);
   $N = id_fetch(['^NSEI'], $live ? ['d', 'p5', 't5'] : ['d', 'p5'], $date)['^NSEI'] ?? [];
   $ctx = id_market_context($N);
-  $D = id_fetch($U, $live ? ['d', 't5'] : ['d'], $date);
-  $cands = []; $rejected = [];
+  $D = id_fetch($U, ['d'], $date);
+  /* live prices only for the stocks that can still make the list (keeps the 9:25 build fast) */
+  if ($live) {
+    $pre = [];
+    foreach ($D as $sym => $x) if (!empty($x['d']) && count($x['d']['c']) >= 60) { $c = end($x['d']['c']); if ($c * ID_MIN_QTY <= $budget && $c >= 50) { $st0 = mk_daily_setup($x['d'], $N['d'] ?? null); if ($st0) $pre[$sym] = abs($st0['trend']) + 0.5 * abs(tanh(($st0['rs_5d'] ?? 0) / 3)) + (($st0['vol_ratio'] ?? 1) > 1.5 ? 0.3 : 0); } }
+    arsort($pre); $T5 = id_fetch(array_slice(array_keys($pre), 0, 90), ['t5'], $date);
+    foreach ($T5 as $sym => $x) if (isset($D[$sym])) $D[$sym]['t5'] = $x['t5'] ?? null;
+  }
+  $cands = []; $rejected = []; $dark = [];
   foreach ($D as $sym => $x) {
     if (empty($x['d']) || count($x['d']['c']) < 60) { $rejected[$sym] = 'no price history'; continue; }
     $st = mk_daily_setup($x['d'], $N['d'] ?? null); if (!$st) continue;
     if ($st['close'] < 50) { $rejected[$sym] = 'price below ₹50'; continue; }
+    if ($st['close'] * ID_MIN_QTY > $budget) { $rejected[$sym] = 'too expensive for ₹' . number_format($budget) . ' per position (₹' . number_format($st['close']) . '/share)'; continue; }
     if ($st['turnover_cr'] < 25) { $rejected[$sym] = 'illiquid (₹' . $st['turnover_cr'] . ' cr/day)'; continue; }
     if (($st['atr_pct'] ?? 0) < 0.8) { $rejected[$sym] = 'moves too little (ATR ' . $st['atr_pct'] . '%)'; continue; }
     $lite = null; $T = $x['t5'] ?? null;
@@ -160,10 +200,14 @@ function id_select($date, $phase) {
     }
     $sk = mk_sector_of($sym . '.NS');
     $P = mk_pick_score($st, null, $lite, null, $ctx['sectors'][$sk] ?? null, $ctx['regime']);
-    $cands[$sym] = ['sym' => $sym, 'name' => $x['name'], 'sector' => $sk, 'setup' => $st, 'pre' => $P['quality']];
+    $dh = id_darkhorse($st, $sym); if ($dh) $dark[$sym] = $dh;
+    $cands[$sym] = ['sym' => $sym, 'name' => $x['name'], 'sector' => $sk, 'setup' => $st, 'pre' => $P['quality'], 'dark' => $dh];
   }
   uasort($cands, function ($a, $b) { return $b['pre'] <=> $a['pre']; });
   $deep = array_slice($cands, 0, 40, true);
+  /* dark horses get the same deep research even if they rank lower on the first screen */
+  uasort($dark, function ($a, $b) { return $b['score'] <=> $a['score']; });
+  foreach (array_slice(array_keys($dark), 0, 8) as $sym) if (!isset($deep[$sym]) && isset($cands[$sym])) $deep[$sym] = $cands[$sym];
   /* stage 2: the deep look */
   $E = id_fetch(array_keys($deep), $live ? ['p5', 'h15', 'h15b', 't5'] : ['p5', 'h15', 'h15b'], $date);
   $news = id_news(array_map(function ($c) { return $c['name']; }, $deep));
@@ -193,16 +237,22 @@ function id_select($date, $phase) {
     $perSector[$c['sector']] = ($perSector[$c['sector']] ?? 0) + 1;
     $label = mk_sector_sensitivity()[$c['sector']]['label'] ?? $c['sector'];
     $picks[] = ['rank' => count($picks) + 1, 'symbol' => $sym, 'name' => $c['name'], 'sector' => $label, 'sector_key' => $c['sector'], 'dir' => $c['dir'], 'quality' => $c['quality'],
-                'factors' => $c['factors'], 'setup' => $c['setup'], 'edge' => $c['edge'], 'news' => $c['news'], 'live_at_pick' => $c['live_at_pick']];
+                'factors' => $c['factors'], 'setup' => $c['setup'], 'edge' => $c['edge'], 'news' => $c['news'], 'live_at_pick' => $c['live_at_pick'], 'darkhorse' => $c['dark']];
   }
+  $horses = [];
+  foreach ($scored as $sym => $c) if ($c['dark']) $horses[] = ['symbol' => $sym, 'name' => $c['name'], 'dir' => $c['dir'], 'quality' => $c['quality'], 'dark_score' => $c['dark']['score'], 'why' => $c['dark']['why'],
+    'price' => $c['setup']['close'], 'picked' => in_array($sym, array_column($picks, 'symbol'), true), 'edge' => $c['edge'] ? $c['edge']['trades'] . ' trades, win ' . $c['edge']['win_rate'] . '%, PF ' . $c['edge']['profit_factor'] : null];
+  usort($horses, function ($a, $b) { return ($b['quality'] + $b['dark_score']) <=> ($a['quality'] + $a['dark_score']); });
   $runners = array_slice(array_map(function ($c) { return ['symbol' => $c['sym'], 'dir' => $c['dir'], 'quality' => $c['quality']]; }, array_values(array_filter($scored, function ($c) use ($picks) { return !in_array($c['sym'], array_column($picks, 'symbol'), true); }))), 0, 10);
   return ['date' => $date, 'built_at' => time(), 'phase_at_build' => $phase, 'locked' => $live && mk_ist_min(time()) >= 565, 'picks' => $picks, 'runners_up' => $runners,
+          'darkhorses' => array_slice($horses, 0, 6), 'settings' => $SET, 'pos_budget' => $budget,
           'universe' => count($U), 'screened' => count($cands), 'researched' => count($deep), 'rejected' => array_slice($rejected, 0, 40, true),
           'market' => ['regime' => $ctx['regime'], 'label' => $ctx['label']]];
 }
 
 /* ---------- live signals for the locked list, with desk rules ---------- */
 function id_live(array $day, $capital, $riskPct) {
+  $SET = id_settings(); $capital = $SET['capital']; $riskPct = $SET['risk_pct']; $budget = id_pos_budget($SET);
   $date = $day['date']; $syms = array_column($day['picks'], 'symbol');
   $isToday = $date === id_today();
   $now = $isToday ? time() : strtotime($date . ' 15:31:00 +05:30');
@@ -216,10 +266,11 @@ function id_live(array $day, $capital, $riskPct) {
   foreach ($day['picks'] as $p) {
     $x = $X[$p['symbol']] ?? []; $C5 = id_join($x['p5'] ?? null, $x['t5'] ?? null);
     $R = ($C5 && count($C5['c']) > 20) ? mk_intraday_replay($C5, $n5, ['now' => $now, 'date' => $date, 'bias' => $p['dir'], 'daily_score' => $p['setup']['trend'], 'market_score' => $day['market']['regime'] ?? 0,
-                                                                        'capital' => $capital, 'risk_pct' => $riskPct, 'max_position' => $capital * ID_POS_CAP, 'entries_from' => $entriesFrom])
+                                                                        'capital' => $capital, 'risk_pct' => $riskPct, 'max_position' => $budget, 'entries_from' => $entriesFrom])
                                          : ['status' => 'NO DATA', 'events' => [], 'trades' => [], 'position' => null, 'levels' => [], 'live' => null, 'day_r' => 0, 'day_pnl' => 0];
     if (!empty($x['t5']) && count($x['t5']['c'])) { $f = max(0, count($x['t5']['c']) - 75); $R['spark'] = array_map(function ($v) { return round($v, 2); }, array_slice($x['t5']['c'], $f)); }
-    $out[] = $p + ['state' => $R];
+    $px = $R['live']['price'] ?? $p['setup']['close']; $mq = (int) floor($budget / max(1, $px));
+    $out[] = $p + ['state' => $R, 'plan' => ['budget' => round($budget), 'price' => $px, 'max_qty' => $mq, 'max_value' => round($mq * $px), 'risk_budget' => round($capital * $riskPct / 100)]];
   }
   /* desk rules, applied in time order across the whole book */
   $entries = [];
@@ -230,6 +281,7 @@ function id_live(array $day, $capital, $riskPct) {
   foreach ($entries as $e) {
     $open = array_filter($open, function ($o) use ($e, &$realized) { if ($o['out'] <= $e['in']) { $realized += $o['r']; return false; } return true; });
     if ($realized <= ID_DAY_STOP_R) { $skip[] = $e + ['why' => 'daily loss limit (' . ID_DAY_STOP_R . 'R) reached']; continue; }
+    if ($realized >= ID_DAY_TARGET_R) { $skip[] = $e + ['why' => 'daily profit target (+' . ID_DAY_TARGET_R . 'R) reached — protecting the day']; continue; }
     if (count($open) >= ID_MAX_OPEN) { $skip[] = $e + ['why' => 'already ' . ID_MAX_OPEN . ' positions open']; continue; }
     $open[] = $e;
   }
@@ -247,12 +299,12 @@ function id_live(array $day, $capital, $riskPct) {
     $st['day_r'] = round($st['day_r'], 2);
     unset($st);
   }
-  $book = ['trades' => 0, 'wins' => 0, 'losses' => 0, 'r' => 0.0, 'pnl' => 0, 'open' => 0, 'open_pnl' => 0];
+  $book = ['trades' => 0, 'wins' => 0, 'losses' => 0, 'r' => 0.0, 'pnl' => 0, 'charges' => 0.0, 'open' => 0, 'open_pnl' => 0, 'capital' => $capital];
   foreach ($out as $p) {
-    foreach ($p['state']['trades'] as $t) { if (!empty($t['skipped'])) continue; $book['trades']++; $book['r'] += $t['r']; $book['pnl'] += $t['pnl']; if ($t['r'] > 0.05) $book['wins']++; elseif ($t['r'] < -0.05) $book['losses']++; }
+    foreach ($p['state']['trades'] as $t) { if (!empty($t['skipped'])) continue; $book['trades']++; $book['r'] += $t['r']; $book['pnl'] += $t['pnl']; $book['charges'] += $t['charges'] ?? 0; if ($t['pnl'] > 0) $book['wins']++; elseif ($t['pnl'] < 0) $book['losses']++; }
     if ($p['state']['position']) { $book['open']++; $book['open_pnl'] += $p['state']['position']['open_pnl']; }
   }
-  $book['r'] = round($book['r'], 2);
+  $book['r'] = round($book['r'], 2); $book['charges'] = round($book['charges'], 2); $book['pnl_pct'] = round($book['pnl'] / $capital * 100, 2);
   return ['picks' => $out, 'book' => $book, 'nifty' => $n5 ? ['price' => round(end($n5['c']), 2)] : null,
           'entries_from' => $entriesFrom ? sprintf('%02d:%02d', intdiv($entriesFrom, 60), $entriesFrom % 60) : null];
 }
@@ -269,7 +321,7 @@ function id_finalize(array $day, array $live) {
     'trades' => array_values(array_map(function ($t) { return array_intersect_key($t, array_flip(['side', 'entry', 'entry_time', 'exit', 'exit_time', 'reason', 'r'])); }, array_filter($p['state']['trades'], function ($t) { return empty($t['skipped']); })))];
   $b = $live['book'];
   $H = array_values(array_filter(id_history(), function ($h) use ($day) { return $h['date'] !== $day['date']; }));
-  $H[] = ['date' => $day['date'], 'trades' => $b['trades'], 'wins' => $b['wins'], 'losses' => $b['losses'], 'r' => $b['r'], 'picks' => $rows];
+  $H[] = ['date' => $day['date'], 'trades' => $b['trades'], 'wins' => $b['wins'], 'losses' => $b['losses'], 'r' => $b['r'], 'pnl' => $b['pnl'], 'capital' => $b['capital'], 'charges' => $b['charges'], 'picks' => $rows];
   usort($H, function ($a, $b) { return strcmp($a['date'], $b['date']); });
   md_store_set('id_history', json_encode(array_slice($H, -250), JSON_UNESCAPED_UNICODE));
   $day['final'] = true; id_day_put($day);
@@ -279,7 +331,8 @@ function id_track() {
   $H = id_history(); $n = count($H); if (!$n) return ['days' => 0];
   $t = array_sum(array_column($H, 'trades')); $w = array_sum(array_column($H, 'wins')); $l = array_sum(array_column($H, 'losses')); $r = array_sum(array_column($H, 'r'));
   $green = count(array_filter($H, function ($h) { return $h['r'] > 0; }));
-  return ['days' => $n, 'trades' => $t, 'win_rate' => $t ? round($w / $t * 100, 1) : null, 'wins' => $w, 'losses' => $l, 'total_r' => round($r, 2), 'avg_r_per_trade' => $t ? round($r / $t, 2) : null,
+  $pnl = array_sum(array_map(function ($h) { return $h['pnl'] ?? 0; }, $H));
+  return ['days' => $n, 'trades' => $t, 'win_rate' => $t ? round($w / $t * 100, 1) : null, 'wins' => $w, 'losses' => $l, 'total_r' => round($r, 2), 'avg_r_per_trade' => $t ? round($r / $t, 2) : null, 'net_pnl' => round($pnl),
           'green_days' => $green, 'recent' => array_reverse(array_slice(array_map(function ($h) { return array_diff_key($h, ['picks' => 1]); }, $H), -20))];
 }
 
@@ -312,5 +365,101 @@ function id_top10($force, $capital, $riskPct) {
   $live = id_live($day, $capital, $riskPct);
   if ($ph['phase'] === 'closed' && $date === id_today() && mk_ist_min(time()) >= 935) $day = id_finalize($day, $live);
   return ['phase' => $ph, 'day' => array_diff_key($day, ['picks' => 1]), 'built_now' => $built, 'entries_from' => $live['entries_from'], 'picks' => $live['picks'], 'book' => $live['book'], 'nifty' => $live['nifty'],
-          'rules' => ['max_open' => ID_MAX_OPEN, 'day_stop_r' => ID_DAY_STOP_R, 'pos_cap_pct' => ID_POS_CAP * 100], 'track' => id_track(), 'server_time' => time()];
+          'rules' => ['max_open' => ID_MAX_OPEN, 'day_stop_r' => ID_DAY_STOP_R, 'day_target_r' => ID_DAY_TARGET_R, 'pos_cap_pct' => ID_POS_CAP * 100, 'min_qty' => ID_MIN_QTY],
+          'settings' => id_settings(), 'pos_budget' => round(id_pos_budget(id_settings())), 'track' => id_track(), 'server_time' => time()];
+}
+
+
+/* =====================================================================
+   ALERTS — Telegram messages for every new signal, sent by mkt_tick.
+   mkt_tick is called every minute during market hours (by the
+   "Live alerts" GitHub workflow), so alerts arrive with the page closed.
+   ===================================================================== */
+function id_tg_api($method, array $params) {
+  $tok = md_config()['telegram_token']; if ($tok === '') return ['ok' => false, 'description' => 'no bot token'];
+  if (isset($GLOBALS['MD_TG_MOCK'])) return call_user_func($GLOBALS['MD_TG_MOCK'], $method, $params);
+  $r = mkt_http('https://api.telegram.org/bot' . $tok . '/' . $method . '?' . http_build_query($params), ['headers' => ['Accept: application/json']]);
+  return json_decode($r['body'], true) ?: ['ok' => false, 'description' => 'HTTP ' . $r['code']];
+}
+/* the chat to send to: learnt from the first message you send the bot */
+function id_tg_chat($refresh = false) {
+  $c = md_store_get('tg_chat'); if ($c && !$refresh) return $c;
+  $u = id_tg_api('getUpdates', ['limit' => 20]);
+  foreach (array_reverse($u['result'] ?? []) as $upd) { $id = $upd['message']['chat']['id'] ?? ($upd['my_chat_member']['chat']['id'] ?? null); if ($id) { md_store_set('tg_chat', (string) $id); return (string) $id; } }
+  return $c ?: null;
+}
+function id_tg_send($html) {
+  $chat = id_tg_chat(); if (!$chat) return ['ok' => false, 'description' => 'Open your bot in Telegram and send it any message first.'];
+  return id_tg_api('sendMessage', ['chat_id' => $chat, 'text' => $html, 'parse_mode' => 'HTML', 'disable_web_page_preview' => 'true']);
+}
+function id_tg_status() {
+  if (md_config()['telegram_token'] === '') return ['configured' => false, 'chat' => false];
+  return ['configured' => true, 'chat' => (bool) id_tg_chat()];
+}
+function id_money($x) { return '₹' . number_format((float) $x, (abs($x) < 1000 && floor($x) != $x) ? 2 : 0); }
+/* one event -> one clear message */
+function id_event_msg(array $p, array $e) {
+  $sym = htmlspecialchars($p['symbol']); $P = $p['state']['position'] ?? null; $t = $e['time'];
+  switch ($e['type']) {
+    case 'BUY': case 'SELL (SHORT)':
+      $buy = $e['type'] === 'BUY'; $q = $P['qty'] ?? null;
+      $tr = null; foreach (array_reverse($p['state']['trades'] ?? []) as $x) if ($x['entry_time'] === $t) { $tr = $x; break; }
+      $pos = $P && $P['entry_time'] === $t ? $P : null; $qty = $pos ? $pos['qty'] : ($tr['qty'] ?? $q);
+      $stop = $pos ? $pos['init_stop'] : null; $t1 = $pos ? $pos['t1'] : null; $t2 = $pos ? $pos['t2'] : null;
+      if (!$pos && preg_match('/Stop ₹([\d.]+), T1 ₹([\d.]+), T2 ₹([\d.]+), qty (\d+)/', $e['note'], $m)) { $stop = $m[1]; $t1 = $m[2]; $t2 = $m[3]; $qty = $m[4]; }
+      return ($buy ? "🟢 <b>BUY $sym</b>" : "🔻 <b>SELL (SHORT) $sym</b>") . " — $qty shares at " . id_money($e['price']) . ' (≈' . id_money($qty * $e['price']) . ")\n"
+        . 'Stop-loss ' . id_money($stop) . ' · Target 1 ' . id_money($t1) . ' (' . ($buy ? 'sell' : 'buy back') . ' half) · Target 2 ' . id_money($t2) . "\n"
+        . "Intraday (MIS). Place the stop-loss order right away. <i>$t</i>";
+    case 'TARGET 1 HIT':
+      $half = $P ? (int) floor($P['qty'] / 2) : null; $buy = $P ? $P['side'] === 'LONG' : true;
+      return "🎯 <b>$sym — Target 1 hit</b> at " . id_money($e['price']) . "\n" . ($buy ? 'SELL' : 'BUY BACK') . ' HALF' . ($half ? " ($half shares)" : '') . ' now and move the stop-loss to your entry ' . ($P ? id_money($P['entry']) : '') . ". <i>$t</i>";
+    case 'TRAIL STOP':
+      return "🔼 <b>$sym — move stop-loss to " . id_money($e['price']) . "</b>\nProfit on the rest is now locked in. <i>$t</i>";
+    case 'EXIT — PROFIT': case 'EXIT — LOSS': case 'EXIT — FLAT':
+      $icon = $e['type'] === 'EXIT — PROFIT' ? '✅' : ($e['type'] === 'EXIT — LOSS' ? '🔴' : '⚪');
+      $why = preg_replace('/\s*\(.*$/', '', $e['note']); $net = preg_match('/net ₹([-\d,]+)/', $e['note'], $m) ? $m[1] : null;
+      return "$icon <b>$sym — EXIT at " . id_money($e['price']) . "</b> ($why)\n" . ($net !== null ? 'Result: ₹' . $net . ' after charges. ' : '') . "Close any remaining shares. <i>$t</i>";
+    case 'SKIPPED':
+      return "⏸ <b>$sym</b> — signal not taken: " . htmlspecialchars(preg_replace('/^Desk rule: /', '', $e['note'])) . " <i>$t</i>";
+  }
+  return null;
+}
+function id_list_msg(array $R) {
+  $S = $R['settings']; $lines = ['📋 <b>Today\'s 10 stocks</b> — plan for ' . id_money($S['capital']) . ' (up to ' . id_money($R['pos_budget']) . ' per stock, max ' . $R['rules']['max_open'] . ' at once)'];
+  foreach ($R['picks'] as $p) {
+    $lv = $p['state']['levels'] ?? []; $up = $p['dir'] === 'LONG';
+    $trig = $up ? ($lv['buy_above'] ?? $p['setup']['pdh']) : ($lv['sell_below'] ?? $p['setup']['pdl']);
+    $lines[] = $p['rank'] . '. <b>' . htmlspecialchars($p['symbol']) . '</b>' . ($p['darkhorse'] ? ' 🐎' : '') . ' — ' . ($up ? 'BUY above ' : 'SELL below ') . id_money($trig) . ' · up to ' . $p['plan']['max_qty'] . ' shares';
+  }
+  $lines[] = "\nWait for the BUY / SELL message before acting — a level alone is not a signal.";
+  return implode("\n", $lines);
+}
+function id_summary_msg(array $R) {
+  $b = $R['book']; $lines = ['🏁 <b>Day summary</b> — ' . ($b['pnl'] >= 0 ? 'profit ' : 'loss ') . id_money($b['pnl']) . ' after ' . id_money($b['charges']) . ' charges (' . sprintf('%+.2f', $b['pnl_pct']) . '%)', $b['trades'] . ' trades · ' . $b['wins'] . ' won · ' . $b['losses'] . ' lost'];
+  foreach ($R['picks'] as $p) foreach ($p['state']['trades'] as $t) if (empty($t['skipped'])) $lines[] = '• ' . htmlspecialchars($p['symbol']) . ' ' . $t['side'] . ' ' . $t['entry_time'] . '→' . $t['exit_time'] . ': ' . id_money($t['pnl']);
+  return implode("\n", $lines);
+}
+/* called every minute: build/lock the list, work out signals, send what is new */
+function id_tick() {
+  $lock = @fopen(md_path('tick_lock'), 'c'); if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) return ['busy' => true];
+  try {
+    $S = id_settings(); $R = id_top10(false, $S['capital'], $S['risk_pct']);
+    $date = $R['day']['date']; $key = 'id_sent_' . str_replace('-', '', $date);
+    $sent = json_decode((string) md_store_get($key), true) ?: ['events' => [], 'list' => false, 'summary' => false];
+    $tg = id_tg_status(); $out = ['date' => $date, 'phase' => $R['phase']['phase'], 'sent' => [], 'telegram' => $tg];
+    $now = mk_ist_min(time()); $isToday = $date === id_today();
+    $send = function ($msg) use (&$out, $tg) { if (!$tg['chat']) { $out['sent'][] = ['queued_no_chat' => strip_tags($msg)]; return; } $r = id_tg_send($msg); $out['sent'][] = ['ok' => $r['ok'] ?? false, 'text' => strip_tags($msg), 'error' => $r['description'] ?? null]; };
+    if (!empty($R['day']['locked']) && !$sent['list'] && $isToday) { $send(id_list_msg($R)); $sent['list'] = true; }
+    foreach ($R['picks'] as $p) foreach ($p['state']['events'] as $e) {
+      $k = $p['symbol'] . '|' . $e['time'] . '|' . $e['type']; if (isset($sent['events'][$k])) continue;
+      $sent['events'][$k] = 1;
+      list($h, $m) = array_map('intval', explode(':', $e['time']));
+      if (!$isToday || $now - ($h * 60 + $m) > 15) continue; // old news (e.g. the job started late): record, don't spam
+      $msg = id_event_msg($p, $e); if ($msg) $send($msg);
+    }
+    if ($isToday && $now >= 932 && !$sent['summary'] && !empty($R['day']['locked'])) { $send(id_summary_msg($R)); $sent['summary'] = true; }
+    md_store_set($key, json_encode($sent));
+    $out['book'] = $R['book']; $out['open'] = array_values(array_map(function ($p) { return $p['symbol'] . ' ' . $p['state']['status']; }, array_filter($R['picks'], function ($p) { return !empty($p['state']['position']); })));
+    return $out;
+  } finally { flock($lock, LOCK_UN); fclose($lock); }
 }

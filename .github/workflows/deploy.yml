@@ -11,6 +11,7 @@ name: Deploy to server (FTP)
 #       account: it could reach, overwrite or delete that site's files.
 #   APP_PASSWORD                             the Market Desk sign-in password
 #   ANTHROPIC_API_KEY                        optional, for the AI notes
+#   TELEGRAM_BOT_TOKEN                       optional, for phone alerts (from @BotFather)
 # Variable (same page -> Variables):
 #   FTP_DIR   only if the FTP account's home is NOT the app folder: the sub-folder
 #             to deploy into, ending in / (default ./ = the account's home folder)
@@ -41,12 +42,14 @@ jobs:
         env:
           APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: |
           if [ -z "$APP_PASSWORD" ]; then echo "::error::Set the APP_PASSWORD secret first — the app refuses to run without a password."; exit 1; fi
           php -r '
             $out = "<?php\n/* written by the deploy workflow from repository secrets */\n";
             $out .= "\$APP_PASSWORD_HASH = " . var_export(password_hash(getenv("APP_PASSWORD"), PASSWORD_DEFAULT), true) . ";\n";
             $out .= "\$ANTHROPIC_API_KEY = " . var_export((string) getenv("ANTHROPIC_API_KEY"), true) . ";\n";
+            $out .= "\$TELEGRAM_BOT_TOKEN = " . var_export((string) getenv("TELEGRAM_BOT_TOKEN"), true) . ";\n";
             file_put_contents("config.php", $out);'
           php -l config.php
 

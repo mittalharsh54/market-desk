@@ -606,7 +606,7 @@ function mkt_dispatch($action) {
   $b = $_SERVER['REQUEST_METHOD'] === 'POST' ? (json_decode(file_get_contents('php://input'), true) ?: []) : [];
   $g = function ($k, $d = null) use ($b) { return isset($b[$k]) ? $b[$k] : (isset($_GET[$k]) ? $_GET[$k] : $d); };
   $force = (string) $g('refresh', '') === '1';
-  $capital = max(0, (float) $g('capital', 100000)); $risk = min(5, max(0.1, (float) $g('risk', 1)));
+  $DS = id_settings(); $capital = max(0, (float) $g('capital', $DS['capital'])); $risk = min(5, max(0.1, (float) $g('risk', $DS['risk_pct'])));
   try {
     switch ($action) {
       case 'mkt_status': $out = ['market' => mk_market_status(), 'universes' => array_map(function ($u) { return ['label' => $u['label'], 'count' => count($u['symbols'])]; }, mkt_universes()), 'fields' => mkt_inputs_fields()]; break;
@@ -623,6 +623,21 @@ function mkt_dispatch($action) {
         $out = ['values' => $in]; break;
       case 'mkt_diag': $out = mkt_diag(); break;
       case 'mkt_top10': $out = id_top10($force, $capital, $risk); break;
+      case 'mkt_tick': $out = id_tick(); break;
+      case 'mkt_tg_status': $out = id_tg_status(); break;
+      case 'mkt_tg_test':
+        $st = id_tg_status();
+        if (!$st['configured']) throw new Exception('No Telegram bot token yet — add the TELEGRAM_BOT_TOKEN secret in GitHub and run the deploy.');
+        id_tg_chat(true);
+        $r = id_tg_send("✅ <b>Market Desk alerts are connected.</b>\nYou will get BUY / SELL / stop-loss / target messages here during market hours.");
+        if (empty($r['ok'])) throw new Exception('Telegram: ' . ($r['description'] ?? 'send failed'));
+        $out = ['sent' => true]; break;
+      case 'mkt_settings': $out = ['settings' => id_settings(), 'pos_budget' => round(id_pos_budget(id_settings()))]; break;
+      case 'mkt_settings_set':
+        $new = id_settings_set($b);
+        /* a new budget changes which stocks are affordable: rebuild a list that is not locked yet */
+        $ph = id_phase(); $dd = id_day_get($ph['date']); if ($dd && empty($dd['locked'])) md_store_set('id_day_' . str_replace('-', '', $ph['date']), '');
+        $out = ['settings' => $new, 'pos_budget' => round(id_pos_budget($new))]; break;
       case 'mkt_ai': $out = mkt_ai_note((string) $g('symbol', ''), $capital, $risk); break;
       default: fail(400, 'Unknown market action.');
     }
