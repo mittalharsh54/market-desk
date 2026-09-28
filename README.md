@@ -12,7 +12,7 @@ the evidence behind it, and a backtest of the same rules on that stock's history
 
 | Tab | What it does |
 |---|---|
-| **Intraday Top 10** | Every trading day: screen ~170 liquid F&O stocks, research the best 40 one by one (trend, strength vs Nifty, setup, liquidity, daily range, pivot width, a 60-day backtest of the rules on that stock, its news and event risk, sector, market, and after the open: gap, opening range, VWAP, relative volume, live score). Keep the 10 best, locked at 9:25 AM. Then live BUY / SELL-short signals with stop, Target 1 (book half, stop to cost), trailing stop, Target 2 and a 3:15 PM square-off, refreshed every minute with browser alerts. Desk rules: max 5 open positions, max 20% of capital per position, no new entries after −3R on the day. Every day is saved to a track record. |
+| **Intraday Top 10** | Every trading day: screen ~170 liquid F&O stocks, research the best 40 one by one (trend, strength vs Nifty, setup, liquidity, daily range, pivot width, a 60-day backtest of the rules on that stock, its news and event risk, sector, market, and after the open: gap, opening range, VWAP, relative volume, live score). Keep the 10 best, locked at 9:25 AM. Then live BUY / SELL-short signals (only on above-normal volume, and scored on buying vs selling volume) with stop, Target 1 (book half, stop to cost), trailing stop, Target 2 and a 3:15 PM square-off, refreshed every minute with browser alerts. Desk rules: max 5 open positions, max 20% of capital per position, no new entries after −3R on the day. Every day is saved to a track record. |
 | **Market pulse** | One regime score for Indian equities built from world indices (US, Europe, Asia), US & India VIX, US yields, the dollar, USD/INR, crude, gold, copper, the Nifty's trend, Nifty 50 breadth, FII/DII flows, the Nifty option chain (PCR, max pain), news sentiment and your India macro numbers. Also covers sector tailwinds for 28 sectors, sector indices vs Nifty, Nifty levels, top movers, scored headlines and an event radar. |
 | **Analyze a stock** | Intraday call (5-minute bars with a 15-minute check), swing call (10-factor daily technical score) and long-term rating (fundamentals vs Indian sector norms + trend + momentum + sector + macro). Charts, support/resistance, candle patterns, fundamentals, sector and macro exposure, stock news, and backtests. |
 | **Scanner** | Ranks Nifty 50, sector baskets or your watchlist into intraday buys/shorts, swing buys, long-term candidates and the weakest stocks. |
@@ -31,7 +31,7 @@ market.php          data fetching: Yahoo Finance, NSE, RSS; assembles each view
 market_engine.php   the maths: indicators, scores, signals, backtests (no I/O)
 sources.php         fallback data: Upstox, CNBC, NSE index snapshot
 config.sample.php   copy to config.php and set your password
-tools/test-market-engine.php   43 offline checks: php tools/test-market-engine.php
+tools/test-market-engine.php   58 offline checks: php tools/test-market-engine.php
 tools/dev-server.php           offline demo with synthetic data
 .github/workflows/deploy.yml   FTP deploy with config from secrets
 .github/workflows/daily-desk.yml    locks the Top 10 at 9:27 IST and records results at 15:42 IST (Mon–Fri)

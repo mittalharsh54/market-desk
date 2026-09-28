@@ -32,7 +32,7 @@ function synth_intraday($days, $drift, $noise, $seed, $start = 500.0) {
     for ($k = 0; $k < 75; $k++) {
       $r = $drift + $noise * ((mt_rand() / mt_getrandmax()) * 2 - 1);
       $o = $p; $c = $p * (1 + $r);
-      $C['t'][] = $day0 + $k * 300; $C['o'][] = $o; $C['c'][] = $c; $C['h'][] = max($o, $c) * 1.0008; $C['l'][] = min($o, $c) * 0.9992; $C['v'][] = 10000 + mt_rand(0, 5000);
+      $C['t'][] = $day0 + $k * 300; $C['o'][] = $o; $C['c'][] = $c; $C['h'][] = max($o, $c) * 1.0008; $C['l'][] = min($o, $c) * 0.9992; $C['v'][] = (10000 + mt_rand(0, 5000)) * (0.7 + 1.2 * abs($r) / max(abs($drift) + $noise, 1e-9)); // bigger moves trade more volume, as in real markets
       $p = $c;
     }
   }
@@ -153,8 +153,8 @@ foreach ($day['t'] as $k => $t) $day['t'][$k] = $t + 4 * 86400; // make it the 5
 $five = mkt_join($pre, $day);
 $R = mk_intraday_replay($five, null, ['now' => end($five['t']) + 3600, 'bias' => 'LONG', 'capital' => 100000, 'risk_pct' => 1]);
 ok(count($R['trades']) >= 1 && $R['trades'][0]['side'] === 'LONG', 'trending-up session triggers a LONG (' . count($R['trades']) . ' trade(s), day ' . $R['day_r'] . 'R)');
-ok($R['events'][0]['type'] === 'BUY' && strpos($R['status'], 'DONE') === 0, 'events start with BUY, session ends DONE (' . $R['status'] . ')');
-$firstBuy = $R['events'][0]['time']; ok($firstBuy >= '09:35', 'no entry before the opening range completes (first ' . $firstBuy . ')');
+ok(($R['events'][0]['type'] ?? '') === 'BUY' && strpos($R['status'], 'DONE') === 0, 'events start with BUY, session ends DONE (' . $R['status'] . ')');
+$firstBuy = $R['events'][0]['time'] ?? ''; ok($firstBuy >= '09:35', 'no entry before the opening range completes (first ' . $firstBuy . ')');
 $dayDn = synth_intraday(1, -0.0009, 0.0010, 53, end($pre['c'])); foreach ($dayDn['t'] as $k => $t) $dayDn['t'][$k] = $t + 4 * 86400;
 $R2 = mk_intraday_replay(mkt_join($pre, $dayDn), null, ['now' => end($dayDn['t']) + 3600, 'bias' => 'SHORT']);
 ok(count($R2['trades']) >= 1 && $R2['trades'][0]['side'] === 'SHORT', 'trending-down session triggers a SHORT (' . $R2['day_r'] . 'R)');
@@ -166,6 +166,16 @@ ok($R3['status'] !== 'LONG ACTIVE' || ($R3['position']['stop'] < $R3['position']
 /* same data, same answer */
 $R4 = mk_intraday_replay($five, null, ['now' => end($five['t']) + 3600, 'bias' => 'LONG']);
 ok(json_encode($R4['events']) === json_encode($R['events']), 'replay is deterministic');
+/* volume: entries need participation; thin-volume triggers are refused */
+ok(strpos($R['events'][0]['note'] ?? '', 'x normal volume') !== false, 'BUY signal states the volume behind it');
+$thin = $five; $nv = count($thin['v']); for ($k = $nv - 75; $k < $nv; $k++) $thin['v'][$k] = 12000.0; // flat volume all day
+$R5 = mk_intraday_replay($thin, null, ['now' => end($thin['t']) + 3600, 'bias' => 'LONG', 'capital' => 100000, 'risk_pct' => 1]);
+ok(count($R5['trades']) === 0, 'no entry when no bar trades above normal volume (' . count($R5['trades']) . ' trades)');
+$A6 = mk_intraday_arrays($five); $F6 = mk_intraday_score_at($A6, count($five['c']) - 1)['factors'];
+$vp = array_values(array_filter($F6, function ($f) { return $f['key'] === 'volp'; }));
+ok($vp && $vp[0]['score'] >= -1 && $vp[0]['score'] <= 1, 'volume-pressure factor is scored in -1..+1');
+$up = ['t' => [0, 1], 'o' => [100, 100], 'h' => [102, 102], 'l' => [99, 99], 'c' => [102, 99], 'v' => [1000, 1000]];
+$Au = mk_intraday_arrays($up); ok($Au['sv'][0] > 0 && $Au['sv'][1] < 0, 'close at the high counts as buying volume, at the low as selling');
 
 echo "\n$passes passed, $fails failed\n";
 exit($fails ? 1 : 0);

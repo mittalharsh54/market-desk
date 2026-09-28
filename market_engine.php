@@ -510,6 +510,9 @@ function mk_intraday_arrays(array $C, array $bench = null) {
   $A = ['C' => $C, 'n' => $n, 'ema9' => mk_ema($c, 9), 'ema21' => mk_ema($c, 21), 'rsi' => mk_rsi($c, 14), 'macd' => mk_macd($c),
         'st' => mk_supertrend($C, 10, 3), 'atr' => mk_atr($C, 14)];
   $vw = mk_vwap($C); $A['vwap'] = $vw['vwap']; $A['volume_weighted'] = $vw['volume_weighted'];
+  /* volume: 20-bar average, and signed volume = volume x where the bar closed in its range (+1 at the high, -1 at the low) */
+  $A['vavg'] = mk_sma($C['v'], 20); $A['sv'] = [];
+  for ($i = 0; $i < $n; $i++) { $rg = $C['h'][$i] - $C['l'][$i]; $A['sv'][$i] = $rg > 0 ? (($C['c'][$i] - $C['l'][$i]) - ($C['h'][$i] - $C['c'][$i])) / $rg * $C['v'][$i] : 0.0; }
   /* per-session facts: day open, opening range (9:15–9:30), previous day's H/L/C */
   $A['day'] = []; $A['dopen'] = []; $A['orh'] = []; $A['orl'] = []; $A['or_done'] = []; $A['pdh'] = []; $A['pdl'] = []; $A['pdc'] = []; $A['cumv'] = [];
   $days = []; $cur = null; $orh = $orl = null; $dop = null; $cv = 0.0; $dh = $dl = null; $prev = null;
@@ -566,6 +569,12 @@ function mk_intraday_score_at(array $A, $i) {
     $add('orb', 'Opening-range breakout (15 min)', 0.10, $s, round($orl, 2) . '–' . round($orh, 2),
       $s > 0 ? 'Broke above the opening range high ' . round($orh, 2) . '.' : ($s < 0 ? 'Broke below the opening range low ' . round($orl, 2) . '.' : 'Still inside the opening range — no breakout yet.'));
   }
+  if ($A['volume_weighted'] && $i >= 6) {
+    $sv = 0.0; $tv = 0.0; for ($j = $i - 5; $j <= $i; $j++) { $sv += $A['sv'][$j]; $tv += $C['v'][$j]; }
+    if ($tv > 0) { $press = $sv / $tv; $vr = $A['vavg'][$i - 1] ? $C['v'][$i] / $A['vavg'][$i - 1] : null;
+      $add('volp', 'Volume pressure (last 30 min)', 0.12, mk_clamp($press * 1.6), round($press, 2),
+        ($press >= 0 ? 'Buyers' : 'Sellers') . ' in control: volume is concentrated on ' . ($press >= 0 ? 'up-closes' : 'down-closes') . ' (' . sprintf('%+.2f', $press) . ')' . ($vr ? '; last bar ' . round($vr, 1) . 'x normal volume.' : '.')); }
+  }
   $pdc = $A['pdc'][$i]; $dop = $A['dopen'][$i];
   if ($pdc) {
     $gap = ($dop / $pdc - 1) * 100; $chg = ($px / $pdc - 1) * 100;
@@ -586,6 +595,14 @@ function mk_intraday_score_at(array $A, $i) {
   $w = 0.0; $s = 0.0; foreach ($F as $f) { $w += $f['weight']; $s += $f['weight'] * $f['score']; }
   return ['score' => $w > 0 ? round($s / $w, 3) : 0.0, 'factors' => $F];
 }
+
+/* Entry needs participation: the trigger bar trades at least 1.2x the last 20 bars' average
+   (skipped for instruments that report no volume, like indices) */
+function mk_vol_ok(array $A, $i, $mult = 1.2) {
+  if (!$A['volume_weighted'] || $i < 21 || !$A['vavg'][$i - 1]) return true;
+  return $A['C']['v'][$i] >= $mult * $A['vavg'][$i - 1];
+}
+function mk_vol_ratio(array $A, $i) { return ($A['volume_weighted'] && $i >= 21 && $A['vavg'][$i - 1]) ? round($A['C']['v'][$i] / $A['vavg'][$i - 1], 1) : null; }
 
 /* Relative volume: today's cumulative volume vs the same time on earlier sessions */
 function mk_rvol(array $A, $i) {
@@ -730,6 +747,7 @@ function mk_backtest_intraday(array $A, $th = 0.45, $cost = 0.08) {
     $s = mk_intraday_score_at($A, $i)['score'];
     if (!$in && !$newDay && $prev !== null && $m >= 585 && $m <= 870 && $A['atr'][$i]) {
       $side = ($s >= $th && $prev < $th) ? 1 : (($s <= -$th && $prev > -$th) ? -1 : 0);
+      if ($side && !mk_vol_ok($A, $i)) { $side = 0; $s = $prev; } // same volume rule as live; stay armed
       if ($side) { $e = $C['c'][$i]; $a = $A['atr'][$i]; $in = ['i' => $i, 'side' => $side, 'e' => $e, 'sl' => $e - $side * 1.2 * $a, 'tp' => $e + $side * 2 * $a]; }
     }
     $prev = $newDay ? null : $s;
@@ -1296,6 +1314,10 @@ function mk_intraday_replay(array $C5, array $bench5 = null, array $o = []) {
     if (!$isDone) continue;
     $okTime = $m >= max(570, (int) ($o['entries_from'] ?? 0)) && $m <= 865 && count($out['trades']) < $maxTrades && $i - $lastExit >= 3;
     $L = $cond($i, 1); $S = $cond($i, -1);
+    if ($okTime && (($L && $prevL === false) || ($S && $prevS === false)) && !mk_vol_ok($A, $i)) {
+      /* the price trigger fired on thin volume: stay armed and take it on a later bar that has the volume */
+      $L = false; $S = false;
+    }
     if ($okTime && (($L && $prevL === false) || ($S && $prevS === false))) {
       $side = $L ? 1 : -1; $px = $C5['c'][$i];
       $struct = $side > 0 ? [min(array_slice($C5['l'], max($first, $i - 7), min(8, $i - $first + 1))), $A['vwap'][$i], $A['orl'][$i]] : [max(array_slice($C5['h'], max($first, $i - 7), min(8, $i - $first + 1))), $A['vwap'][$i], $A['orh'][$i]];
@@ -1303,7 +1325,8 @@ function mk_intraday_replay(array $C5, array $bench5 = null, array $o = []) {
       if ($P && !empty($o['max_position'])) $P['qty'] = min($P['qty'], (int) floor($o['max_position'] / $px));
       if ($P && $P['qty'] > 0) {
         $pos = ['side' => $side, 'entry' => $px, 'stop' => $P['stop'], 't1' => $P['targets'][0], 't2' => $P['targets'][1], 'risk' => $P['risk_per_share'], 'qty' => $P['qty'], 't1_hit' => false, 'time' => gmdate('H:i', $C5['t'][$i] + 300 + MK_IST), 'init_stop' => $P['stop']];
-        $ev($i, $side > 0 ? 'BUY' : 'SELL (SHORT)', $px, 'Score ' . sprintf('%+.2f', $sc($i)) . ', ' . ($side > 0 ? 'above' : 'below') . ' VWAP and the opening range. Stop ₹' . $P['stop'] . ', T1 ₹' . $P['targets'][0] . ', T2 ₹' . $P['targets'][1] . ', qty ' . $P['qty'] . ' (₹' . number_format(round($P['qty'] * $px)) . ').');
+        $vr = mk_vol_ratio($A, $i);
+        $ev($i, $side > 0 ? 'BUY' : 'SELL (SHORT)', $px, 'Score ' . sprintf('%+.2f', $sc($i)) . ', ' . ($side > 0 ? 'above' : 'below') . ' VWAP and the opening range' . ($vr ? ', on ' . $vr . 'x normal volume' : '') . '. Stop ₹' . $P['stop'] . ', T1 ₹' . $P['targets'][0] . ', T2 ₹' . $P['targets'][1] . ', qty ' . $P['qty'] . ' (₹' . number_format(round($P['qty'] * $px)) . ').');
       }
     }
     $prevL = $L; $prevS = $S;
