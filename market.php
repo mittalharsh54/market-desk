@@ -555,8 +555,17 @@ function mkt_diag() {
   foreach ($nse as $pth) $out['nse ' . $pth] = $probe('https://www.nseindia.com' . $pth, ['cookie' => $ck, 'headers' => ['Referer: https://www.nseindia.com/get-quotes/equity?symbol=RELIANCE', 'X-Requested-With: XMLHttpRequest']]);
   /* FRED (US Federal Reserve) daily series: no key needed */
   foreach (['DGS10', 'DEXINUS', 'DCOILBRENTEU', 'SP500', 'VIXCLS', 'NIKKEI225'] as $id) $out['fred ' . $id] = $probe('https://fred.stlouisfed.org/graph/fredgraph.csv?id=' . $id);
+  /* Upstox public candle API (Indian stocks & indices) */
+  $to = date('Y-m-d'); $fromD = date('Y-m-d', strtotime('-400 days')); $fromI = date('Y-m-d', strtotime('-20 days'));
+  $out['upstox v2 day'] = $probe('https://api.upstox.com/v2/historical-candle/' . rawurlencode('NSE_EQ|INE002A01018') . '/day/' . $to . '/' . $fromD, ['headers' => ['Accept: application/json']]);
+  $out['upstox v3 15min'] = $probe('https://api.upstox.com/v3/historical-candle/' . rawurlencode('NSE_EQ|INE002A01018') . '/minutes/15/' . $to . '/' . $fromI, ['headers' => ['Accept: application/json']]);
+  $out['upstox v3 5min'] = $probe('https://api.upstox.com/v3/historical-candle/' . rawurlencode('NSE_EQ|INE002A01018') . '/minutes/5/' . $to . '/' . date('Y-m-d', strtotime('-7 days')), ['headers' => ['Accept: application/json']]);
+  $out['upstox nifty day'] = $probe('https://api.upstox.com/v2/historical-candle/' . rawurlencode('NSE_INDEX|Nifty 50') . '/day/' . $to . '/' . $fromD, ['headers' => ['Accept: application/json']]);
+  $out['upstox instruments'] = $probe('https://assets.upstox.com/market-quote/instruments/exchange/NSE.json.gz');
+  /* CNBC quotes + chart bars (global cues) */
+  $out['cnbc quote'] = $probe('https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=' . rawurlencode('.SPX|.VIX|@LCO.1|US10Y|.N225|INR=') . '&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&events=1');
+  $out['cnbc chart'] = $probe('https://ts-api.cnbc.com/harmony/app/charts/1Y.json?symbol=.SPX');
   $out['google_finance'] = $probe('https://www.google.com/finance/quote/RELIANCE:NSE');
-  $out['investing_rss'] = $probe('https://www.investing.com/rss/news_25.rss');
   return $out;
 }
 
