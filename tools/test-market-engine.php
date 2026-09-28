@@ -166,6 +166,8 @@ ok($R3['status'] !== 'LONG ACTIVE' || ($R3['position']['stop'] < $R3['position']
 /* same data, same answer */
 $R4 = mk_intraday_replay($five, null, ['now' => end($five['t']) + 3600, 'bias' => 'LONG']);
 ok(json_encode($R4['events']) === json_encode($R['events']), 'replay is deterministic');
+$R2b = mk_intraday_replay(mkt_join($pre, $dayDn), null, ['now' => end($dayDn['t']) + 3600, 'bias' => 'SHORT', 'long_only' => true]);
+ok(count(array_filter($R2b['trades'], function ($t) { return $t['side'] === 'SHORT'; })) === 0, 'Buy only: no short trades on a falling day');
 /* volume: entries need participation; thin-volume triggers are refused */
 ok(strpos($R['events'][0]['note'] ?? '', 'x normal volume') !== false, 'BUY signal states the volume behind it');
 $thin = $five; $nv = count($thin['v']); for ($k = $nv - 75; $k < $nv; $k++) $thin['v'][$k] = 12000.0; // flat volume all day

@@ -1269,7 +1269,9 @@ function mk_intraday_replay(array $C5, array $bench5 = null, array $o = []) {
   $last = $n - 1; while ($last >= $first && $A['day'][$last] !== $day) $last--;
   $done = function ($i) use ($C5, $now) { return $C5['t'][$i] + 300 <= $now; };
   $sc = function ($i) use ($A, $tilt) { return mk_clamp(mk_intraday_score_at($A, $i)['score'] + $tilt); };
-  $cond = function ($i, $side) use ($A, $C5, $sc, $bias, $th, $thCounter) {
+  $longOnly = !empty($o['long_only']);
+  $cond = function ($i, $side) use ($A, $C5, $sc, $bias, $th, $thCounter, $longOnly) {
+    if ($longOnly && $side < 0) return false;
     if (!$A['or_done'][$i] || $A['orh'][$i] === null || !$A['vwap'][$i]) return false;
     $need = ($bias === 'BOTH' || ($bias === 'LONG') === ($side > 0)) ? $th : $thCounter;
     $s = $sc($i); $c = $C5['c'][$i];

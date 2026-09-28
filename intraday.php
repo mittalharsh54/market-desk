@@ -34,10 +34,12 @@ const ID_MIN_QTY = 3;           // a stock must be affordable in at least this m
 /* ---------- desk settings (saved on the server so the 9:27 lock uses them) ---------- */
 function id_settings() {
   $j = json_decode((string) md_store_get('desk_settings'), true); $j = is_array($j) ? $j : [];
-  return ['capital' => max(1000, (float) ($j['capital'] ?? 10000)), 'risk_pct' => min(5, max(0.1, (float) ($j['risk_pct'] ?? 1))), 'leverage' => in_array($lv = (int) ($j['leverage'] ?? 1), [1, 2, 3, 4, 5], true) ? $lv : 1];
+  return ['capital' => max(1000, (float) ($j['capital'] ?? 10000)), 'risk_pct' => min(5, max(0.1, (float) ($j['risk_pct'] ?? 1))), 'leverage' => in_array($lv = (int) ($j['leverage'] ?? 1), [1, 2, 3, 4, 5], true) ? $lv : 1,
+          'long_only' => !empty($j['long_only'])]; // "Buy only": no short selling
 }
 function id_settings_set(array $in) {
   $cur = id_settings(); foreach (['capital', 'risk_pct', 'leverage'] as $k) if (isset($in[$k]) && is_numeric($in[$k])) $cur[$k] = $in[$k] + 0;
+  if (isset($in['long_only'])) $cur['long_only'] = (bool) $in['long_only'];
   md_store_set('desk_settings', json_encode($cur)); return id_settings();
 }
 function id_pos_budget(array $st) { return $st['capital'] * ID_POS_CAP * $st['leverage']; }
@@ -227,6 +229,7 @@ function id_select($date, $phase) {
     /* the method must have worked on this stock: no picks where the rules have been losing money */
     if ($edge && ($edge['trades'] ?? 0) >= 20 && $edge['profit_factor'] !== null && $edge['profit_factor'] < 0.9) { $rejected[$sym] = 'rules lost money here over 60 days (PF ' . $edge['profit_factor'] . ', ' . $edge['trades'] . ' trades)'; continue; }
     $P = mk_pick_score($c['setup'], $edge, $liveS, $nw, $ctx['sectors'][$c['sector']] ?? null, $ctx['regime']);
+    if ($SET['long_only'] && $P['dir'] === 'SHORT') { $rejected[$sym] = 'short setup — you chose Buy only'; continue; }
     $scored[$sym] = $c + ['dir' => $P['dir'], 'quality' => $P['quality'], 'factors' => $P['factors'], 'edge' => $edge ? array_diff_key($edge, ['recent' => 1]) : null, 'news' => $nw, 'live_at_pick' => $liveS];
   }
   uasort($scored, function ($a, $b) { return $b['quality'] <=> $a['quality']; });
@@ -266,7 +269,7 @@ function id_live(array $day, $capital, $riskPct) {
   foreach ($day['picks'] as $p) {
     $x = $X[$p['symbol']] ?? []; $C5 = id_join($x['p5'] ?? null, $x['t5'] ?? null);
     $R = ($C5 && count($C5['c']) > 20) ? mk_intraday_replay($C5, $n5, ['now' => $now, 'date' => $date, 'bias' => $p['dir'], 'daily_score' => $p['setup']['trend'], 'market_score' => $day['market']['regime'] ?? 0,
-                                                                        'capital' => $capital, 'risk_pct' => $riskPct, 'max_position' => $budget, 'entries_from' => $entriesFrom])
+                                                                        'capital' => $capital, 'risk_pct' => $riskPct, 'max_position' => $budget, 'entries_from' => $entriesFrom, 'long_only' => $SET['long_only']])
                                          : ['status' => 'NO DATA', 'events' => [], 'trades' => [], 'position' => null, 'levels' => [], 'live' => null, 'day_r' => 0, 'day_pnl' => 0];
     if (!empty($x['t5']) && count($x['t5']['c'])) { $f = max(0, count($x['t5']['c']) - 75); $R['spark'] = array_map(function ($v) { return round($v, 2); }, array_slice($x['t5']['c'], $f)); }
     $px = $R['live']['price'] ?? $p['setup']['close']; $mq = (int) floor($budget / max(1, $px));
@@ -361,6 +364,8 @@ function id_top10($force, $capital, $riskPct) {
     } elseif (!$day) throw new Exception('Another request is researching today\'s list right now — try again in a minute.');
     if ($lock) fclose($lock);
   }
+  if ($day && empty($day['picks']) && id_settings()['long_only'] && in_array('short setup — you chose Buy only', $day['rejected'] ?? [], true))
+    throw new Exception('No stock has a clean BUY setup today — the good setups are all shorts. Sit out today, or switch Trades to "Buy & short".');
   if (!$day || empty($day['picks'])) throw new Exception('No stock passed the filters — the price feed may be down. Try again shortly.');
   $live = id_live($day, $capital, $riskPct);
   if ($ph['phase'] === 'closed' && $date === id_today() && mk_ist_min(time()) >= 935) $day = id_finalize($day, $live);
@@ -407,7 +412,7 @@ function id_event_msg(array $p, array $e) {
       $pos = $P && $P['entry_time'] === $t ? $P : null; $qty = $pos ? $pos['qty'] : ($tr['qty'] ?? $q);
       $stop = $pos ? $pos['init_stop'] : null; $t1 = $pos ? $pos['t1'] : null; $t2 = $pos ? $pos['t2'] : null;
       if (!$pos && preg_match('/Stop ₹([\d.]+), T1 ₹([\d.]+), T2 ₹([\d.]+), qty (\d+)/', $e['note'], $m)) { $stop = $m[1]; $t1 = $m[2]; $t2 = $m[3]; $qty = $m[4]; }
-      return ($buy ? "🟢 <b>BUY $sym</b>" : "🔻 <b>SELL (SHORT) $sym</b>") . " — $qty shares at " . id_money($e['price']) . ' (≈' . id_money($qty * $e['price']) . ")\n"
+      return ($buy ? "🟢 <b>BUY $sym</b>" : "🔻 <b>SHORT $sym</b> (sell first, buy back later today)") . " — $qty shares at " . id_money($e['price']) . ' (≈' . id_money($qty * $e['price']) . ")\n"
         . 'Stop-loss ' . id_money($stop) . ' · Target 1 ' . id_money($t1) . ' (' . ($buy ? 'sell' : 'buy back') . ' half) · Target 2 ' . id_money($t2) . "\n"
         . "Intraday (MIS). Place the stop-loss order right away. <i>$t</i>";
     case 'TARGET 1 HIT':
@@ -429,9 +434,10 @@ function id_list_msg(array $R) {
   foreach ($R['picks'] as $p) {
     $lv = $p['state']['levels'] ?? []; $up = $p['dir'] === 'LONG';
     $trig = $up ? ($lv['buy_above'] ?? $p['setup']['pdh']) : ($lv['sell_below'] ?? $p['setup']['pdl']);
-    $lines[] = $p['rank'] . '. <b>' . htmlspecialchars($p['symbol']) . '</b>' . ($p['darkhorse'] ? ' 🐎' : '') . ' — ' . ($up ? 'BUY above ' : 'SELL below ') . id_money($trig) . ' · up to ' . $p['plan']['max_qty'] . ' shares';
+    $lines[] = $p['rank'] . '. <b>' . htmlspecialchars($p['symbol']) . '</b>' . ($p['darkhorse'] ? ' 🐎' : '') . ' — ' . ($up ? '▲ BUY if above ' : '▼ SHORT if below ') . id_money($trig) . ' · up to ' . $p['plan']['max_qty'] . ' shares';
   }
-  $lines[] = "\nWait for the BUY / SELL message before acting — a level alone is not a signal.";
+  $lines[] = "\nWait for the BUY / SHORT message before acting — a level alone is not a signal.";
+  if (array_filter($R['picks'], function ($p) { return $p['dir'] !== 'LONG'; })) $lines[] = 'SHORT = profit if the price falls: sell first (Intraday/MIS), buy back before 3:15 PM. You don\'t need to own the shares.';
   return implode("\n", $lines);
 }
 function id_summary_msg(array $R) {
