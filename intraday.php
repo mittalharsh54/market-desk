@@ -274,7 +274,8 @@ function id_live(array $day, $capital, $riskPct) {
   foreach ($day['picks'] as $p) {
     $x = $X[$p['symbol']] ?? []; $C5 = id_join($x['p5'] ?? null, $x['t5'] ?? null);
     $R = ($C5 && count($C5['c']) > 20) ? mk_intraday_replay($C5, $n5, ['now' => $now, 'date' => $date, 'bias' => $p['dir'], 'daily_score' => $p['setup']['trend'], 'market_score' => $day['market']['regime'] ?? 0,
-                                                                        'capital' => $capital, 'risk_pct' => $riskPct, 'max_position' => $budget, 'entries_from' => $entriesFrom, 'long_only' => $SET['long_only']])
+                                                                        'capital' => $capital, 'risk_pct' => $riskPct, 'max_position' => $budget, 'entries_from' => $entriesFrom, 'long_only' => $SET['long_only'],
+                                                                        'th' => md_rules()['intraday']['th'], 'max_trades' => md_rules()['intraday']['max_trades']])
                                          : ['status' => 'NO DATA', 'events' => [], 'trades' => [], 'position' => null, 'levels' => [], 'live' => null, 'day_r' => 0, 'day_pnl' => 0];
     if (!empty($x['t5']) && count($x['t5']['c'])) { $f = max(0, count($x['t5']['c']) - 75); $R['spark'] = array_map(function ($v) { return round($v, 2); }, array_slice($x['t5']['c'], $f)); }
     $px = $R['live']['price'] ?? $p['setup']['close']; $mq = (int) floor($budget / max(1, $px));
@@ -386,7 +387,8 @@ function id_top10($force, $capital, $riskPct) {
   if ($ph['phase'] === 'closed' && $date === id_today() && mk_ist_min(time()) >= 935) $day = id_finalize($day, $live);
   return ['phase' => $ph, 'day' => array_diff_key($day, ['picks' => 1]), 'built_now' => $built, 'entries_from' => $live['entries_from'], 'picks' => $live['picks'], 'book' => $live['book'], 'nifty' => $live['nifty'],
           'rules' => ['max_open' => ID_MAX_OPEN, 'day_stop_r' => ID_DAY_STOP_R, 'day_target_r' => ID_DAY_TARGET_R, 'pos_cap_pct' => ID_POS_CAP * 100, 'min_qty' => ID_MIN_QTY],
-          'settings' => id_settings(), 'pos_budget' => round(id_pos_budget(id_settings())), 'track' => id_track(), 'server_time' => time()];
+          'settings' => id_settings(), 'pos_budget' => round(id_pos_budget(id_settings())), 'track' => id_track(), 'server_time' => time(),
+          'learned' => ['updated' => md_rules()['updated'], 'intraday' => md_rules()['intraday'], 'swing' => md_rules()['swing'], 'last' => md_rules()['log'][0] ?? null]];
 }
 
 

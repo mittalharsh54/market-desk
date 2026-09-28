@@ -22,6 +22,9 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+  workflow_run:            # the daily learning run commits rules.json with the Actions token, which does not fire "push"
+    workflows: ["Daily learning"]
+    types: [completed]
 
 concurrency:
   group: deploy          # one upload at a time: overlapping FTP uploads leave half-written temp files

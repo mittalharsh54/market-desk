@@ -64,7 +64,7 @@ foreach (['0.30 (live rule)' => 0.30, '0.45 (stricter)' => 0.45] as $label => $t
   $H1 = array_values(array_filter($T, function ($t) use ($mid) { return $t['date'] < $mid; }));
   $H2 = array_values(array_filter($T, function ($t) use ($mid) { return $t['date'] >= $mid; }));
   foreach (['gross (no charges)' => 0, 'net, Rs 2,500 positions' => 2500, 'net, Rs 5,000 positions' => 5000] as $cl => $v)
-    echo json_encode(['rule' => $label, 'costs' => $cl, 'all' => $stat($T, $v), 'first_half' => $stat($H1, $v), 'second_half' => $stat($H2, $v)]), "\n";
+    echo json_encode(['rule' => $label, 'th' => $th, 'costs' => $cl, 'position' => $v, 'all' => $stat($T, $v), 'first_half' => $stat($H1, $v), 'second_half' => $stat($H2, $v)]), "\n";
 
   /* a Rs 10,000 account: at most $slots positions, equal split of equity, strongest signal first */
   foreach ([2, 4] as $slots) {
@@ -85,7 +85,7 @@ foreach (['0.30 (live rule)' => 0.30, '0.45 (stricter)' => 0.45] as $label => $t
     foreach ($open as $o) $cash += $o['v'] * (1 + $o['ret'] / 100) - $o['v'] * delivery_cost_pct($o['v']) / 100;
     $yrs = (strtotime(end($ndates)) - strtotime($first)) / (365.25 * 86400);
     $nb = $nifty[end($ndates)] / $nifty[$first];
-    echo json_encode(['rule' => $label, 'account' => "Rs 10,000, up to $slots positions", 'from' => $first, 'to' => end($ndates), 'trades' => $taken,
+    echo json_encode(['rule' => $label, 'th' => $th, 'slots' => $slots, 'account' => "Rs 10,000, up to $slots positions", 'from' => $first, 'to' => end($ndates), 'trades' => $taken,
       'end_value' => round($cash), 'cagr_pct' => round((pow($cash / 10000, 1 / $yrs) - 1) * 100, 1), 'max_drawdown_closed_trades_pct' => round($dd * 100, 1),
       'nifty_buy_hold_end_value' => round(10000 * $nb), 'nifty_cagr_pct' => round((pow($nb, 1 / $yrs) - 1) * 100, 1)]), "\n";
   }

@@ -1,0 +1,57 @@
+name: Daily learning
+
+# Every trading day after the close, re-test the rules on the latest data and
+# update rules.json, which the app uses. A change is adopted only if it made money
+# after charges in both halves of the test period on enough trades (tools/learn.php).
+# The decision log is kept in rules.json and shown on the Intraday page.
+
+on:
+  schedule:
+    - cron: '40 10 * * 1-5'   # 16:10 IST, after the close
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: learn
+  cancel-in-progress: false
+
+jobs:
+  intraday:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - run: php tools/volume-study.php 260 0 1 grid | tee intraday.jsonl
+      - uses: actions/upload-artifact@v4
+        with: { name: intraday, path: intraday.jsonl }
+  swing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - run: php tools/swing-study.php 260 3 | tee swing.jsonl
+      - uses: actions/upload-artifact@v4
+        with: { name: swing, path: swing.jsonl }
+  learn:
+    needs: [intraday, swing]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with: { path: results }
+      - name: Decide what to keep
+        run: |
+          php tools/learn.php results/intraday/intraday.jsonl results/swing/swing.jsonl | tee decision.txt
+          { echo "### Learning run"; echo '```'; cat decision.txt; echo '```'; echo '```json'; cat rules.json; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Save rules.json
+        run: |
+          git config user.name "market-desk-learning"
+          git config user.email "actions@users.noreply.github.com"
+          git add rules.json
+          git diff --cached --quiet && { echo "No change."; exit 0; }
+          git commit -m "Daily learning: $(cat decision.txt | head -c 200)"
+          git push

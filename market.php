@@ -37,6 +37,8 @@
 require_once __DIR__ . '/market_engine.php';
 require_once __DIR__ . '/sources.php';
 require_once __DIR__ . '/intraday.php';
+/* the volume gate the daily learning run settled on (rules.json) */
+if (function_exists('md_rules')) $GLOBALS['MK_VOL_MULT'] = (float) md_rules()['intraday']['vol_mult'];
 
 const MKT_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
 

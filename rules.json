@@ -1,0 +1,32 @@
+{
+    "intraday": {
+        "vol_mult": 1.5,
+        "th": 0.4,
+        "max_trades": 2,
+        "tradeable": false,
+        "evidence": {
+            "variant": "gate 1.5x, th 0.40, 2/day (live)",
+            "stock_days": 8602,
+            "trades": 8855,
+            "win_pct": 40.3,
+            "gross_r_per_trade": 0.045,
+            "net_r_per_trade": -0.07,
+            "net_pf": 0.75,
+            "half1_net_r": -322.2,
+            "half2_net_r": -295,
+            "tested": "2026-09-29"
+        },
+        "variants_tested": 8
+    },
+    "swing": {
+        "th": 0.3,
+        "tradeable": false
+    },
+    "log": [
+        {
+            "date": "2026-09-29",
+            "intraday": "kept current rule; no setting made money after charges in both halves"
+        }
+    ],
+    "updated": "2026-09-29"
+}

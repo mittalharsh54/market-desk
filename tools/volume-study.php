@@ -89,7 +89,8 @@ function stats(array $T) {
 }
 foreach ($out as $name => $o) {
   $T = $o['trades']; $W = array_values(array_filter($T, function ($t) { return $t['warm']; }));
-  echo json_encode(['variant' => $name, 'stock_days' => $o['days']] + stats($T)), "\n";
+  $v = $VARIANTS[$name]; $params = ['volp' => $v[0], 'vol_mult' => $v[1], 'th' => $v[2], 'max_trades' => $v[3]];
+  echo json_encode(['variant' => $name, 'params' => $params, 'stock_days' => $o['days']] + stats($T)), "\n";
   echo json_encode(['variant' => "$name, same days", 'stock_days' => $o['days']] + stats($W)), "\n";
   echo json_encode(['variant' => "$name + past-edge filter", 'stock_days' => $o['days']] + stats(array_values(array_filter($W, function ($t) { return $t['edge']; })))), "\n";
 }

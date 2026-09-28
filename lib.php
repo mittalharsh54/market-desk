@@ -28,6 +28,16 @@ function md_config() {
 }
 function md_configured() { $c = md_config(); return $c['password'] !== '' || $c['password_hash'] !== ''; }
 
+/* ---------- learned rules (rules.json, written by the daily learning run: tools/learn.php) ---------- */
+function md_rules() {
+  static $r = null; if ($r !== null) return $r;
+  $r = json_decode((string) @file_get_contents(__DIR__ . '/rules.json'), true) ?: [];
+  $r += ['intraday' => [], 'swing' => [], 'log' => [], 'updated' => null];
+  $r['intraday'] += ['vol_mult' => 1.5, 'th' => 0.40, 'max_trades' => 2, 'tradeable' => false];
+  $r['swing'] += ['th' => 0.30, 'tradeable' => false];
+  return $r;
+}
+
 /* ---------- JSON responses ---------- */
 function fail($code, $msg) {
   http_response_code($code);

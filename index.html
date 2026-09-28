@@ -137,6 +137,7 @@
   .plan span { font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: .04em; }
   .warnbox { background: var(--warn-bg); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; margin-top: 8px; }
   .warnbox li { margin: 2px 0; }
+  .okbox { background: color-mix(in oklab, var(--bull) 14%, var(--surface)); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; margin-top: 8px; }
   ul.plain { margin: 6px 0 0; padding-left: 18px; } ul.plain li { margin: 3px 0; font-size: 13px; }
 
   .heat { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
@@ -998,6 +999,15 @@
         </details>
       </div></div>`;
   }
+  function learnBox(L) {
+    const I = L && L.intraday, E = I && I.evidence;
+    if (!E) return `<div class="warnbox" style="margin:0 0 10px"><b>Not yet tested.</b> Paper-trade only until the daily learning run has tested these rules.</div>`;
+    const pos = I.tradeable;
+    return `<div class="${pos ? "okbox" : "warnbox"}" style="margin:0 0 10px"><b>${pos ? "Tested edge: these rules made money after charges." : "Tested result — read before trading real money."}</b>
+      Last tested ${esc(E.tested)} on ${fmt(E.stock_days, 0)} stock-days (${fmt(E.trades, 0)} trades, rule: ${esc(E.variant)}): won ${E.win_pct}% of trades, ${E.gross_r_per_trade >= 0 ? "+" : ""}${E.gross_r_per_trade}R a trade before charges, <b>${E.net_r_per_trade >= 0 ? "+" : ""}${E.net_r_per_trade}R after charges</b>; first half ${E.half1_net_r}R, second half ${E.half2_net_r}R.
+      ${pos ? "Still: size small, use the stop-loss every time." : "No setting tried so far is profitable after charges in both halves, so use this list to paper-trade and learn."}
+      ${L.last ? `<br><span class="tiny">Learning run ${esc(L.last.date)}: ${esc(L.last.intraday || "")}</span>` : ""}</div>`;
+  }
   function renderTop10() {
     const J = T10, ph = J.phase, d = J.day, b = J.book, tr = J.track, SET = J.settings;
     $("#t10Phase").innerHTML = `<span class="dot"></span>${esc(ph.label)}`; $("#t10Phase").classList.toggle("open", ph.phase === "live");
@@ -1007,7 +1017,7 @@
     const morning = Date.parse(d.date + "T08:45:00+05:30") / 1000;
     const nextStep = d.locked ? "Locked for the day — it will not change." : d.built_at < morning ? "It is re-checked once at 8:45 AM with overnight news and global markets, then locked at 9:25 AM." : "It locks at 9:25 AM once the opening range is known.";
     let h = `<p class="small dim" style="margin:0 0 8px">List for <b>${esc(d.date)}</b>, researched ${esc(builtAt)} IST (${d.researched} stocks studied in depth). Refreshing this page does not change it. ${nextStep} Stocks already on the list keep their place unless a newcomer is clearly better.</p>
-    <div class="warnbox" style="margin:0 0 10px"><b>Tested result — read before trading real money.</b> These intraday rules were replayed on 253 NSE stocks over ~34 sessions (Aug–Sep 2026, ~8,800 trades). They won about 40% of trades and made a small profit <i>before</i> charges, but <b>lost money after brokerage, STT and fees</b> (about −0.07R per trade; no setting tried fixed that). Use this list to paper-trade and learn, not to expect daily profit.</div>
+    ${learnBox(J.learned)}
     <div class="summary">
         <div><span>Your budget</span><b>₹${fmt(SET.capital, 0)}</b><em>up to ₹${fmt(J.pos_budget, 0)} per stock · max ${J.rules.max_open} at once</em></div>
         <div><span>Today's profit / loss</span><b class="${b.pnl + b.open_pnl >= 0 ? "good" : "bad"}">${inr(b.pnl + b.open_pnl, 0)}</b><em>${b.trades} closed · ${nOpen} open · after charges</em></div>
