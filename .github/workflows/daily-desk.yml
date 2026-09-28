@@ -1,7 +1,8 @@
 name: Daily desk (Intraday Top 10)
 
 # Keeps the Intraday Top 10 honest and on time even when nobody has the page open:
-#   08:50 IST  research the universe (warms the day's cache, provisional list)
+#   00:40 IST  research the new session's list overnight
+#   08:50 IST  one re-check with overnight news and global cues (existing picks keep their place unless clearly beaten)
 #   09:27 IST  lock the list once the opening range is known (09:40 backup run)
 #   15:42 IST  record the day's signals in the track record
 # GitHub may start scheduled runs a few minutes late; the app locks the list at
@@ -10,7 +11,8 @@ name: Daily desk (Intraday Top 10)
 
 on:
   schedule:
-    - cron: '20 3 * * 1-5'    # 08:50 IST
+    - cron: '10 19 * * 0-4'   # 00:40 IST (Mon-Fri): research the new session's list overnight
+    - cron: '20 3 * * 1-5'    # 08:50 IST: one re-check with overnight news and global markets
     - cron: '57 3 * * 1-5'    # 09:27 IST
     - cron: '10 4 * * 1-5'    # 09:40 IST
     - cron: '12 10 * * 1-5'   # 15:42 IST

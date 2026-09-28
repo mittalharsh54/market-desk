@@ -171,7 +171,7 @@ function id_market_context(array $nifty) {
 }
 
 /* ---------- selection ---------- */
-function id_select($date, $phase) {
+function id_select($date, $phase, array $prev = null) {
   @set_time_limit(240);
   $U = id_universe(); $live = in_array($phase, ['opening', 'live'], true) && $date === id_today();
   $SET = id_settings(); $budget = id_pos_budget($SET);
@@ -206,7 +206,9 @@ function id_select($date, $phase) {
     $cands[$sym] = ['sym' => $sym, 'name' => $x['name'], 'sector' => $sk, 'setup' => $st, 'pre' => $P['quality'], 'dark' => $dh];
   }
   uasort($cands, function ($a, $b) { return $b['pre'] <=> $a['pre']; });
-  $deep = array_slice($cands, 0, 40, true);
+  $deep = array_slice($cands, 0, 60, true);
+  /* stocks already on the list are always re-researched, so a small wobble in the first screen can't drop them */
+  foreach (($prev['picks'] ?? []) as $pp) if (!isset($deep[$pp['symbol']]) && isset($cands[$pp['symbol']])) $deep[$pp['symbol']] = $cands[$pp['symbol']];
   /* dark horses get the same deep research even if they rank lower on the first screen */
   uasort($dark, function ($a, $b) { return $b['score'] <=> $a['score']; });
   foreach (array_slice(array_keys($dark), 0, 8) as $sym) if (!isset($deep[$sym]) && isset($cands[$sym])) $deep[$sym] = $cands[$sym];
@@ -232,7 +234,10 @@ function id_select($date, $phase) {
     if ($SET['long_only'] && $P['dir'] === 'SHORT') { $rejected[$sym] = 'short setup — you chose Buy only'; continue; }
     $scored[$sym] = $c + ['dir' => $P['dir'], 'quality' => $P['quality'], 'factors' => $P['factors'], 'edge' => $edge ? array_diff_key($edge, ['recent' => 1]) : null, 'news' => $nw, 'live_at_pick' => $liveS];
   }
-  uasort($scored, function ($a, $b) { return $b['quality'] <=> $a['quality']; });
+  /* stability: a stock already on the list keeps its place unless a newcomer is clearly better (0.06 quality margin) */
+  $was = array_column($prev['picks'] ?? [], 'symbol');
+  foreach ($scored as $sym => $c) { $scored[$sym]['kept'] = in_array($sym, $was, true); $scored[$sym]['rank_q'] = $c['quality'] + ($scored[$sym]['kept'] ? 0.06 : 0); }
+  uasort($scored, function ($a, $b) { return $b['rank_q'] <=> $a['rank_q']; });
   $picks = []; $perSector = [];
   foreach ($scored as $sym => $c) {
     if (count($picks) >= 10) break;
@@ -240,7 +245,7 @@ function id_select($date, $phase) {
     $perSector[$c['sector']] = ($perSector[$c['sector']] ?? 0) + 1;
     $label = mk_sector_sensitivity()[$c['sector']]['label'] ?? $c['sector'];
     $picks[] = ['rank' => count($picks) + 1, 'symbol' => $sym, 'name' => $c['name'], 'sector' => $label, 'sector_key' => $c['sector'], 'dir' => $c['dir'], 'quality' => $c['quality'],
-                'factors' => $c['factors'], 'setup' => $c['setup'], 'edge' => $c['edge'], 'news' => $c['news'], 'live_at_pick' => $c['live_at_pick'], 'darkhorse' => $c['dark']];
+                'factors' => $c['factors'], 'setup' => $c['setup'], 'edge' => $c['edge'], 'news' => $c['news'], 'live_at_pick' => $c['live_at_pick'], 'darkhorse' => $c['dark'], 'kept' => $c['kept']];
   }
   $horses = [];
   foreach ($scored as $sym => $c) if ($c['dark']) $horses[] = ['symbol' => $sym, 'name' => $c['name'], 'dir' => $c['dir'], 'quality' => $c['quality'], 'dark_score' => $c['dark']['score'], 'why' => $c['dark']['why'],
@@ -349,8 +354,13 @@ function id_top10($force, $capital, $riskPct) {
   }
   /* a past session never finalised (nobody looked after the close): replay it now */
   foreach ([id_prev_weekday($date)] as $pd) { $pdDay = id_day_get($pd); if ($pdDay && empty($pdDay['final']) && !empty($pdDay['picks'])) id_finalize($pdDay, id_live($pdDay, $capital, $riskPct)); }
+  /* a fixed research schedule, so refreshing the page never changes the list:
+       1) built once for the next session (evening / overnight)
+       2) re-researched once from 8:45 AM with overnight news and global cues
+       3) locked at the first build after 9:25 AM, once the opening range is known */
+  $morning = strtotime($date . ' 08:45:00 Asia/Kolkata');
   $stale = !$day || empty($day['picks'])
-        || (!$day['locked'] && in_array($ph['phase'], ['preopen', 'opening'], true) && time() - $day['built_at'] > ($ph['phase'] === 'preopen' ? 1800 : 240))
+        || (!$day['locked'] && in_array($ph['phase'], ['preopen', 'opening'], true) && time() >= $morning && $day['built_at'] < $morning)
         || (!$day['locked'] && $ph['phase'] === 'live');
   if ($ph['phase'] === 'closed' && $day && !empty($day['picks'])) $stale = false;
   if ($force && $ph['phase'] !== 'closed') $stale = true;
@@ -358,9 +368,14 @@ function id_top10($force, $capital, $riskPct) {
   if ($stale) {
     $lock = @fopen(md_path('id_lock'), 'c');
     if ($lock && flock($lock, LOCK_EX | LOCK_NB)) {
-      $sel = id_select($date, $ph['phase']);
+      $sel = id_select($date, $ph['phase'], ($day && !empty($day['picks'])) ? $day : null);
       if ($day && $day['locked'] && $force) $sel['repicked_at'] = time();
-      $day = $sel; id_day_put($day); $built = true; flock($lock, LOCK_UN);
+      /* a thin data run (feed errors) must not replace a good list */
+      if ($day && !empty($day['picks']) && $sel['screened'] < 0.8 * ($day['screened'] ?? 0)) {
+        $day['refresh_failed'] = ['at' => time(), 'screened' => $sel['screened']];
+        if (!$day['locked'] && !empty($sel['locked'])) { $day['locked'] = true; $day['built_at'] = time(); }
+      } else { $sel['builds'] = ($day['builds'] ?? 0) + 1; $day = $sel; }
+      id_day_put($day); $built = true; flock($lock, LOCK_UN);
     } elseif (!$day) throw new Exception('Another request is researching today\'s list right now — try again in a minute.');
     if ($lock) fclose($lock);
   }
