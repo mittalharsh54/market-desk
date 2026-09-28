@@ -23,6 +23,10 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+concurrency:
+  group: deploy          # one upload at a time: overlapping FTP uploads leave half-written temp files
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -56,6 +60,17 @@ jobs:
       - name: Engine checks
         if: env.FTP_SERVER != ''
         run: php tools/test-market-engine.php
+
+      - name: Remove half-written uploads left by an interrupted deploy
+        if: env.FTP_SERVER != ''
+        env:
+          H: ${{ secrets.FTP_SERVER }}
+          FU: ${{ secrets.FTP_USERNAME }}
+          FP: ${{ secrets.FTP_PASSWORD }}
+          D: ${{ vars.FTP_DIR || './' }}
+        run: |
+          sudo apt-get install -y -qq lftp >/dev/null 2>&1 || (sudo apt-get update -qq && sudo apt-get install -y -qq lftp >/dev/null)
+          lftp -u "$FU,$FP" -e "set ssl:verify-certificate no; set net:max-retries 2; set net:timeout 20; cd $D; glob -a rm -f .in.* ; bye" "$H" || true
 
       - name: Upload over FTP
         if: env.FTP_SERVER != ''
