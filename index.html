@@ -1003,7 +1003,8 @@
     $("#t10Phase").innerHTML = `<span class="dot"></span>${esc(ph.label)}`; $("#t10Phase").classList.toggle("open", ph.phase === "live");
     const picks = J.picks.map(p => Object.assign({}, p, { A: actionOf(p) })).sort((x, y) => x.A.order - y.A.order || x.rank - y.rank);
     const nOpen = picks.filter(p => p.state.position).length, nNew = picks.filter(p => p.A.fresh).length;
-    let h = `<div class="summary">
+    let h = `<div class="warnbox" style="margin:0 0 10px"><b>Tested result — read before trading real money.</b> These intraday rules were replayed on 253 NSE stocks over ~34 sessions (Aug–Sep 2026, ~8,800 trades). They won about 40% of trades and made a small profit <i>before</i> charges, but <b>lost money after brokerage, STT and fees</b> (about −0.07R per trade; no setting tried fixed that). Use this list to paper-trade and learn, not to expect daily profit.</div>
+    <div class="summary">
         <div><span>Your budget</span><b>₹${fmt(SET.capital, 0)}</b><em>up to ₹${fmt(J.pos_budget, 0)} per stock · max ${J.rules.max_open} at once</em></div>
         <div><span>Today's profit / loss</span><b class="${b.pnl + b.open_pnl >= 0 ? "good" : "bad"}">${inr(b.pnl + b.open_pnl, 0)}</b><em>${b.trades} closed · ${nOpen} open · after charges</em></div>
         <div><span>Right now</span><b>${nNew ? nNew + " new signal" + (nNew > 1 ? "s" : "") : nOpen ? nOpen + " open trade" + (nOpen > 1 ? "s" : "") : "No action"}</b><em>${esc(ph.label)}</em></div>
