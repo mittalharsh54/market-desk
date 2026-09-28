@@ -109,6 +109,22 @@ $STRATS['Monthly momentum rotation'] = function () use ($P, $dates, $start, $T) 
   return $sig;
 };
 
+/* 5. the same rotation with a market filter: hold stocks only while the Nifty is above its 200-DMA
+      (checked at each month start); otherwise sell everything and sit in cash. Aims to cut the deep drawdowns. */
+$nSma = lab_sma($N['c'], 200);
+$STRATS['Momentum rotation + market filter'] = function () use ($P, $N, $nSma, $dates, $start, $T) {
+  $sig = [];
+  for ($k = $start; $k < $T - 1; $k++) {
+    if (substr($dates[$k], 0, 7) === substr($dates[$k - 1], 0, 7)) continue;
+    if ($nSma[$k] === null || $N['c'][$k] <= $nSma[$k]) { $sig[] = ['k' => $k, 'sym' => null, 'score' => -1, 'exit' => 'rotation', 'rank_top' => []]; continue; }
+    $rank = [];
+    foreach ($P as $s => $p) { $c = $p['c']; if ($c[$k] === null || $c[$k - 252] === null || $c[$k - 21] === null || $p['sma200'][$k] === null || $c[$k] <= $p['sma200'][$k]) continue; $rank[$s] = $c[$k - 21] / $c[$k - 252] - 1; }
+    arsort($rank); $top = array_slice(array_keys($rank), 0, 20);
+    foreach ($top as $r => $s) $sig[] = ['k' => $k, 'sym' => $s, 'score' => 100 - $r, 'exit' => 'rotation', 'rank_top' => $top];
+  }
+  return $sig;
+};
+
 /* ---------- account simulation ---------- */
 function lab_run(array $sig, array $P, $T, $start, $slots, array $dates) {
   $by = []; foreach ($sig as $x) $by[$x['k']][] = $x;
@@ -133,6 +149,7 @@ function lab_run(array $sig, array $P, $T, $start, $slots, array $dates) {
     $mtm = $cash; foreach ($pos as $q) $mtm += $q['n'] * ($P[$q['sym']]['c'][$k - 1] ?? $q['e']);
     foreach ($by[$k - 1] ?? [] as $x) {
       if (count($pos) >= $slots) break;
+      if ($x['sym'] === null) continue; // "go to cash" marker
       foreach ($pos as $q) if ($q['sym'] === $x['sym']) continue 2;
       $p = $P[$x['sym']]; $e = $p['o'][$k]; if (!$e) continue;
       $budget = min($cash, $mtm / $slots); $n = floor($budget / $e); if ($n < 1 || $n * $e < 1000) continue;
@@ -160,7 +177,7 @@ foreach ($B as $name => $e) echo json_encode(['strategy' => $name, 'baseline' =>
 
 foreach ($STRATS as $name => $fn) {
   $sig = $fn();
-  foreach ([2, 4] as $slots) {
+  foreach ([2, 4, 6] as $slots) {
     $R = lab_run($sig, $P, $T, $start, $slots, $dates);
     $tr = function ($a, $b) use ($R) { $t = array_values(array_filter($R['trades'], function ($x) use ($a, $b) { return $x['k'] >= $a && $x['k'] < $b; })); $n = count($t);
       return ['trades' => $n, 'win_pct' => $n ? round(count(array_filter($t, function ($x) { return $x['ret'] > 0; })) / $n * 100, 1) : null, 'avg_net_ret_pct' => $n ? round(array_sum(array_column($t, 'ret')) / $n, 2) : null]; };
