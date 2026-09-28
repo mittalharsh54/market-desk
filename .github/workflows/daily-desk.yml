@@ -34,7 +34,11 @@ jobs:
             r=$(curl -s -m 280 -b "$J" "${U}api.php?action=mkt_top10")
             if echo "$r" | jq -e '.ok' >/dev/null 2>&1; then
               echo "$r" | jq '{phase: .phase.label, date: .day.date, locked: .day.locked, built_now, entries_from, book, track: (.track | del(.recent)),
-                              picks: [.picks[] | {rank, symbol, dir, quality, status: .state.status, day_r: .state.day_r}]}'
+                              screened: .day.screened, researched: .day.researched, universe: .day.universe, rejected: (.day.rejected | length),
+                              picks: [.picks[] | {rank, symbol, dir, quality, status: .state.status, day_r: .state.day_r,
+                                edge: (if .edge then "\(.edge.trades) trades, win \(.edge.win_rate)%, PF \(.edge.profit_factor)" else null end),
+                                news: (if .news then "\(.news.scored) headlines \(.news.flags)" else null end),
+                                why: [.factors[] | select((.score|fabs) >= 0.5) | "\(.label) \(.score)"]}]}'
               exit 0
             fi
             echo "attempt $try: ${r:0:300}"; sleep 45
