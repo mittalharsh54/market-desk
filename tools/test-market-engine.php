@@ -24,6 +24,7 @@ function synth_daily($n, $drift, $noise, $seed, $start = 1000.0) {
   return $C;
 }
 /* 5-minute bars, 75 per session from 9:15 IST */
+function mkt_join(array $a, array $b) { foreach ($a as $k => $v) $a[$k] = array_merge($v, $b[$k]); return $a; }
 function synth_intraday($days, $drift, $noise, $seed, $start = 500.0) {
   mt_srand($seed); $C = ['t' => [], 'o' => [], 'h' => [], 'l' => [], 'c' => [], 'v' => []]; $p = $start;
   for ($d = 0; $d < $days; $d++) {
@@ -136,6 +137,35 @@ echo "Mapping & clock\n";
 ok(mk_sector_of('BPCL.NS') === 'omc' && mk_sector_of('TCS.NS') === 'it' && mk_sector_of('XYZ.NS', 'Technology', 'Software') === 'it', 'sector mapping');
 ok(mk_market_status(gmmktime(5, 0, 0, 9, 23, 2026))['open'] === true, 'Wed 10:30 IST is market hours');
 ok(mk_market_status(gmmktime(5, 0, 0, 9, 26, 2026))['open'] === false, 'Saturday is closed');
+
+echo "Intraday Top 10 engine\n";
+$dUp = synth_daily(300, 0.002, 0.012, 41); $dN = synth_daily(300, 0.0005, 0.008, 42, 20000);
+$ST = mk_daily_setup($dUp, $dN);
+ok($ST && $ST['trend'] > 0 && $ST['turnover_cr'] > 0 && $ST['atr_pct'] > 0, 'daily setup features computed (trend ' . $ST['trend'] . ', ATR ' . $ST['atr_pct'] . '%)');
+ok(isset($ST['nr7'], $ST['inside'], $ST['close_loc'], $ST['cpr_width']), 'setup flags present');
+$PS = mk_pick_score($ST, ['trades' => 20, 'win_rate' => 55, 'profit_factor' => 1.6, 'long_win_rate' => 58, 'short_win_rate' => 50], ['score' => 0.5, 'gap' => 0.6, 'rvol' => 1.8, 'price' => 105, 'open' => 102], null, 0.2, 0.1);
+ok($PS['dir'] === 'LONG' && $PS['quality'] > 0.2, 'strong uptrend + live strength ranks as a quality LONG (' . $PS['quality'] . ')');
+$PS2 = mk_pick_score(mk_daily_setup(synth_daily(300, -0.002, 0.012, 43), $dN), null, ['score' => -0.5, 'gap' => -0.5, 'rvol' => 1.5, 'price' => 98, 'open' => 99]);
+ok($PS2['dir'] === 'SHORT', 'downtrend + live weakness ranks as a SHORT');
+/* replay: 4 quiet sessions, then a trending day */
+$pre = synth_intraday(4, 0.0, 0.0012, 51, 500); $day = synth_intraday(1, 0.0009, 0.0010, 52, end($pre['c']));
+foreach ($day['t'] as $k => $t) $day['t'][$k] = $t + 4 * 86400; // make it the 5th session
+$five = mkt_join($pre, $day);
+$R = mk_intraday_replay($five, null, ['now' => end($five['t']) + 3600, 'bias' => 'LONG', 'capital' => 100000, 'risk_pct' => 1]);
+ok(count($R['trades']) >= 1 && $R['trades'][0]['side'] === 'LONG', 'trending-up session triggers a LONG (' . count($R['trades']) . ' trade(s), day ' . $R['day_r'] . 'R)');
+ok($R['events'][0]['type'] === 'BUY' && strpos($R['status'], 'DONE') === 0, 'events start with BUY, session ends DONE (' . $R['status'] . ')');
+$firstBuy = $R['events'][0]['time']; ok($firstBuy >= '09:35', 'no entry before the opening range completes (first ' . $firstBuy . ')');
+$dayDn = synth_intraday(1, -0.0009, 0.0010, 53, end($pre['c'])); foreach ($dayDn['t'] as $k => $t) $dayDn['t'][$k] = $t + 4 * 86400;
+$R2 = mk_intraday_replay(mkt_join($pre, $dayDn), null, ['now' => end($dayDn['t']) + 3600, 'bias' => 'SHORT']);
+ok(count($R2['trades']) >= 1 && $R2['trades'][0]['side'] === 'SHORT', 'trending-down session triggers a SHORT (' . $R2['day_r'] . 'R)');
+/* mid-session: an open position is reported with live P&L */
+$mid = mkt_join($pre, ['t' => array_slice($day['t'], 0, 40), 'o' => array_slice($day['o'], 0, 40), 'h' => array_slice($day['h'], 0, 40), 'l' => array_slice($day['l'], 0, 40), 'c' => array_slice($day['c'], 0, 40), 'v' => array_slice($day['v'], 0, 40)]);
+$R3 = mk_intraday_replay($mid, null, ['now' => $mid['t'][count($mid['t']) - 1] + 120, 'bias' => 'LONG']);
+ok($R3['live'] && $R3['live']['price'] > 0 && $R3['levels']['orh'] !== null, 'mid-session snapshot has live price and levels (' . $R3['status'] . ')');
+ok($R3['status'] !== 'LONG ACTIVE' || ($R3['position']['stop'] < $R3['position']['entry'] || $R3['position']['t1_hit']), 'active long has its stop below entry (or at cost after T1)');
+/* same data, same answer */
+$R4 = mk_intraday_replay($five, null, ['now' => end($five['t']) + 3600, 'bias' => 'LONG']);
+ok(json_encode($R4['events']) === json_encode($R['events']), 'replay is deterministic');
 
 echo "\n$passes passed, $fails failed\n";
 exit($fails ? 1 : 0);

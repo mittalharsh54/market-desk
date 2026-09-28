@@ -1,0 +1,42 @@
+name: Daily desk (Intraday Top 10)
+
+# Keeps the Intraday Top 10 honest and on time even when nobody has the page open:
+#   08:50 IST  research the universe (warms the day's cache, provisional list)
+#   09:27 IST  lock the list once the opening range is known (09:40 backup run)
+#   15:42 IST  record the day's signals in the track record
+# GitHub may start scheduled runs a few minutes late; the app locks the list at
+# the first build after 9:25 and only counts signals after the list was built.
+# Uses the APP_PASSWORD secret; the site is SITE_URL or markets.adlouis.com.
+
+on:
+  schedule:
+    - cron: '20 3 * * 1-5'    # 08:50 IST
+    - cron: '57 3 * * 1-5'    # 09:27 IST
+    - cron: '10 4 * * 1-5'    # 09:40 IST
+    - cron: '12 10 * * 1-5'   # 15:42 IST
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      URL: ${{ vars.SITE_URL || 'https://markets.adlouis.com/' }}
+      APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+    steps:
+      - name: Build / lock / record today's list
+        run: |
+          set -u
+          U="${URL%/}/"; J=$(mktemp)
+          curl -s -m 30 -c "$J" -b "$J" -X POST -H "Content-Type: application/json" \
+            -d "$(jq -n --arg p "$APP_PASSWORD" '{password:$p}')" "${U}api.php?action=login" | jq -c . || { echo "::error::login failed"; exit 1; }
+          for try in 1 2 3; do
+            r=$(curl -s -m 280 -b "$J" "${U}api.php?action=mkt_top10")
+            if echo "$r" | jq -e '.ok' >/dev/null 2>&1; then
+              echo "$r" | jq '{phase: .phase.label, date: .day.date, locked: .day.locked, built_now, entries_from, book, track: (.track | del(.recent)),
+                              picks: [.picks[] | {rank, symbol, dir, quality, status: .state.status, day_r: .state.day_r}]}'
+              exit 0
+            fi
+            echo "attempt $try: ${r:0:300}"; sleep 45
+          done
+          echo "::error::Top 10 did not build"; exit 1

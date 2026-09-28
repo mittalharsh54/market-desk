@@ -36,6 +36,7 @@
 
 require_once __DIR__ . '/market_engine.php';
 require_once __DIR__ . '/sources.php';
+require_once __DIR__ . '/intraday.php';
 
 const MKT_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
 
@@ -621,6 +622,7 @@ function mkt_dispatch($action) {
         md_store_set('macro_v1', ''); // next Market Pulse load re-scores with the new numbers
         $out = ['values' => $in]; break;
       case 'mkt_diag': $out = mkt_diag(); break;
+      case 'mkt_top10': $out = id_top10($force, $capital, $risk); break;
       case 'mkt_ai': $out = mkt_ai_note((string) $g('symbol', ''), $capital, $risk); break;
       default: fail(400, 'Unknown market action.');
     }

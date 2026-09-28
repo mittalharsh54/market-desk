@@ -1150,3 +1150,169 @@ function mk_market_status($now = null) {
   $phase = $m < 540 ? 'Pre-market' : ($m < 555 ? 'Pre-open auction' : ($m < 930 ? 'Open' : 'Closed'));
   return ['open' => $phase === 'Open', 'phase' => $phase, 'ist' => gmdate('D H:i', $now + MK_IST)];
 }
+
+/* =====================================================================
+   INTRADAY TOP 10 — daily setup features, pick scoring, and the live
+   signal engine (a state machine replayed over today's 5-minute bars).
+   ===================================================================== */
+
+/* Yesterday-close features of one stock (pass daily bars WITHOUT today's partial bar) */
+function mk_daily_setup(array $C, array $bench = null) {
+  $n = count($C['c']); if ($n < 60) return null; $i = $n - 1; $c = $C['c'];
+  $A = mk_daily_arrays($C, $bench); $S = mk_tech_score_at($A, $i);
+  $atr = $A['atr'][$i]; $turn = 0.0; $vs = 0.0;
+  for ($j = $n - 20; $j < $n; $j++) { $turn += $c[$j] * $C['v'][$j]; $vs += $C['v'][$j]; }
+  $rng = $C['h'][$i] - $C['l'][$i]; $minR = INF; for ($j = $n - 7; $j < $n; $j++) $minR = min($minR, $C['h'][$j] - $C['l'][$j]);
+  $h20 = max(array_slice($C['h'], -20)); $l20 = min(array_slice($C['l'], -20)); $lb = min($n, 250);
+  $h52 = max(array_slice($C['h'], -$lb)); $l52 = min(array_slice($C['l'], -$lb));
+  $rs = function ($bars) use ($A, $c, $i) { if (!$A['bench'] || $i - $bars < 0 || !$A['bench'][$i - $bars] || !$A['bench'][$i]) return null; return (($c[$i] / $c[$i - $bars]) - ($A['bench'][$i] / $A['bench'][$i - $bars])) * 100; };
+  $P = mk_pivots($C['h'][$i], $C['l'][$i], $c[$i]);
+  $top = $S['factors']; usort($top, function ($a, $b) { return abs($b['score'] * $b['weight']) <=> abs($a['score'] * $a['weight']); });
+  return [
+    'date' => mk_ist_date($C['t'][$i]), 'close' => round($c[$i], 2), 'trend' => $S['score'], 'trend_top' => array_slice($top, 0, 3),
+    'atr' => $atr ? round($atr, 2) : null, 'atr_pct' => $atr ? round($atr / $c[$i] * 100, 2) : null,
+    'turnover_cr' => round($turn / 20 / 1e7, 1), 'vol_ratio' => $vs > 0 ? round($C['v'][$i] / ($vs / 20), 2) : null,
+    'close_loc' => $rng > 0 ? round(($c[$i] - $C['l'][$i]) / $rng, 2) : 0.5, 'nr7' => $rng <= $minR + 1e-9, 'inside' => $C['h'][$i] <= $C['h'][$i - 1] && $C['l'][$i] >= $C['l'][$i - 1],
+    'dist_20h' => round(($c[$i] / $h20 - 1) * 100, 2), 'dist_20l' => round(($c[$i] / $l20 - 1) * 100, 2), 'dist_52h' => round(($c[$i] / $h52 - 1) * 100, 2), 'dist_52l' => round(($c[$i] / $l52 - 1) * 100, 2),
+    'ret_1d' => $n > 1 ? round(($c[$i] / $c[$i - 1] - 1) * 100, 2) : null, 'ret_5d' => round(($c[$i] / $c[$i - 5] - 1) * 100, 2),
+    'rs_5d' => ($x = $rs(5)) === null ? null : round($x, 2), 'rs_20d' => ($x = $rs(20)) === null ? null : round($x, 2),
+    'pdh' => round($C['h'][$i], 2), 'pdl' => round($C['l'][$i], 2), 'pdc' => round($c[$i], 2),
+    'cpr_bc' => round($P['BC'], 2), 'cpr_tc' => round($P['TC'], 2), 'cpr_width' => round($P['cpr_width_pct'], 3), 'r1' => round($P['R1'], 2), 's1' => round($P['S1'], 2),
+    'rsi' => mk_round($A['rsi'][$i], 1), 'adx' => mk_round($A['adx']['adx'][$i], 1),
+  ];
+}
+
+/* Rank one candidate. Direction first (where is it likely to go), then how
+   good a trade it is in that direction. Every component is explained. */
+function mk_pick_score(array $st, $edge = null, $live = null, $news = null, $sector = null, $market = null) {
+  $D = $st['trend']; $RS = 0.5 * tanh(($st['rs_5d'] ?? 0) / 3) + 0.5 * tanh(($st['rs_20d'] ?? 0) / 6);
+  $L = $live['score'] ?? null;
+  $dirScore = 0.4 * $D + 0.3 * $RS + ($L !== null ? 0.5 * $L : 0) + 0.1 * ($news['score'] ?? 0) + 0.1 * ($sector ?? 0) + 0.1 * ($market ?? 0);
+  $d = $dirScore >= 0 ? 1 : -1; $F = [];
+  $add = function ($key, $label, $w, $s, $note) use (&$F) { if ($s === null) return; $F[] = ['key' => $key, 'label' => $label, 'weight' => $w, 'score' => round(mk_clamp($s), 3), 'note' => $note]; };
+  $dirWord = $d > 0 ? 'long' : 'short';
+  $add('trend', 'Daily trend', 0.16, $d * $D, 'Daily technical score ' . sprintf('%+.2f', $D) . ($d * $D >= 0 ? ' supports a ' : ' works against a ') . $dirWord . '.');
+  $add('rs', 'Strength vs Nifty', 0.10, $d * $RS, sprintf('%+.1f pts vs Nifty over 5 days, %+.1f over 20 days.', $st['rs_5d'] ?? 0, $st['rs_20d'] ?? 0));
+  if ($L !== null) $add('live', 'Live intraday score', 0.18, $d * $L, '5-minute score ' . sprintf('%+.2f', $L) . ' (VWAP, EMAs, Supertrend, opening range, momentum).');
+  $setup = 0.0; $bits = [];
+  if ($st['nr7'] || $st['inside']) { $setup += 0.4; $bits[] = $st['nr7'] ? 'NR7 (tightest range in 7 days — expansion due)' : 'inside day (coiling)'; }
+  $cl = $d > 0 ? ($st['close_loc'] - 0.5) * 2 : (0.5 - $st['close_loc']) * 2; $setup += 0.35 * $cl; $bits[] = 'closed at ' . round($st['close_loc'] * 100) . '% of its day range';
+  if ($d > 0 && $st['dist_20h'] > -2) { $setup += 0.35; $bits[] = 'within ' . abs($st['dist_20h']) . '% of the 20-day high (breakout zone)'; }
+  if ($d < 0 && $st['dist_20l'] < 2) { $setup += 0.35; $bits[] = 'within ' . abs($st['dist_20l']) . '% of the 20-day low (breakdown zone)'; }
+  $add('setup', 'Chart setup', 0.10, $setup, ucfirst(implode('; ', $bits)) . '.');
+  if ($edge && !empty($edge['trades'])) {
+    $n = $edge['trades']; $pf = $edge['profit_factor'] ?? 1.0; $side = $d > 0 ? ($edge['long_win_rate'] ?? null) : ($edge['short_win_rate'] ?? null);
+    $e = tanh((($pf ?? 1) - 1) / 0.5) * min(1, $n / 15); if ($side !== null) $e = 0.7 * $e + 0.3 * tanh(($side - 45) / 15);
+    $add('edge', 'Past intraday edge (60 days)', 0.14, $e, $n . ' signals on this stock: win rate ' . $edge['win_rate'] . '%, profit factor ' . ($pf === null ? '—' : $pf) . ($side !== null ? ', ' . $dirWord . ' win rate ' . $side . '%' : '') . '.');
+  }
+  $add('liq', 'Liquidity', 0.07, tanh(log10(max(1, $st['turnover_cr']) / 50)), '₹' . number_format($st['turnover_cr']) . ' cr traded a day on average — ' . ($st['turnover_cr'] >= 200 ? 'deep, tight spreads.' : ($st['turnover_cr'] >= 50 ? 'adequate.' : 'thin, slippage risk.')));
+  $a = $st['atr_pct']; $vf = $a === null ? null : ($a < 0.8 ? -1 : ($a < 1.2 ? 0.2 : ($a <= 3.5 ? 1 : ($a <= 5 ? 0.2 : -0.8))));
+  $add('vol', 'Daily range (ATR)', 0.07, $vf, 'Moves ' . $a . '% a day on average — ' . ($a < 1.2 ? 'too quiet for good intraday targets.' : ($a > 3.5 ? 'very volatile, use smaller size.' : 'ideal intraday range.')));
+  if ($live) {
+    $g = $live['gap'] ?? 0; $rv = $live['rvol'] ?? null; $s = 0.0; $bits = [];
+    if ($rv !== null) { $s += tanh(($rv - 1) / 0.6) * 0.6; $bits[] = 'relative volume ' . round($rv, 2) . 'x'; }
+    if (abs($g) > 0.3) { $hold = $d * ($live['price'] - $live['open']) >= 0; $s += ($d * $g > 0 ? ($hold ? 0.4 : -0.2) : ($hold ? 0.3 : -0.3)); $bits[] = sprintf('gap %+.2f%%', $g) . ($hold ? ', holding' : ', fading'); }
+    $add('flow', 'Opening action', 0.06, $s, $bits ? ucfirst(implode('; ', $bits)) . '.' : 'Quiet open.');
+  }
+  $w = $st['cpr_width']; $add('cpr', 'Central Pivot Range width', 0.04, $w < 0.25 ? 1 : ($w > 0.6 ? -0.5 : 0.2), 'CPR ' . $w . '% wide' . ($w < 0.25 ? ' — narrow, trending day likely.' : ($w > 0.6 ? ' — wide, range-bound day likely.' : '.')));
+  if ($news && ($news['scored'] ?? 0)) $add('news', 'Stock news', 0.04, $d * $news['score'], $news['scored'] . ' recent headlines, sentiment ' . sprintf('%+.2f', $news['score']) . '.');
+  if ($sector !== null) $add('sector', 'Sector tailwind', 0.04, $d * $sector, 'Sector score ' . sprintf('%+.2f', $sector) . ' today.');
+  if ($market !== null) $add('market', 'Market regime', 0.04, $d * $market, 'Market regime ' . sprintf('%+.2f', $market) . ($d * $market >= 0 ? ' — with you.' : ' — against you, be quicker to exit.'));
+  $tw = array_sum(array_column($F, 'weight')); $q = 0.0; foreach ($F as $f) $q += $f['weight'] * $f['score'];
+  return ['dir' => $d > 0 ? 'LONG' : 'SHORT', 'dir_score' => round($dirScore, 3), 'quality' => $tw ? round($q / $tw, 3) : 0.0, 'factors' => $F];
+}
+
+/* The live signal engine. $C5 = 5-minute bars (earlier sessions + today, for
+   indicator warm-up). Replays today bar by bar, so the same data always gives
+   the same signals — on any device, at any time.
+   Entries only on COMPLETED bars; stops and targets also watch the forming bar. */
+function mk_intraday_replay(array $C5, array $bench5 = null, array $o = []) {
+  $now = $o['now'] ?? time(); $bias = $o['bias'] ?? 'BOTH'; $th = $o['th'] ?? 0.40; $thCounter = $o['th_counter'] ?? 0.55;
+  $capital = $o['capital'] ?? 100000; $riskPct = $o['risk_pct'] ?? 1.0; $maxTrades = $o['max_trades'] ?? 2;
+  $tilt = 0.10 * ($o['daily_score'] ?? 0) + 0.08 * ($o['market_score'] ?? 0);
+  $out = ['status' => 'PRE-OPEN', 'events' => [], 'trades' => [], 'position' => null, 'levels' => [], 'live' => null, 'day_r' => 0.0, 'day_pnl' => 0.0];
+  $n = count($C5['c']); if ($n < 20) return $out;
+  $A = mk_intraday_arrays($C5, $bench5); $day = $o['date'] ?? $A['day'][$n - 1];
+  $first = array_search($day, $A['day'], true); if ($first === false) return $out;
+  $last = $n - 1; while ($last >= $first && $A['day'][$last] !== $day) $last--;
+  $done = function ($i) use ($C5, $now) { return $C5['t'][$i] + 300 <= $now; };
+  $sc = function ($i) use ($A, $tilt) { return mk_clamp(mk_intraday_score_at($A, $i)['score'] + $tilt); };
+  $cond = function ($i, $side) use ($A, $C5, $sc, $bias, $th, $thCounter) {
+    if (!$A['or_done'][$i] || $A['orh'][$i] === null || !$A['vwap'][$i]) return false;
+    $need = ($bias === 'BOTH' || ($bias === 'LONG') === ($side > 0)) ? $th : $thCounter;
+    $s = $sc($i); $c = $C5['c'][$i];
+    return $side > 0 ? ($s >= $need && $c > $A['vwap'][$i] && $c > $A['orh'][$i]) : ($s <= -$need && $c < $A['vwap'][$i] && $c < $A['orl'][$i]);
+  };
+  $ev = function ($i, $type, $price, $note) use (&$out, $C5) { $out['events'][] = ['time' => gmdate('H:i', $C5['t'][$i] + 300 + MK_IST), 'type' => $type, 'price' => round($price, 2), 'note' => $note]; };
+  $pos = null; $lastExit = -99; $prevL = $prevS = null;
+  $close = function ($i, $exit, $reason) use (&$pos, &$out, &$lastExit, $ev) {
+    $side = $pos['side']; $risk = $pos['risk']; $half = (int) floor($pos['qty'] / 2);
+    $r = $pos['t1_hit'] ? 0.5 * ($pos['t1'] - $pos['entry']) * $side / $risk + 0.5 * ($exit - $pos['entry']) * $side / $risk : ($exit - $pos['entry']) * $side / $risk;
+    $pnl = $pos['t1_hit'] ? $half * ($pos['t1'] - $pos['entry']) * $side + ($pos['qty'] - $half) * ($exit - $pos['entry']) * $side : $pos['qty'] * ($exit - $pos['entry']) * $side;
+    $out['trades'][] = ['side' => $side > 0 ? 'LONG' : 'SHORT', 'entry' => round($pos['entry'], 2), 'entry_time' => $pos['time'], 'exit' => round($exit, 2), 'exit_time' => gmdate('H:i', $GLOBALS['__mk_t'] + MK_IST),
+                        'reason' => $reason, 'r' => round($r, 2), 'pnl' => round($pnl), 'qty' => $pos['qty'], 't1_hit' => $pos['t1_hit']];
+    $ev($i, $r > 0.05 ? 'EXIT — PROFIT' : ($r < -0.05 ? 'EXIT — LOSS' : 'EXIT — FLAT'), $exit, $reason . sprintf(' (%+.2fR, ₹%s)', $r, number_format(round($pnl))));
+    $out['day_r'] += $r; $out['day_pnl'] += $pnl; $pos = null; $lastExit = $i;
+  };
+  for ($i = $first; $i <= $last; $i++) {
+    $m = mk_ist_min($C5['t'][$i]); $isDone = $done($i); $GLOBALS['__mk_t'] = $C5['t'][$i] + 300;
+    if ($pos) {
+      $sd = $pos['side']; $hi = $C5['h'][$i]; $lo = $C5['l'][$i]; $op = $C5['o'][$i];
+      $hitStop = $sd > 0 ? $lo <= $pos['stop'] : $hi >= $pos['stop'];
+      if ($hitStop) { $x = $sd > 0 ? min($op, $pos['stop']) : max($op, $pos['stop']); $close($i, $x, $pos['t1_hit'] ? ($sd * ($pos['stop'] - $pos['entry']) > 0 ? 'Trailing stop hit' : 'Stopped at cost after Target 1') : 'Stop-loss hit'); continue; }
+      if ($sd > 0 ? $hi >= $pos['t2'] : $lo <= $pos['t2']) { $close($i, $pos['t2'], 'Target 2 hit'); continue; }
+      if (!$pos['t1_hit'] && ($sd > 0 ? $hi >= $pos['t1'] : $lo <= $pos['t1'])) {
+        $pos['t1_hit'] = true; $pos['stop'] = $pos['entry'];
+        $ev($i, 'TARGET 1 HIT', $pos['t1'], 'Book half (' . (int) floor($pos['qty'] / 2) . ' shares); stop on the rest moved to cost ₹' . round($pos['entry'], 2) . '.');
+      }
+      if ($isDone) {
+        if ($m >= 910) { $close($i, $C5['c'][$i], 'Square-off at 3:15 PM'); continue; }
+        $s = $sc($i);
+        if ($sd * $s <= -0.15) { $close($i, $C5['c'][$i], 'Signal reversed (score ' . sprintf('%+.2f', $s) . ')'); continue; }
+        if ($pos['t1_hit']) { $st = $A['st']['line'][$i]; $sdir = $A['st']['dir'][$i];
+          if ($st !== null && $sdir === $sd && $sd * ($st - $pos['stop']) > 0) {
+            $pos['stop'] = $st; // trail silently; tell the trader only when it has moved meaningfully (≥ 0.5R since the last note)
+            if (abs($st - ($pos['trail_note'] ?? $pos['entry'])) >= 0.5 * $pos['risk']) { $pos['trail_note'] = $st; $ev($i, 'TRAIL STOP', $st, 'Stop ' . ($sd > 0 ? 'raised' : 'lowered') . ' to ₹' . round($st, 2) . ' (Supertrend) — profit locked in.'); }
+          } }
+      }
+      continue;
+    }
+    if (!$isDone) continue;
+    $okTime = $m >= max(570, (int) ($o['entries_from'] ?? 0)) && $m <= 865 && count($out['trades']) < $maxTrades && $i - $lastExit >= 3;
+    $L = $cond($i, 1); $S = $cond($i, -1);
+    if ($okTime && (($L && $prevL === false) || ($S && $prevS === false))) {
+      $side = $L ? 1 : -1; $px = $C5['c'][$i];
+      $struct = $side > 0 ? [min(array_slice($C5['l'], max($first, $i - 7), min(8, $i - $first + 1))), $A['vwap'][$i], $A['orl'][$i]] : [max(array_slice($C5['h'], max($first, $i - 7), min(8, $i - $first + 1))), $A['vwap'][$i], $A['orh'][$i]];
+      $P = mk_trade_plan($side, $px, $A['atr'][$i], $struct, $capital, $riskPct, [1.5, 2.5]);
+      if ($P && !empty($o['max_position'])) $P['qty'] = min($P['qty'], (int) floor($o['max_position'] / $px));
+      if ($P && $P['qty'] > 0) {
+        $pos = ['side' => $side, 'entry' => $px, 'stop' => $P['stop'], 't1' => $P['targets'][0], 't2' => $P['targets'][1], 'risk' => $P['risk_per_share'], 'qty' => $P['qty'], 't1_hit' => false, 'time' => gmdate('H:i', $C5['t'][$i] + 300 + MK_IST), 'init_stop' => $P['stop']];
+        $ev($i, $side > 0 ? 'BUY' : 'SELL (SHORT)', $px, 'Score ' . sprintf('%+.2f', $sc($i)) . ', ' . ($side > 0 ? 'above' : 'below') . ' VWAP and the opening range. Stop ₹' . $P['stop'] . ', T1 ₹' . $P['targets'][0] . ', T2 ₹' . $P['targets'][1] . ', qty ' . $P['qty'] . '.');
+      }
+    }
+    $prevL = $L; $prevS = $S;
+  }
+  unset($GLOBALS['__mk_t']);
+  /* snapshot */
+  $j = $last; $px = $C5['c'][$j]; $pdc = $A['pdc'][$j];
+  $out['live'] = ['price' => round($px, 2), 'time' => gmdate('H:i', min($now, $C5['t'][$j] + 300) + MK_IST), 'open' => round($A['dopen'][$j], 2), 'prev_close' => $pdc ? round($pdc, 2) : null,
+                  'chg_pct' => $pdc ? round(($px / $pdc - 1) * 100, 2) : null, 'gap' => $pdc ? round(($A['dopen'][$j] / $pdc - 1) * 100, 2) : null,
+                  'vwap' => mk_round($A['vwap'][$j]), 'score' => round($sc($j), 3), 'rvol' => mk_round(mk_rvol($A, $j)),
+                  'day_high' => round(max(array_slice($C5['h'], $first, $last - $first + 1)), 2), 'day_low' => round(min(array_slice($C5['l'], $first, $last - $first + 1)), 2)];
+  $out['levels'] = ['orh' => mk_round($A['orh'][$j]), 'orl' => mk_round($A['orl'][$j]), 'vwap' => mk_round($A['vwap'][$j]), 'pdh' => mk_round($A['pdh'][$j]), 'pdl' => mk_round($A['pdl'][$j]),
+                    'buy_above' => $A['orh'][$j] ? round(max($A['orh'][$j], $A['vwap'][$j]), 2) : null, 'sell_below' => $A['orl'][$j] ? round(min($A['orl'][$j], $A['vwap'][$j]), 2) : null];
+  if ($pos) {
+    $u = ($px - $pos['entry']) * $pos['side']; $half = (int) floor($pos['qty'] / 2);
+    $open = $pos['t1_hit'] ? $half * ($pos['t1'] - $pos['entry']) * $pos['side'] + ($pos['qty'] - $half) * $u : $pos['qty'] * $u;
+    $out['position'] = ['side' => $pos['side'] > 0 ? 'LONG' : 'SHORT', 'entry' => round($pos['entry'], 2), 'entry_time' => $pos['time'], 'stop' => round($pos['stop'], 2), 'init_stop' => $pos['init_stop'],
+                        't1' => $pos['t1'], 't2' => $pos['t2'], 't1_hit' => $pos['t1_hit'], 'qty' => $pos['qty'], 'risk' => $pos['risk'],
+                        'open_r' => round(($pos['t1_hit'] ? 0.5 * ($pos['t1'] - $pos['entry']) * $pos['side'] + 0.5 * $u : $u) / $pos['risk'], 2), 'open_pnl' => round($open)];
+    $out['status'] = $pos['side'] > 0 ? 'LONG ACTIVE' : 'SHORT ACTIVE';
+  } else {
+    $m = mk_ist_min($now); $sessionOver = $m >= 870 || mk_ist_date($now) !== $day;
+    if ($out['trades']) { $r = array_sum(array_column($out['trades'], 'r')); $out['status'] = $sessionOver ? ($r > 0.05 ? 'DONE — PROFIT' : ($r < -0.05 ? 'DONE — LOSS' : 'DONE — FLAT')) : 'WAITING (re-entry)'; }
+    else $out['status'] = $sessionOver ? 'NO TRADE TODAY' : ($m < 570 ? 'OPENING RANGE' : 'WAITING');
+  }
+  $out['day_r'] = round($out['day_r'], 2); $out['day_pnl'] = round($out['day_pnl']);
+  return $out;
+}

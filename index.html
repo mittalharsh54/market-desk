@@ -181,6 +181,22 @@
   .form-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--text-dim); font-weight: 600; }
   .quick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   details summary { cursor: pointer; font-weight: 650; }
+  .t10 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  @media (max-width: 980px) { .t10 { grid-template-columns: minmax(0, 1fr); } }
+  .pick { position: relative; }
+  .pick.flash { animation: fl 2.4s ease-out 1; }
+  @keyframes fl { 0% { box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 60%, transparent); } 100% { box-shadow: var(--shadow); } }
+  .pick .top { display: flex; align-items: flex-start; gap: 10px; }
+  .pick .rank { font-weight: 800; font-size: 18px; color: var(--text-faint); min-width: 30px; }
+  .pick .px { text-align: right; margin-left: auto; }
+  .pick .px b { font-size: 18px; font-variant-numeric: tabular-nums; display: block; }
+  .status { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 750; padding: 3px 8px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--line-strong); letter-spacing: .02em; }
+  .status.go { background: color-mix(in oklab, var(--bull) 18%, var(--surface)); border-color: var(--bull); }
+  .status.short { background: color-mix(in oklab, var(--bear) 18%, var(--surface)); border-color: var(--bear); }
+  .tl { margin: 8px 0 0; padding: 0; list-style: none; font-size: 12.5px; }
+  .tl li { display: grid; grid-template-columns: 44px 1fr; gap: 8px; padding: 3px 0; border-top: 1px dashed var(--line); }
+  .tl li b { font-size: 12px; }
+  .flashbox { background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; font-size: 13px; }
   .icon-btn { width: 34px; height: 34px; padding: 0; justify-content: center; }
   #login { position: fixed; inset: 0; background: var(--bg); display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
   #login .card { width: 100%; max-width: 360px; }
@@ -211,7 +227,8 @@
   </div>
 
   <div class="tabs" role="tablist">
-    <button class="tab on" data-tab="pulse">Market pulse</button>
+    <button class="tab on" data-tab="top10">Intraday Top 10</button>
+    <button class="tab" data-tab="pulse">Market pulse</button>
     <button class="tab" data-tab="stock">Analyze a stock</button>
     <button class="tab" data-tab="scan">Scanner</button>
     <button class="tab" data-tab="inputs">India macro inputs</button>
@@ -219,7 +236,20 @@
   </div>
 
   <!-- ================= MARKET PULSE ================= -->
-  <section class="panel on" id="p-pulse">
+  <section class="panel on" id="p-top10">
+    <div class="ch" style="margin-bottom:10px">
+      <span class="pill" id="t10Phase">…</span>
+      <span class="dim small" id="t10AsOf"></span>
+      <span class="spacer"></span>
+      <button class="btn btn-sm" id="t10Alerts" title="Browser notification + sound when a signal fires">🔔 Enable alerts</button>
+      <button class="btn btn-sm" id="t10Repick" title="Research the universe again and replace today's list">Re-pick</button>
+      <button class="btn btn-sm" id="t10Refresh">↻ Refresh</button>
+    </div>
+    <div id="t10Flash"></div>
+    <div id="t10Body"><div class="loading"><span class="spin"></span>Researching today's list — screening ~170 liquid F&amp;O stocks, then studying the best 30 in depth…</div></div>
+  </section>
+
+  <section class="panel" id="p-pulse">
     <div class="ch" style="margin-bottom:10px">
       <span class="dim small" id="pulseAsOf"></span>
       <span class="spacer"></span>
@@ -277,6 +307,16 @@
     <div class="card method">
       <h2>How Market Desk decides</h2>
       <p>Every call is the output of explicit, weighted rules — no black box. Each factor gets a score from −1 (bearish) to +1 (bullish) and a one-line reason; the page shows all of them so you can disagree with any.</p>
+      <h3>0 · Intraday Top 10 — how the list and the signals are made</h3>
+      <ul>
+        <li><b>Screen (~170 liquid F&amp;O stocks):</b> drop anything under ₹50, under ₹25 cr average daily turnover, moving under 0.8% a day, gapping more than 5% (too extended to chase), or with results / a board meeting due today or tomorrow.</li>
+        <li><b>Research the best 30, one by one:</b> daily trend; strength vs Nifty over 5 and 20 days; setup (NR7, inside day, where yesterday closed in its range, distance to 20-day high/low); liquidity; daily range (ATR); Central Pivot Range width; a 60-day backtest of the exact intraday rules on that stock; its own news and event flags (results, block deals, order wins, regulatory trouble, broker actions); sector tailwind; market regime. After the open: gap and whether it holds, opening range, VWAP, relative volume and the live 5-minute score.</li>
+        <li><b>Pick 10</b> by quality, at most 3 per sector, each with a LONG or SHORT bias. Before 9:15 the list is a provisional watchlist; it <b>locks at 9:25 AM</b> once the opening range is known. <i>Re-pick</i> rebuilds it.</li>
+        <li><b>Entry:</b> on a completed 5-minute bar between 9:30 and 2:25 PM, the score must cross +0.40 (−0.40 for a short) with price above (below) both VWAP and the opening range. Trading against the day's bias needs ±0.55. At most 2 trades per stock a day.</li>
+        <li><b>Exit:</b> stop from ATR and structure (swing/VWAP/opening range, capped at 2.5 ATR). Target 1 = 1.5R: book half and move the stop to cost. Then trail on the Supertrend line. Target 2 = 2.5R. Exit early if the score reverses past −0.15 against you. Everything squares off at 3:15 PM.</li>
+        <li><b>Desk rules:</b> max 5 positions at once, max 20% of capital per position, no new entries once the day's book is down 3R. Size = capital × risk% ÷ stop distance.</li>
+        <li><b>Track record:</b> every day's signals are saved after the close with their R-multiples, so you can judge the method on its real results.</li>
+      </ul>
       <h3>1 · Market regime (national + international)</h3>
       <ul>
         <li><b>Global equities</b> (S&amp;P 500, Nasdaq, Dow, FTSE, DAX) 16% and <b>Asia</b> (Nikkei, Hang Seng, Shanghai, KOSPI) 9% — set the opening tone and FII risk appetite.</li>
@@ -359,7 +399,7 @@
   $("#riskPct").onchange = () => store.set("risk", Number($("#riskPct").value) || 1);
   function showTab(t) {
     $$(".tab").forEach(b => b.classList.toggle("on", b.dataset.tab === t)); $$(".panel").forEach(p => p.classList.toggle("on", p.id === "p-" + t));
-    store.set("tab", t); if (t === "inputs") loadInputs(); if (t === "pulse" && !pulseLoaded) loadPulse();
+    store.set("tab", t); if (t === "inputs") loadInputs(); if (t === "pulse" && !pulseLoaded) loadPulse(); if (t === "top10") loadTop10();
     if (t === "stock" || t === "pulse") setTimeout(redrawAll, 30);
   }
   $$(".tab").forEach(b => b.onclick = () => showTab(b.dataset.tab));
@@ -816,6 +856,120 @@
     $("#inSave").disabled = false;
   };
 
+  /* =====================================================================
+     INTRADAY TOP 10
+     ===================================================================== */
+  let T10 = null, t10Timer = null, t10Busy = false, t10Next = 0;
+  const seenKey = () => "seen-" + (T10 ? T10.day.date : "x");
+  function statusBadge(s) {
+    const up = /LONG ACTIVE/.test(s), dn = /SHORT ACTIVE/.test(s), win = /PROFIT/.test(s), loss = /LOSS/.test(s);
+    return `<span class="status ${up ? "go" : dn ? "short" : ""}">${up ? "▲ " : dn ? "▼ " : win ? "✔ " : loss ? "✖ " : "● "}${esc(s)}</span>`;
+  }
+  function beep() { try { const C = new (window.AudioContext || window.webkitAudioContext)(); const o = C.createOscillator(), g = C.createGain(); o.connect(g); g.connect(C.destination); o.frequency.value = 880; g.gain.setValueAtTime(0.15, C.currentTime); g.gain.exponentialRampToValueAtTime(0.001, C.currentTime + 0.5); o.start(); o.stop(C.currentTime + 0.5); } catch (e) {} }
+  function notifyNew(fresh) {
+    if (!fresh.length) return;
+    $("#t10Flash").innerHTML = `<div class="flashbox"><b>New signals</b> · ${fresh.map(f => `${esc(f.sym)}: ${esc(f.e.type)}${f.e.price ? " @ " + inr(f.e.price) : ""} (${esc(f.e.time)})`).join(" · ")}</div>`;
+    beep();
+    if (store.get("alerts", false) && "Notification" in window && Notification.permission === "granted") fresh.slice(0, 4).forEach(f => { try { new Notification(f.sym + " — " + f.e.type + (f.e.price ? " @ ₹" + f.e.price : ""), { body: f.e.note, tag: f.sym + f.e.time + f.e.type }); } catch (e) {} });
+    fresh.forEach(f => { const el = document.querySelector(`.pick[data-sym="${CSS.escape(f.sym)}"]`); if (el) { el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); } });
+  }
+  async function loadTop10(force) {
+    if (t10Busy) return; t10Busy = true; $("#t10Refresh").disabled = $("#t10Repick").disabled = true;
+    try {
+      const j = await api("mkt_top10", Object.assign({}, money(), force ? { refresh: 1 } : {}));
+      const first = !T10 || T10.day.date !== j.day.date; T10 = j;
+      /* alert only for events that appeared since this browser last looked (the first look just records them) */
+      const seen = new Set(store.get(seenKey(), [])); const hadSeen = seen.size > 0; const fresh = [];
+      j.picks.forEach(p => (p.state.events || []).forEach(e => { const k = p.symbol + "|" + e.time + "|" + e.type; if (!seen.has(k)) { if (!first || hadSeen) fresh.push({ sym: p.symbol, e }); seen.add(k); } }));
+      store.set(seenKey(), Array.from(seen));
+      renderTop10(); notifyNew(fresh);
+    } catch (e) { $("#t10Body").innerHTML = `<div class="err">${e.message}</div>`; }
+    t10Busy = false; $("#t10Refresh").disabled = $("#t10Repick").disabled = false; scheduleTop10();
+  }
+  function scheduleTop10() {
+    clearTimeout(t10Timer); if (!T10) return;
+    const ph = T10.phase.phase; const every = ph === "live" || ph === "opening" ? 60 : ph === "preopen" ? 300 : 0;
+    if (!every) { $("#t10AsOf").textContent = "Updated " + istTime(T10.server_time) + " IST"; return; }
+    t10Next = Date.now() + every * 1000;
+    const tick = () => { const left = Math.max(0, Math.round((t10Next - Date.now()) / 1000));
+      $("#t10AsOf").textContent = "Updated " + istTime(T10.server_time) + " IST · next refresh in " + left + "s";
+      if (left <= 0) { if (!document.hidden) loadTop10(); else t10Next = Date.now() + 15000; } else t10Timer = setTimeout(tick, 1000); };
+    tick();
+  }
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && T10 && Date.now() > t10Next && ["live", "opening"].includes(T10.phase.phase)) loadTop10(); });
+  function pickCard(p) {
+    const S = p.state, L = S.live, P = S.position, lv = S.levels || {}, st = p.setup;
+    let mid = "";
+    if (P) {
+      mid = `<div class="plan"><div><span>${P.side === "LONG" ? "Bought" : "Sold"} ${esc(P.entry_time)}</span><b>${inr(P.entry)}</b></div><div><span>Stop${P.t1_hit ? " (trailing)" : ""}</span><b>${inr(P.stop)}</b></div>
+        <div><span>Target 1 ${P.t1_hit ? "✔" : ""}</span><b>${inr(P.t1)}</b></div><div><span>Target 2</span><b>${inr(P.t2)}</b></div><div><span>Qty</span><b>${fmt(P.qty, 0)}</b></div>
+        <div><span>Open P&amp;L</span><b>${chg(P.open_r, 2, "R")} <span class="small">${inr(P.open_pnl, 0)}</span></b></div></div>`;
+    } else if (/WAITING|OPENING/.test(S.status)) {
+      mid = `<div class="plan"><div><span>Buy above</span><b>${inr(lv.buy_above || st.pdh)}</b></div><div><span>Sell below</span><b>${inr(lv.sell_below || st.pdl)}</b></div>
+        <div><span>VWAP</span><b>${inr(lv.vwap)}</b></div><div><span>Opening range</span><b class="small">${lv.orl ? fmt(lv.orl) + "–" + fmt(lv.orh) : "forming"}</b></div></div>
+        <div class="tiny faint">A trade fires only when a completed 5-min bar confirms: score ${p.dir === "LONG" ? "≥ +0.40 for the planned long (≤ −0.55 to go short instead)" : "≤ −0.40 for the planned short (≥ +0.55 to go long instead)"}, beyond VWAP and the opening range.</div>`;
+    } else if (S.status === "PRE-OPEN" || S.status === "NO DATA") {
+      mid = `<div class="plan"><div><span>Yesterday high</span><b>${inr(st.pdh)}</b></div><div><span>Yesterday low</span><b>${inr(st.pdl)}</b></div><div><span>CPR</span><b class="small">${fmt(st.cpr_bc)}–${fmt(st.cpr_tc)}</b></div><div><span>R1 / S1</span><b class="small">${fmt(st.r1)} / ${fmt(st.s1)}</b></div></div>
+        <div class="tiny faint">Plan: ${p.dir === "LONG" ? "look to buy strength above the opening range and VWAP after 9:30" : "look to sell weakness below the opening range and VWAP after 9:30"}.</div>`;
+    }
+    const trades = (S.trades || []).filter(t => !t.skipped);
+    const ev = (S.events || []).slice().reverse().slice(0, 7);
+    const f = p.factors || [], ed = p.edge, nw = p.news;
+    return `<div class="card pick" data-sym="${esc(p.symbol)}">
+      <div class="top"><div class="rank">#${p.rank}</div><div style="min-width:0"><h3 style="margin:0">${esc(p.symbol)} ${badge(p.dir)}</h3>
+        <div class="tiny faint">${esc(p.name || "")} · ${esc(p.sector)} · quality ${sc(p.quality)}</div><div style="margin-top:6px">${statusBadge(S.status)}</div></div>
+        <div class="px">${L ? `<b>${inr(L.price)}</b>${chg(L.chg_pct)}<div class="tiny faint">${esc(L.time)} · VWAP ${fmt(L.vwap)}${L.rvol ? " · RVOL " + L.rvol + "x" : ""}</div>` : `<b>${inr(st.close)}</b><div class="tiny faint">prev close</div>`}
+        <div style="margin-top:4px">${S.spark ? spark(S.spark, 120, 30) : ""}</div></div></div>
+      ${mid}
+      ${trades.length ? `<div class="small" style="margin-top:6px">Today: ${trades.map(t => `${t.side} ${t.entry_time}→${t.exit_time} ${chg(t.r, 2, "R")} (${esc(t.reason)})`).join(" · ")}</div>` : ""}
+      ${(S.skipped || []).map(x => `<div class="warnbox">${esc(x)}</div>`).join("")}
+      ${ev.length ? `<ul class="tl">${ev.map(e => `<li><span class="num faint">${esc(e.time)}</span><span><b>${esc(e.type)}</b>${e.price ? " @ " + inr(e.price) : ""} <span class="dim">${esc(e.note)}</span></span></li>`).join("")}</ul>` : ""}
+      <details class="mt"><summary class="small">Why ${esc(p.symbol)} — the research</summary>
+        ${factorRows(f, true)}
+        <div class="kv mt">
+          <div><span>Daily trend</span><b>${sc(st.trend)}</b></div><div><span>ATR / day</span><b>${st.atr_pct}%</b></div><div><span>Turnover</span><b>₹${fmt(st.turnover_cr, 0)} cr</b></div>
+          <div><span>RS vs Nifty 5d / 20d</span><b>${pct(st.rs_5d, 1)} / ${pct(st.rs_20d, 1)}</b></div><div><span>Yesterday</span><b>${pct(st.ret_1d, 2)} · closed ${Math.round(st.close_loc * 100)}% of range</b></div>
+          <div><span>Setup</span><b>${[st.nr7 ? "NR7" : "", st.inside ? "Inside day" : ""].filter(Boolean).join(", ") || "—"}</b></div>
+          <div><span>From 20d high / low</span><b>${pct(st.dist_20h, 1)} / ${pct(st.dist_20l, 1)}</b></div><div><span>From 52w high</span><b>${pct(st.dist_52h, 1)}</b></div>
+          <div><span>RSI / ADX</span><b>${fmt(st.rsi, 0)} / ${fmt(st.adx, 0)}</b></div><div><span>CPR width</span><b>${st.cpr_width}%</b></div>
+          ${ed ? `<div><span>60-day intraday edge</span><b>${ed.trades} trades · ${ed.win_rate}% · PF ${ed.profit_factor ?? "—"}</b></div>` : ""}
+        </div>
+        ${nw ? `<p class="small mt"><b>News:</b> ${nw.flags.length ? nw.flags.map(esc).join(" · ") : "no event flags"} · sentiment ${sc(nw.score)}</p>
+          <ul class="plain">${(nw.headlines || []).map(h => `<li class="small"><a href="${esc(h.link)}" target="_blank" rel="noopener">${esc(h.title)}</a> <span class="faint">${sc(h.sentiment)}</span></li>`).join("")}</ul>` : ""}
+        <p class="small"><a href="#" data-sym="${esc(p.symbol)}">Open the full analysis →</a></p>
+      </details></div>`;
+  }
+  function renderTop10() {
+    const J = T10, ph = J.phase, d = J.day, b = J.book, tr = J.track;
+    $("#t10Phase").innerHTML = `<span class="dot"></span>${esc(ph.label)}`; $("#t10Phase").classList.toggle("open", ph.phase === "live");
+    const lockTxt = d.locked ? "List locked " + istTime(d.built_at) : "Provisional — built " + istTime(d.built_at);
+    let h = `<div class="tiles">
+      <div class="tile"><div class="k">Session ${esc(d.date)}</div><div class="v" style="font-size:18px">${esc(lockTxt)}</div><div class="s">${d.universe} stocks screened → ${d.screened} passed filters → ${d.researched} researched in depth → 10 picked</div></div>
+      <div class="tile"><div class="k">Market</div><div class="v" style="font-size:18px">${d.market && d.market.label ? esc(d.market.label) : "—"}</div><div class="s">${d.market && d.market.regime != null ? "regime " + sc(d.market.regime) : ""}${J.nifty ? " · Nifty " + fmt(J.nifty.price, 0) : ""}</div></div>
+      <div class="tile"><div class="k">Today's book</div><div class="v">${chg(b.r, 2, "R")}</div><div class="s">${b.trades} closed trades · ${b.wins} won · ${b.losses} lost · ${inr(b.pnl, 0)}${b.open ? ` · ${b.open} open (${inr(b.open_pnl, 0)})` : ""}</div></div>
+      <div class="tile"><div class="k">Track record</div><div class="v">${tr.days ? chg(tr.total_r, 1, "R") : "—"}</div><div class="s">${tr.days ? `${tr.days} days · ${tr.trades} trades · win rate ${tr.win_rate}% · ${tr.avg_r_per_trade}R/trade · ${tr.green_days} green days` : "Builds up from the first full session"}</div></div>
+    </div>
+    ${J.entries_from ? `<div class="warnbox">This list was built at ${esc(J.entries_from)} IST, after the open — signals are only counted from then on, so hindsight can't flatter the results.</div>` : ""}
+    ${d.not_recorded ? `<p class="tiny faint">${esc(d.not_recorded)}</p>` : ""}
+    <p class="tiny faint">Desk rules: max ${J.rules.max_open} positions at once · max ${J.rules.pos_cap_pct}% of capital per position · no new entries after ${J.rules.day_stop_r}R on the day · risk per trade ${money().risk}% of ₹${fmt(money().capital, 0)}. Signals are rule-based probabilities, not guarantees.</p>
+    <div class="t10">${J.picks.map(pickCard).join("")}</div>`;
+    if (d.runners_up && d.runners_up.length) h += `<div class="card mt"><h2>Next in line</h2><p class="small">${d.runners_up.map(r => `<a href="#" data-sym="${esc(r.symbol)}">${esc(r.symbol)}</a> ${r.dir === "LONG" ? "▲" : "▼"} ${sc(r.quality)}`).join(" · ")}</p>
+      <details><summary class="small">Filtered out (${Object.keys(d.rejected || {}).length})</summary><p class="small dim">${Object.entries(d.rejected || {}).map(([k, v]) => `${esc(k)}: ${esc(v)}`).join(" · ")}</p></details></div>`;
+    if (tr.recent && tr.recent.length) h += `<div class="card mt"><h2>Track record — recent sessions</h2><div class="tbl"><table><thead><tr><th>Date</th><th class="r">Trades</th><th class="r">Won</th><th class="r">Lost</th><th class="r">Result</th></tr></thead><tbody>
+      ${tr.recent.map(r => `<tr><td>${esc(r.date)}</td><td class="r">${r.trades}</td><td class="r">${r.wins}</td><td class="r">${r.losses}</td><td class="r">${chg(r.r, 2, "R")}</td></tr>`).join("")}</tbody></table></div></div>`;
+    $("#t10Body").innerHTML = h;
+  }
+  $("#t10Refresh").onclick = () => loadTop10();
+  $("#t10Repick").onclick = () => { if (confirm("Research all stocks again and replace today's list? Signals already given on the current list will no longer be shown.")) loadTop10(true); };
+  $("#t10Body").addEventListener("click", e => { const s = e.target.closest("[data-sym]"); if (s && s.tagName === "A") { e.preventDefault(); analyze(s.dataset.sym); } });
+  function alertsLabel() { $("#t10Alerts").textContent = store.get("alerts", false) ? "🔔 Alerts on" : "🔕 Enable alerts"; }
+  $("#t10Alerts").onclick = async () => {
+    if (store.get("alerts", false)) { store.set("alerts", false); return alertsLabel(); }
+    if ("Notification" in window && Notification.permission !== "granted") { try { await Notification.requestPermission(); } catch (e) {} }
+    store.set("alerts", true); beep(); alertsLabel();
+  };
+  alertsLabel();
+
   /* ---------- theme ---------- */
   const savedTheme = store.get("theme", null); if (savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
   $("#themeBtn").onclick = () => {
@@ -847,8 +1001,7 @@
   recent(); initScan();
   const hs = location.hash.match(/^#stock=(.+)$/);
   if (hs) analyze(decodeURIComponent(hs[1]));
-  else showTab(store.get("tab", "pulse") === "stock" ? "stock" : store.get("tab", "pulse"));
-  if (!hs && !pulseLoaded && store.get("tab", "pulse") !== "pulse") loadPulse();  // warm the macro cache so stock calls include the regime
+  else showTab(store.get("tab", "top10") === "stock" ? "stock" : store.get("tab", "top10"));
   }
 })();
 </script>
