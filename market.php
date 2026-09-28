@@ -35,6 +35,7 @@
    ===================================================================== */
 
 require_once __DIR__ . '/market_engine.php';
+require_once __DIR__ . '/sources.php';
 
 const MKT_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
 
@@ -143,19 +144,29 @@ function mkt_parse_chart($body) {
 }
 /* specs: key => [symbol, range, interval]; returns key => candles|null (cached) */
 function mkt_charts(array $specs, $force = false) {
-  $out = []; $need = [];
+  $out = []; $need = []; $cks = [];
   foreach ($specs as $k => $s) {
-    list($sym, $range, $int) = $s; $ck = "chart|$sym|$range|$int";
+    list($sym, $range, $int) = $s; $ck = "chart|$sym|$range|$int"; $cks[$k] = $ck;
     $ttl = in_array($int, ['1m', '2m', '5m', '15m', '30m', '60m'], true) ? mkt_ttl('intraday') : mkt_ttl('daily');
     $hit = $force ? null : mkt_cache_get($ck, $ttl);
-    if ($hit) $out[$k] = $hit; else $need[$k] = ['url' => mkt_chart_url($sym, $range, $int), 'ck' => $ck];
+    if ($hit) $out[$k] = $hit; else $need[$k] = ['url' => mkt_chart_url($sym, $range, $int)];
   }
-  if ($need) {
+  $failed = [];
+  if ($need && !mkt_yahoo_blocked()) {
     $res = mkt_http_multi($need);
+    $n429 = 0;
     foreach ($need as $k => $r) {
       $C = ($res[$k]['code'] === 200) ? mkt_parse_chart($res[$k]['body']) : null;
-      if ($C) { mkt_cache_set($r['ck'], $C); $out[$k] = $C; }
-      else { $stale = mkt_cache_get($r['ck'], null); $out[$k] = $stale ?: null; if ($stale) $out[$k]['meta']['stale'] = true; }
+      if ($res[$k]['code'] === 429) $n429++;
+      if ($C) { $C['meta']['source'] = 'Yahoo'; mkt_cache_set($cks[$k], $C); $out[$k] = $C; } else $failed[$k] = $specs[$k];
+    }
+    if ($n429 && $n429 >= count($need) / 2) mkt_yahoo_mark_blocked(); // this server is being refused: go straight to the fallbacks for a while
+  } else foreach ($need as $k => $r) $failed[$k] = $specs[$k];
+  if ($failed) {
+    $fb = mkt_fallback_charts($failed);
+    foreach ($failed as $k => $s) {
+      if (!empty($fb[$k])) { mkt_cache_set($cks[$k], $fb[$k]); $out[$k] = $fb[$k]; continue; }
+      $stale = mkt_cache_get($cks[$k], null); $out[$k] = $stale ?: null; if ($stale) $out[$k]['meta']['stale'] = true;
     }
   }
   return $out;
@@ -179,14 +190,16 @@ function mkt_yahoo_auth($force = false) {
 }
 function mkt_quote_summary($sym) {
   $ck = "qs|$sym"; $hit = mkt_cache_get($ck, mkt_ttl('fund')); if ($hit) return $hit;
+  if (mkt_yahoo_blocked()) return mkt_cnbc_fundamentals($sym) ?: mkt_cache_get($ck, null);
   $mods = 'price,summaryDetail,defaultKeyStatistics,financialData,assetProfile,calendarEvents,recommendationTrend';
   for ($try = 0; $try < 2; $try++) {
     $a = mkt_yahoo_auth($try > 0); if (!$a) break;
     $r = mkt_http('https://query2.finance.yahoo.com/v10/finance/quoteSummary/' . rawurlencode($sym) . '?modules=' . $mods . '&crumb=' . rawurlencode($a['crumb']), ['cookie' => $a['cookie']]);
     if ($r['code'] === 200) { $j = json_decode($r['body'], true); $q = $j['quoteSummary']['result'][0] ?? null; if ($q) { mkt_cache_set($ck, $q); return $q; } }
+    if ($r['code'] === 429) { mkt_yahoo_mark_blocked(); break; }
     if ($r['code'] !== 401 && $r['code'] !== 403) break;
   }
-  return mkt_cache_get($ck, null);
+  return mkt_cnbc_fundamentals($sym) ?: mkt_cache_get($ck, null);
 }
 
 /* ---------- news (RSS) ---------- */
@@ -382,13 +395,20 @@ function mkt_macro($force = false) {
   if ($oc) $extra[] = ['key' => 'pcr', 'label' => 'Nifty options (PCR)', 'weight' => 0.03, 'score' => $oc['score']];
   if ($news['scored'] ?? 0) $extra[] = ['key' => 'news', 'label' => 'News sentiment', 'weight' => 0.05, 'score' => $news['score']];
   if ($india['score'] !== null) $extra[] = ['key' => 'india_macro', 'label' => 'India macro (RBI, CPI, GDP, PMI…)', 'weight' => 0.08, 'score' => $india['score']];
+  $nseIdx = mkt_nse_indices(); $nv = $nseIdx['NIFTY 50'] ?? null;
+  if ($nv && $nv['pe']) $extra[] = ['key' => 'valuation', 'label' => 'Nifty valuation (P/E ' . round($nv['pe'], 1) . ')', 'weight' => 0.05, 'score' => round(tanh((21.5 - $nv['pe']) / 3), 3)];
   $R = mk_regime($ins, $extra);
+  if (count($ins) < 6) { // flows, options and news alone are not a market read
+    $R['label'] = 'Not enough price data'; $R['insufficient'] = true;
+    $R['advice'] = 'Live prices could not be fetched from any source just now, so no regime call is made. The flows, options and news below are still current.';
+  }
   $sectors = mk_sector_view($R['drivers'], $srs);
   $vix = null; foreach ($ins as $x) if ($x['driver'] === 'india_vix') $vix = $x['last'];
   $out = ['as_of' => time(), 'market' => mk_market_status(), 'regime' => $R, 'instruments' => $ins, 'missing' => $missing,
           'nifty' => $niftyTech ? ['price' => $niftyTech['price'], 'change_pct' => $niftyTech['change_pct'], 'score' => $niftyTech['score'], 'factors' => $niftyTech['factors'],
                                    'levels' => $niftyTech['levels'], 'pivots' => $niftyTech['pivots_daily'], 'structure' => $niftyTech['structure'], 'returns' => $niftyTech['returns'], 'indicators' => $niftyTech['indicators']] : null,
-          'india_vix' => $vix, 'breadth' => $breadth, 'sector_indices' => $sectorsIdx, 'sectors' => array_values($sectors), 'flows' => $flows, 'options' => $oc,
+          'india_vix' => $vix, 'breadth' => $breadth, 'nifty_valuation' => $nv,
+          'sources' => array_count_values(array_filter(array_map(function ($C) { return $C['meta']['source'] ?? null; }, array_filter($D)))), 'sector_indices' => $sectorsIdx, 'sectors' => array_values($sectors), 'flows' => $flows, 'options' => $oc,
           'news' => $news, 'india_inputs' => ['values' => $inputs, 'scored' => $india], 'events' => mkt_events($inputs)];
   if ($ins) mkt_cache_set('macro_v1', $out); // an all-failed fetch is shown, never cached
   return $out;
@@ -435,7 +455,7 @@ function mkt_analyze($symIn, $capital = 100000, $riskPct = 1.0, $force = false) 
     $exposure[] = ['driver' => mk_driver_name($d), 'sensitivity' => $beta, 'driver_move' => $m === null ? null : round($m, 2), 'effect' => $m === null ? null : round($beta * $m, 3),
                    'note' => ($beta > 0 ? 'Benefits when ' : 'Hurt when ') . mk_driver_name($d) . ' rises' . ($m === null ? '.' : '; it is currently ' . ($m > 0.1 ? 'rising' : ($m < -0.1 ? 'falling' : 'flat')) . '.')];
   }
-  $out = ['symbol' => $sym, 'name' => $name, 'exchange' => $meta['exchange'] ?? null, 'currency' => $meta['currency'] ?? 'INR', 'as_of' => time(), 'market' => mk_market_status(),
+  $out = ['data_source' => ['prices' => $meta['source'] ?? null, 'fundamentals' => $Q ? ($Q['_source'] ?? 'Yahoo') : null], 'symbol' => $sym, 'name' => $name, 'exchange' => $meta['exchange'] ?? null, 'currency' => $meta['currency'] ?? 'INR', 'as_of' => time(), 'market' => mk_market_status(),
           'stale' => !empty($meta['stale']), 'sector' => ['key' => $sectorKey, 'label' => $sens['label'] ?? $sectorKey, 'story' => $sens['story'] ?? null, 'view' => $sector, 'exposure' => $exposure,
                                                          'yahoo_sector' => $fund['values']['sector'] ?? null, 'industry' => $fund['values']['industry'] ?? null],
           'verdicts' => ['intraday' => $intraday, 'swing' => $swing, 'long' => $long],
@@ -489,7 +509,9 @@ function mkt_search($q) {
   $q = trim((string) $q); if ($q === '') return [];
   $local = []; $uq = strtoupper($q);
   foreach (mkt_universes() as $u) foreach ($u['symbols'] as $s) if (strpos($s, $uq) === 0) $local[$s] = ['symbol' => $s, 'yahoo' => mkt_norm_symbol($s), 'name' => null, 'exchange' => 'NSE'];
+  if (mkt_yahoo_blocked()) { foreach (mkt_search_master($q) as $x) $local[$x['symbol']] = $x; return array_slice(array_values($local), 0, 12); }
   $r = mkt_http('https://query2.finance.yahoo.com/v1/finance/search?q=' . rawurlencode($q) . '&quotesCount=12&newsCount=0&listsCount=0');
+  if ($r['code'] === 429) { mkt_yahoo_mark_blocked(); foreach (mkt_search_master($q) as $x) $local[$x['symbol']] = $x; }
   $j = json_decode($r['body'], true);
   foreach (($j['quotes'] ?? []) as $x) {
     $s = $x['symbol'] ?? ''; if (!preg_match('/\.(NS|BO)$|^\^/', $s)) continue;

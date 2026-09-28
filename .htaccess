@@ -1,7 +1,7 @@
 # Market Desk — Apache / LiteSpeed rules (Hostinger reads these)
 
 # Never serve the settings file, the data folder, tools or git files.
-<FilesMatch "^(config\.php|config\.sample\.php|lib\.php|market\.php|market_engine\.php|README\.md|\.ftp-deploy-sync-state\.json)$">
+<FilesMatch "^(config\.php|config\.sample\.php|lib\.php|market\.php|market_engine\.php|sources\.php|README\.md|\.ftp-deploy-sync-state\.json)$">
   Require all denied
 </FilesMatch>
 RedirectMatch 404 ^/?(.*/)?(data|tools|\.git|\.github)(/.*)?$

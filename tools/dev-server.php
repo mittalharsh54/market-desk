@@ -76,7 +76,47 @@ function dev_rss($name) {
 }
 $GLOBALS['MKT_HTTP_MOCK'] = function ($url) {
   $mk = function ($p) { return ['code' => $p[0], 'body' => $p[1], 'error' => '', 'headers' => "HTTP/1.1 200 OK\r\nset-cookie: A3=dev; Path=/\r\n"]; };
+  $blocked = getenv('MD_MOCK_YAHOO_429') === '1';
+  if ($blocked && strpos($url, 'yahoo.com') !== false) return $mk([429, 'Too Many Requests']);
   if (strpos($url, '/v8/finance/chart/') !== false) return $mk(dev_chart($url));
+  /* Upstox: instrument list + candles, built from the same synthetic series */
+  if (strpos($url, 'assets.upstox.com') !== false) {
+    $rows = [];
+    foreach (['RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'SBIN', 'ITC', 'M&M', 'BAJAJ-AUTO', 'TMPV', 'LT', 'ICICIBANK', 'AXISBANK', 'KOTAKBANK', 'BHARTIARTL', 'TITAN', 'NTPC'] as $i => $t)
+      $rows[] = ['segment' => 'NSE_EQ', 'name' => $t . ' LTD', 'exchange' => 'NSE', 'isin' => 'INE' . sprintf('%06d', $i) . 'A01', 'instrument_type' => 'EQ', 'instrument_key' => 'NSE_EQ|INE' . sprintf('%06d', $i) . 'A01', 'trading_symbol' => $t];
+    foreach (['Nifty 50', 'Nifty Bank', 'India VIX', 'Nifty IT', 'Nifty Auto', 'Nifty Pharma', 'Nifty FMCG', 'Nifty Metal', 'Nifty Realty', 'Nifty Energy', 'Nifty PSU Bank', 'Nifty Fin Service', 'Nifty Infra', 'Nifty Media', 'Nifty PSE', 'Nifty Midcap 50'] as $n)
+      $rows[] = ['segment' => 'NSE_INDEX', 'name' => $n, 'exchange' => 'NSE', 'instrument_type' => 'INDEX', 'instrument_key' => 'NSE_INDEX|' . $n, 'trading_symbol' => strtoupper($n)];
+    $rows[] = ['segment' => 'NSE_FO', 'name' => 'NIFTY FUT', 'instrument_type' => 'FUT', 'instrument_key' => 'NSE_FO|1', 'trading_symbol' => 'NIFTY26OCTFUT'];
+    return $mk([200, gzencode(json_encode($rows))]);
+  }
+  if (strpos($url, 'api.upstox.com') !== false) {
+    preg_match('~historical-candle/(intraday/)?([^/]+)/(day|minutes/(\d+))~', $url, $m);
+    $key = rawurldecode($m[2]); $intra = $m[1] !== ''; $step = ($m[3] === 'day') ? 86400 : 60 * (int) $m[4];
+    $sym = strpos($key, 'NSE_INDEX|Nifty 50') === 0 ? '^NSEI' : (strpos($key, 'India VIX') !== false ? '^INDIAVIX' : $key);
+    $bars = $step === 86400 ? 500 : ($intra ? 75 : 75 * 8);
+    $C = dev_series($sym, $bars, $step === 86400 ? 86400 : 300, $step !== 86400);
+    if ($step === 900) $C = mk_resample($C, 3);
+    $today = gmdate('Y-m-d', time() + 19800); $rows = [];
+    for ($i = count($C['c']) - 1; $i >= 0; $i--) {
+      $d = gmdate('Y-m-d', $C['t'][$i] + 19800);
+      if ($intra ? $d !== $today : $d === $today) continue; // history excludes today; intraday is today only
+      $rows[] = [gmdate('Y-m-d\TH:i:s', $C['t'][$i] + 19800) . '+05:30', $C['o'][$i], $C['h'][$i], $C['l'][$i], $C['c'][$i], $C['v'][$i], 0];
+    }
+    return $mk([200, json_encode(['status' => 'success', 'data' => ['candles' => $rows]])]);
+  }
+  /* CNBC: daily bars + quotes */
+  if (strpos($url, 'ts-api.cnbc.com') !== false) {
+    preg_match('~symbol=([^&]+)~', $url, $m); $cs = rawurldecode($m[1]); $C = dev_series('cnbc:' . $cs, 260, 86400, false); $bars = [];
+    for ($i = 0; $i < count($C['c']); $i++) $bars[] = ['open' => sprintf('%.4f', $C['o'][$i]), 'high' => sprintf('%.4f', $C['h'][$i]), 'low' => sprintf('%.4f', $C['l'][$i]), 'close' => sprintf('%.4f', $C['c'][$i]), 'volume' => 0, 'tradeTimeinMills' => $C['t'][$i] * 1000];
+    return $mk([200, json_encode(['barData' => ['priceBars' => $bars]])]);
+  }
+  if (strpos($url, 'quote.cnbc.com') !== false) {
+    preg_match('~symbols=([^&]+)~', $url, $m); $q = [];
+    foreach (explode('|', rawurldecode($m[1])) as $cs) $q[] = ['symbol' => $cs, 'code' => 0, 'name' => $cs . ' (CNBC)', 'last' => '1,234.50', 'last_time' => gmdate('Y-m-d\TH:i:s', time() - 3600) . '.000+0000', 'open' => '1,220.00', 'high' => '1,240.00', 'low' => '1,210.00',
+      'pe' => '24.10', 'eps' => '51.2', 'mktcapView' => '16.2T', 'dividendyield' => '0.55%', 'beta' => '1.05', 'psales' => '1.4', 'ROETTM' => '17.5%', 'NETPROFTTM' => '11.2%', 'GROSMGNTTM' => '38.0%', 'DEBTEQTYQ' => '42.0%', 'currencyCode' => 'INR'];
+    return $mk([200, json_encode(['FormattedQuoteResult' => ['FormattedQuote' => $q]])]);
+  }
+  if (strpos($url, '/api/allIndices') !== false) return $mk([200, json_encode(['data' => [['index' => 'NIFTY 50', 'last' => 25000, 'percentChange' => -0.4, 'pe' => '22.8', 'pb' => '3.6', 'dy' => '1.25', 'advances' => '21', 'declines' => '29']]])]);
   if (strpos($url, 'getcrumb') !== false) return $mk([200, 'devCrumb']);
   if (strpos($url, 'fc.yahoo.com') !== false || $url === 'https://www.nseindia.com/') return $mk([200, '<html></html>']);
   if (strpos($url, 'quoteSummary') !== false) {

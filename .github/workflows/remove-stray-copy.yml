@@ -22,7 +22,7 @@ jobs:
           P: ${{ secrets.FTP_PASSWORD }}
         run: |
           set -euo pipefail
-          lf() { lftp -u "$U,$P" -e "set net:max-retries 2; set net:timeout 20; $1; bye" "$H"; }
+          lf() { lftp -u "$U,$P" -e "set ssl:verify-certificate no; set net:max-retries 2; set net:timeout 20; $1; bye" "$H"; }
           echo "== FTP home"; lf "cls -1"
           echo "== Candidate folder"; list=$(lf "cls -1 public_html/markets/" || true); echo "$list"
           for f in index.html api.php market_engine.php market.php lib.php; do

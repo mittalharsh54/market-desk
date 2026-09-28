@@ -46,15 +46,15 @@ jobs:
 
           echo "== Market pulse (server fetching ~90 instruments, flows, options, news)"
           m=$(curl -s -m 170 -b "$J" "${U}api.php?action=mkt_macro&refresh=1")
-          echo "$m" | jq '{error, regime: .regime.label, score: .regime.score, instruments: (.instruments|length), missing, nifty: .nifty.price,
+          echo "$m" | jq '{error, sources, regime: .regime.label, score: .regime.score, instruments: (.instruments|length), missing, nifty: .nifty.price,
                           india_vix, breadth_total: .breadth.total, sectors_with_index: (.sector_indices|length),
                           flows: .flows, options: (.options|if . then {pcr, max_pain, expiry} else null end),
                           news_items: (.news.items|length), news_sources_ok: .news.sources_ok}' || { echo "::error::macro not JSON: ${m:0:300}"; FAIL=1; }
-          n=$(echo "$m" | jq '.instruments|length' 2>/dev/null || echo 0); [ "${n:-0}" -ge 10 ] || { echo "::error::Server could fetch only ${n:-0} instruments from Yahoo"; FAIL=1; }
+          n=$(echo "$m" | jq '.instruments|length' 2>/dev/null || echo 0); [ "${n:-0}" -ge 10 ] || { echo "::error::Server could fetch only ${n:-0} market instruments"; FAIL=1; }
 
           echo "== Stock analysis (RELIANCE)"
           a=$(curl -s -m 170 -b "$J" "${U}api.php?action=mkt_analyze&symbol=RELIANCE")
-          echo "$a" | jq '{error, symbol, name, price: .technical.price, tech_score: .technical.score,
+          echo "$a" | jq '{error, data_source, symbol, name, price: .technical.price, tech_score: .technical.score,
                           intraday: .verdicts.intraday.action, swing: .verdicts.swing.action, long: .verdicts.long.rating,
                           fundamentals: (.fundamental.available // false), fund_score: .fundamental.score, pe: .fundamental.values.pe,
                           backtest_swing_trades: .backtest.swing.trades, backtest_intraday_trades: .backtest.intraday.trades,

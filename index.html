@@ -515,14 +515,14 @@
   }
   function setMarket(m) { if (!m) return; $("#mktPill").classList.toggle("open", !!m.open); $("#mktPhase").textContent = "NSE " + m.phase + " · " + m.ist + " IST"; }
   function renderPulse() {
-    const M = MACRO, R = M.regime; $("#pulseAsOf").textContent = "Updated " + istTime(M.as_of) + " IST" + (M.cached ? " (cached)" : "");
+    const M = MACRO, R = M.regime; $("#pulseAsOf").textContent = "Updated " + istTime(M.as_of) + " IST" + (M.cached ? " (cached)" : "") + (M.sources && Object.keys(M.sources).length ? " · prices from " + Object.keys(M.sources).join(", ") : "");
     const n = M.nifty, b = M.breadth, f = M.flows, o = M.options;
     const vixIns = (M.instruments || []).find(x => x.driver === "india_vix");
     let h = `<div class="tiles">
       <div class="tile" style="grid-column:span 2;min-width:0"><div class="k">Market regime for Indian equities</div>
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div class="v">${sc(R.score)}</div>${badge(R.label.toUpperCase())}</div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div class="v">${R.insufficient ? "—" : sc(R.score)}</div>${badge(R.label.toUpperCase())}</div>
         ${meter(R.score, true)}<div class="s" style="margin-top:6px">${esc(R.advice)}</div></div>
-      <div class="tile"><div class="k">Nifty 50</div><div class="v">${n ? fmt(n.price, 0) : "—"}</div><div class="s">${n ? chg(n.change_pct) + " · trend " + sc(n.score) : "unavailable"}</div><div class="s">${n ? esc(n.structure.label) : ""}</div></div>
+      <div class="tile"><div class="k">Nifty 50</div><div class="v">${n ? fmt(n.price, 0) : "—"}</div><div class="s">${n ? chg(n.change_pct) + " · trend " + sc(n.score) : "unavailable"}</div><div class="s">${n ? esc(n.structure.label) : ""}</div>${M.nifty_valuation && M.nifty_valuation.pe ? `<div class="s">P/E ${fmt(M.nifty_valuation.pe, 1)} · P/B ${fmt(M.nifty_valuation.pb, 2)} · yield ${fmt(M.nifty_valuation.dy, 2)}%</div>` : ""}</div>
       <div class="tile"><div class="k">India VIX</div><div class="v">${vixIns ? fmt(vixIns.last) : "—"}</div><div class="s">${vixIns ? chg(vixIns.chg_1d) + " · " + (vixIns.last > 20 ? "elevated fear — size down" : vixIns.last < 13 ? "calm — complacency risk" : "normal range") : ""}</div></div>
       <div class="tile"><div class="k">Breadth · Nifty 50</div><div class="v">${b ? b.advances + " ▲ " + b.declines + " ▼" : "—"}</div><div class="s">${b ? b.pct_above_50dma + "% above 50-DMA · " + b.pct_above_20dma + "% above 20-DMA" : ""}</div></div>
       <div class="tile"><div class="k">FII / DII (₹ cr)</div><div class="v" style="font-size:19px">${f ? fmt(f.fii_net, 0) + " / " + fmt(f.dii_net, 0) : "—"}</div><div class="s">${f ? esc((f.source || "") + (f.date ? " · " + f.date : "")) : 'NSE unreachable — <a href="#" data-goto="inputs">enter by hand</a>'}</div></div>
@@ -612,7 +612,7 @@
     charts.length = 0;
     const isIdx = A.symbol[0] === "^";
     let h = `<div class="card"><div class="ch" style="align-items:center"><div style="flex:1;min-width:220px"><h2 style="font-size:20px">${esc(A.name)}</h2>
-      <div class="small dim">${esc(A.symbol)} · ${esc(A.exchange || "")} · ${esc(A.sector.label)}${A.sector.industry ? " · " + esc(A.sector.industry) : ""}${A.stale ? ' · <b>showing cached data — live fetch failed</b>' : ""}</div></div>
+      <div class="small dim">${esc(A.symbol)} · ${esc(A.exchange || "")} · ${esc(A.sector.label)}${A.data_source && A.data_source.prices ? " · prices: " + esc(A.data_source.prices) + (A.data_source.fundamentals ? ", fundamentals: " + esc(A.data_source.fundamentals) : "") : ""}${A.sector.industry ? " · " + esc(A.sector.industry) : ""}${A.stale ? ' · <b>showing cached data — live fetch failed</b>' : ""}</div></div>
       <div style="text-align:right"><div style="font-size:26px;font-weight:750" class="num">${inr(T.price)}</div><div>${chg(T.change_pct)} <span class="tiny faint">· ${istTime(A.as_of)} IST</span></div></div></div>
       <div class="small dim" style="margin-top:6px">Market regime: <b>${esc(A.macro.label || "—")}</b> (${sc(A.macro.score)}) · India VIX ${fmt(A.macro.india_vix)} · Sector ${esc(A.sector.label)} ${A.sector.view ? "tailwind " + sc(A.sector.view.score) : ""}</div></div>`;
     /* three verdicts */
@@ -673,7 +673,7 @@
             <div><span>ROE · ROA</span><b>${pct(v.roe == null ? null : v.roe * 100, 1)} · ${pct(v.roa == null ? null : v.roa * 100, 1)}</b></div>
             <div><span>Op. / net margin</span><b>${pct(v.op_margin == null ? null : v.op_margin * 100, 1)} · ${pct(v.net_margin == null ? null : v.net_margin * 100, 1)}</b></div>
             <div><span>Revenue / EPS growth</span><b>${pct(v.rev_growth == null ? null : v.rev_growth * 100, 1)} · ${pct(v.earn_growth == null ? null : v.earn_growth * 100, 1)}</b></div>
-            <div><span>Debt/Equity</span><b>${v.de == null ? "—" : fmt(v.de > 10 ? v.de / 100 : v.de)}</b></div><div><span>Dividend yield</span><b>${pct(v.div_yield == null ? null : v.div_yield * 100, 2)}</b></div>
+            <div><span>Debt/Equity</span><b>${v.de == null ? "—" : fmt(v.de / 100)}</b></div><div><span>Dividend yield</span><b>${pct(v.div_yield == null ? null : v.div_yield * 100, 2)}</b></div>
             <div><span>Promoter / inst.</span><b>${pct(v.insiders == null ? null : v.insiders * 100, 0)} · ${pct(v.institutions == null ? null : v.institutions * 100, 0)}</b></div>
             <div><span>Analyst target</span><b>${v.target_mean ? inr(v.target_mean, 0) : "—"}</b></div><div><span>Consensus</span><b>${v.rec_mean ? fmt(v.rec_mean) + " " + esc(v.rec_key || "") : "—"}</b></div>
             <div><span>Next results</span><b>${esc(v.next_earnings || "—")}</b></div><div><span>EPS ttm / fwd</span><b>${fmt(v.eps_ttm)} / ${fmt(v.eps_fwd)}</b></div>

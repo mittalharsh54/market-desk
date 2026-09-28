@@ -28,6 +28,7 @@ api.php             JSON API + password login
 lib.php             config, file storage, login, Claude call
 market.php          data fetching: Yahoo Finance, NSE, RSS; assembles each view
 market_engine.php   the maths: indicators, scores, signals, backtests (no I/O)
+sources.php         fallback data: Upstox, CNBC, NSE index snapshot
 config.sample.php   copy to config.php and set your password
 tools/test-market-engine.php   43 offline checks: php tools/test-market-engine.php
 tools/dev-server.php           offline demo with synthetic data
@@ -39,7 +40,7 @@ tools/dev-server.php           offline demo with synthetic data
 1. Make a subdomain or folder, e.g. `markets.yourdomain.com` (hPanel → Domains → Subdomains).
 2. Upload every file in this repo into its folder, including `.htaccess`.
 3. Copy `config.sample.php` to `config.php` and set `$APP_PASSWORD`. Add `$ANTHROPIC_API_KEY` if you want the AI notes.
-4. Use PHP 8.0 or newer, with the cURL and SimpleXML extensions (both are standard on Hostinger).
+4. Use PHP 7.4 or newer, with the cURL, zlib and SimpleXML extensions (all standard on Hostinger).
 5. Open the site and sign in.
 
 The app creates a `data/` folder for its cache and your inputs. `.htaccess` blocks
@@ -79,10 +80,27 @@ Open http://127.0.0.1:8080. To try it with no internet and made-up data:
 
 ## Data sources and their limits
 
-- **Yahoo Finance**: prices for NSE/BSE stocks, indices, FX, commodities and yields, plus fundamentals and analyst views. No key needed. NSE prices can lag a few minutes.
-- **NSE India**: FII/DII flows and the Nifty option chain. NSE often blocks hosting-company IP addresses. If flows show as unavailable, type them into *India macro inputs*.
-- **News RSS**: Economic Times, Moneycontrol, Mint, Business Standard, Google News. Sentiment comes from a finance word list, not a human reader.
+The app tries Yahoo Finance first. Many shared-hosting servers get a permanent
+"429 Too Many Requests" from Yahoo. When that happens, the app remembers it for
+30 minutes and uses these sources instead, which do answer servers:
+
+| What | Source |
+|---|---|
+| NSE/BSE stocks and indices: daily, 5- and 15-minute bars, and today's live bars | Upstox public candle API |
+| World indices, VIX, US yields, dollar, rupee, crude, gold, copper, bitcoin | CNBC quote and chart feeds |
+| Fundamentals (P/E, ROE, margins, debt/equity, dividend yield, market cap) | Yahoo, else CNBC. CNBC has no growth rates or P/B, so those factors drop out. |
+| Nifty P/E, P/B and dividend yield; FII/DII flows; option chain | NSE |
+| News | ET, Moneycontrol, Mint, Business Standard, Google News |
+
+Each view shows which source its prices came from. **Api action `mkt_diag`**
+(signed-in only) reports what every source returns to your server. The
+**Smoke test live site** workflow runs it, together with a sign-in and a full
+analysis, against the live URL.
+
+- **News sentiment** comes from a finance word list, not a human reader.
 - **Not modelled**: NSE holidays. On a holiday the app shows the last session.
-- **Hard-coded lists to keep current**: index constituent lists and the Fed (FOMC) dates live in `market.php`. Update them after index rebalances, and each January for the FOMC dates.
+- **Hard-coded lists to keep current**: index constituent lists and the Fed (FOMC) dates live in `market.php`.
+  Update them after index rebalances, and each January for the FOMC dates.
+- **Requirements**: PHP 7.4 or newer, with cURL, zlib and SimpleXML.
 
 Everything fetched is cached in `data/`: briefly while the market is open, longer when it's closed.
