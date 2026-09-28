@@ -481,6 +481,8 @@ function id_tick() {
       $msg = id_event_msg($p, $e); if ($msg) $send($msg);
     }
     if ($isToday && $now >= 932 && !$sent['summary'] && !empty($R['day']['locked'])) { $send(id_summary_msg($R)); $sent['summary'] = true; }
+    /* monthly momentum: announce a rebalance once (first trading day of the month) */
+    if ($isToday && $tg['chat']) { try { mom_view(); $mm = mom_announce(); if ($mm) $send($mm); } catch (Exception $e) { $out['momentum_error'] = $e->getMessage(); } }
     md_store_set($key, json_encode($sent));
     $out['book'] = $R['book']; $out['open'] = array_values(array_map(function ($p) { return $p['symbol'] . ' ' . $p['state']['status']; }, array_filter($R['picks'], function ($p) { return !empty($p['state']['position']); })));
     return $out;

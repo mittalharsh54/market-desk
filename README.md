@@ -12,6 +12,7 @@ the evidence behind it, and a backtest of the same rules on that stock's history
 
 | Tab | What it does |
 |---|---|
+| **Monthly picks** | The strategy that passed the lab: monthly momentum with a market filter. On the first trading day of each month, hold the 4 strongest stocks by 12-month return (skipping the last month) that are above their 200-day average, equal amounts, as delivery trades; keep a holding while it stays in the top 20; hold cash while the Nifty is below its 200-day average. Telegram announces each rebalance. |
 | **Intraday Top 10** | Every trading day: screen ~170 liquid F&O stocks, research the best 40 one by one (trend, strength vs Nifty, setup, liquidity, daily range, pivot width, a 60-day backtest of the rules on that stock, its news and event risk, sector, market, and after the open: gap, opening range, VWAP, relative volume, live score). Keep the 10 best, locked at 9:25 AM. Then live BUY / SELL-short signals (only when the trigger bar trades 1.5× normal volume) with stop, Target 1 (book half, stop to cost), trailing stop, Target 2 and a 3:15 PM square-off, refreshed every minute with browser alerts. Desk rules: max 5 open positions, max 20% of capital per position, no new entries after −3R on the day. Every day is saved to a track record. |
 | **Market pulse** | One regime score for Indian equities built from world indices (US, Europe, Asia), US & India VIX, US yields, the dollar, USD/INR, crude, gold, copper, the Nifty's trend, Nifty 50 breadth, FII/DII flows, the Nifty option chain (PCR, max pain), news sentiment and your India macro numbers. Also covers sector tailwinds for 28 sectors, sector indices vs Nifty, Nifty levels, top movers, scored headlines and an event radar. |
 | **Analyze a stock** | Intraday call (5-minute bars with a 15-minute check), swing call (10-factor daily technical score) and long-term rating (fundamentals vs Indian sector norms + trend + momentum + sector + macro). Charts, support/resistance, candle patterns, fundamentals, sector and macro exposure, stock news, and backtests. |
@@ -30,8 +31,10 @@ lib.php             config, file storage, login, Claude call
 market.php          data fetching: Yahoo Finance, NSE, RSS; assembles each view
 market_engine.php   the maths: indicators, scores, signals, backtests (no I/O)
 sources.php         fallback data: Upstox, CNBC, NSE index snapshot
+momentum.php        Monthly picks (the lab-approved strategy)
+rules.json          live rules + evidence, updated by the daily learning run
 config.sample.php   copy to config.php and set your password
-tools/test-market-engine.php   58 offline checks: php tools/test-market-engine.php
+tools/test-market-engine.php   59 offline checks: php tools/test-market-engine.php
 tools/dev-server.php           offline demo with synthetic data
 .github/workflows/deploy.yml   FTP deploy with config from secrets
 .github/workflows/daily-desk.yml    locks the Top 10 at 9:27 IST and records results at 15:42 IST (Mon–Fri)
@@ -110,3 +113,13 @@ analysis, against the live URL.
 - **Requirements**: PHP 7.4 or newer, with cURL, zlib and SimpleXML.
 
 Everything fetched is cached in `data/`: briefly while the market is open, longer when it's closed.
+
+## How the rules learn
+
+Every trading day at 16:10 IST the **Daily learning** workflow re-tests the rules on the latest data:
+the intraday rules (`tools/volume-study.php`), the swing rule (`tools/swing-study.php`) and five
+swing/positional strategies in a Rs 10,000 account with a hold-out (`tools/strategy-lab.php`).
+`tools/learn.php` then updates `rules.json`. A change is adopted only if it made money after charges
+in both halves of the test period (intraday/swing), or beat both Nifty buy-and-hold and equal-weight
+buy-and-hold of the same stocks in the tuning period and the hold-out (positional). The decision log
+lives in `rules.json` and is shown in the app.

@@ -37,6 +37,7 @@
 require_once __DIR__ . '/market_engine.php';
 require_once __DIR__ . '/sources.php';
 require_once __DIR__ . '/intraday.php';
+require_once __DIR__ . '/momentum.php';
 /* the volume gate the daily learning run settled on (rules.json) */
 if (function_exists('md_rules')) $GLOBALS['MK_VOL_MULT'] = (float) md_rules()['intraday']['vol_mult'];
 
@@ -625,6 +626,7 @@ function mkt_dispatch($action) {
         $out = ['values' => $in]; break;
       case 'mkt_diag': $out = mkt_diag(); break;
       case 'mkt_top10': $out = id_top10($force, $capital, $risk); break;
+      case 'mkt_momentum': $out = mom_view(); break;
       case 'mkt_tick': $out = id_tick(); break;
       case 'mkt_tg_status': $out = id_tg_status(); break;
       case 'mkt_tg_test':

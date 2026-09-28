@@ -254,6 +254,7 @@
   </div>
 
   <div class="tabs" role="tablist">
+    <button class="tab" data-tab="mom">Monthly picks ✓ tested</button>
     <button class="tab on" data-tab="top10">Intraday Top 10</button>
     <button class="tab" data-tab="pulse">Market pulse</button>
     <button class="tab" data-tab="stock">Analyze a stock</button>
@@ -275,6 +276,11 @@
     </div>
     <div id="t10Flash"></div>
     <div id="t10Body"><div class="loading"><span class="spin"></span>Researching today's list — screening ~170 liquid F&amp;O stocks, then studying the best 40 in depth…</div></div>
+  </section>
+
+  <section class="panel" id="p-mom">
+    <div class="ch" style="margin-bottom:10px"><span class="pill">Monthly momentum · delivery (CNC) · checked once a month</span><span class="spacer"></span><button class="btn btn-sm" id="momRefresh">↻ Refresh</button></div>
+    <div id="momBody"><div class="loading"><span class="spin"></span>Ranking ~250 stocks by 12-month momentum…</div></div>
   </section>
 
   <section class="panel" id="p-pulse">
@@ -438,10 +444,47 @@
   ["#capital", "#riskPct", "#leverage", "#tradeMode"].forEach(id => $(id).onchange = saveSettings);
   function showTab(t) {
     $$(".tab").forEach(b => b.classList.toggle("on", b.dataset.tab === t)); $$(".panel").forEach(p => p.classList.toggle("on", p.id === "p-" + t));
-    store.set("tab", t); if (t === "inputs") loadInputs(); if (t === "pulse" && !pulseLoaded) loadPulse(); if (t === "top10") loadTop10();
+    store.set("tab", t); if (t === "inputs") loadInputs(); if (t === "pulse" && !pulseLoaded) loadPulse(); if (t === "top10") loadTop10(); if (t === "mom") loadMom();
     if (t === "stock" || t === "pulse") setTimeout(redrawAll, 30);
   }
   $$(".tab").forEach(b => b.onclick = () => showTab(b.dataset.tab));
+
+  /* ---------- Monthly momentum ---------- */
+  async function loadMom() {
+    $("#momBody").innerHTML = `<div class="loading"><span class="spin"></span>Ranking ~250 stocks by 12-month momentum…</div>`;
+    try { renderMom(await api("mkt_momentum")); } catch (e) { $("#momBody").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+  }
+  $("#momRefresh").onclick = loadMom;
+  $("#momBody").addEventListener("click", e => { const x = e.target.closest("[data-sym]"); if (x) { e.preventDefault(); analyze(x.dataset.sym); } });
+  function renderMom(M) {
+    const R = M.rank, E = M.evidence || {}, ev = E.evidence || {}, res = (ev.results || []).find(r => r.strategy === E.strategy && r.slots === E.slots), base = ev.baselines || [];
+    const bl = part => base.map(b => `${esc(b.strategy)} ${b[part].cagr_pct}%`).join(" · ");
+    const dstr = d => new Date(d + "T12:00:00+05:30").toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", weekday: "short", day: "numeric", month: "short" });
+    let h = `<div class="${E.tradeable ? "okbox" : "warnbox"}" style="margin:0 0 10px">${res ? `<b>Why this strategy:</b> it is the only one of 5 strategies (15 account set-ups) that beat both Nifty buy-and-hold and equal-weight buy-and-hold of the same stocks, in the tuning years <i>and</i> in a hold-out it was never tuned on, with a worst fall under 30%.
+      Tuning years (${esc(base[0] ? base[0].from : "")} → ${esc(base[0] ? base[0].holdout_from : "")}): <b>${res.train.cagr_pct}% a year</b>, worst fall ${res.train.max_dd_pct}% (baselines: ${bl("train")}).
+      Hold-out (→ ${esc(base[0] ? base[0].to : "")}): <b>${res.holdout.cagr_pct}% a year</b>, worst fall ${res.holdout.max_dd_pct}% (baselines: ${bl("holdout")}).
+      <br><b>Be realistic:</b> the hold-out edge is small and rests on few trades; the test uses today's stock list, which flatters momentum; a single stock can fall 20–30%. Expect losing months, and judge it over a year, not a week.` : "<b>Not tested yet.</b> The daily learning run has not approved a positional strategy."}</div>`;
+    h += `<div class="summary">
+      <div><span>Market filter</span><b class="${R.market_on ? "good" : "bad"}">${R.market_on ? "ON — invest" : "OFF — hold cash"}</b><em>Nifty ${fmt(R.nifty, 0)} vs 200-day avg ${fmt(R.nifty_200dma, 0)} (${esc(R.nifty_as_of)})</em></div>
+      <div><span>${M.mode === "preview" ? "Starts" : "This month"}</span><b>${M.mode === "preview" ? dstr(M.starts) : esc(M.month)}</b><em>${M.mode === "preview" ? "first trading day of the month" : "set on " + esc(M.rebalanced_on)}</em></div>
+      <div><span>Next check</span><b>${dstr(M.next_rebalance)}</b><em>${M.slots} stocks × ~₹${fmt(M.per_slot, 0)} of your ₹${fmt(M.capital, 0)}</em></div></div>`;
+    const hold = M.holdings || [];
+    h += `<div class="card mt"><h2>${M.mode === "preview" ? "Preview — what you would buy on " + dstr(M.starts) : "What to hold this month"}</h2>`;
+    if (M.mode === "preview") h += `<p class="small dim">You are starting mid-month. The strategy buys on the first trading day of the month, from the previous close — wait until then; this list may still change.</p>`;
+    if (!hold.length) h += `<p><b>Hold cash.</b> ${R.market_on ? "No stock qualified within your budget." : "The Nifty is below its 200-day average, so the market filter says stay out. The filter is what kept the worst fall near 28% instead of 60% in the test."}</p>`;
+    else h += `<div class="tbl"><table class="plan-t"><thead><tr><th>Stock</th><th>Do this</th><th class="r">Shares</th><th class="r">Price ref.</th><th class="r">Amount</th></tr></thead><tbody>
+      ${hold.map(x => `<tr><td><a href="#" data-sym="${esc(x.symbol)}"><b>${esc(x.symbol)}</b></a><div class="tiny dim">${esc(x.name)}</div></td><td><span class="dopill ${x.kept ? "wait" : "buy"}">${x.kept ? "KEEP" : M.mode === "preview" ? "BUY on " + dstr(M.starts) : "BUY (delivery)"}</span></td>
+        <td class="r num">${x.qty}</td><td class="r num">₹${fmt(x.buy_ref)}</td><td class="r num">₹${fmt(x.amount, 0)}</td></tr>`).join("")}</tbody></table></div>`;
+    if ((M.sell || []).length) h += `<p class="small"><b>Sell this month:</b> ${M.sell.map(x => esc(x.symbol)).join(", ")} — dropped out of the top 20.</p>`;
+    h += `<details class="mt"><summary class="small">How to place the orders</summary><ol class="small">
+      <li>On the first trading day of the month, after 9:15 AM: sell anything marked SELL, then buy each stock as <b>Delivery (CNC)</b>, not intraday.</li>
+      <li>No stop-loss orders and no daily watching — the rule is checked once a month. A holding is sold only when it drops out of the top 20 or the market filter turns off.</li>
+      <li>Charges on ₹10,000 run about ₹16 per stock sold (DP charge) plus 0.1% STT each way — that is why this checks monthly, not daily.</li></ol></details></div>`;
+    h += `<div class="card mt"><h2>Top 20 by momentum</h2><p class="small dim">12-month return skipping the latest month, only stocks above their 200-day average. ${R.ranked} of ${R.screened} stocks qualified.</p>
+      <div class="tbl"><table class="small"><thead><tr><th>#</th><th>Stock</th><th class="r">12-1 month</th><th class="r">Last month</th><th class="r">Above 200-DMA</th><th class="r">Price</th></tr></thead><tbody>
+      ${R.top.map((r, i) => `<tr><td>${i + 1}</td><td><a href="#" data-sym="${esc(r.symbol)}"><b>${esc(r.symbol)}</b></a></td><td class="r num">${r.mom_12_1}%</td><td class="r num">${r.ret_1m}%</td><td class="r num">${r.above_200dma_pct}%</td><td class="r num">₹${fmt(r.price)}</td></tr>`).join("")}</tbody></table></div></div>`;
+    $("#momBody").innerHTML = h;
+  }
 
   /* =====================================================================
      CHARTS — plain SVG. Candles + overlays + volume, indicator panels,

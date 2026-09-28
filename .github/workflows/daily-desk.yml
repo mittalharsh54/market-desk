@@ -47,6 +47,7 @@ jobs:
                                 edge: (if .edge then "\(.edge.trades) trades, win \(.edge.win_rate)%, PF \(.edge.profit_factor)" else null end),
                                 news: (if .news then "\(.news.scored) headlines \(.news.flags)" else null end),
                                 why: [.factors[] | select((.score|fabs) >= 0.5) | "\(.label) \(.score)"]}]}'
+              echo "== Monthly momentum"; curl -s -m 200 -b "$J" "${U}api.php?action=mkt_momentum" | jq -c '{error, mode, month, market_on: .rank.market_on, holdings: [.holdings[]?.symbol], buy: [.buy[]?.symbol], sell: [.sell[]?.symbol]}' || true
               exit 0
             fi
             echo "attempt $try: ${r:0:300}"; sleep 45
