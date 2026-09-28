@@ -1,0 +1,27 @@
+name: Research (volume study)
+
+# Replays the live intraday rules on the last ~60 days of real 5-minute data,
+# with and without the volume checks, so the rule is kept only if it helps.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stocks:
+        description: "How many stocks from the universe"
+        default: "260"
+
+jobs:
+  study:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Replay with and without volume rules
+        run: |
+          php -v | head -1
+          php tools/volume-study.php "${{ inputs.stocks }}" | tee study.jsonl
+          {
+            echo "| Variant | Trades | Win % | Avg R | Profit factor (R) | Net ₹ at ₹1L, 1% risk | 1st half R | 2nd half R |"
+            echo "|---|---|---|---|---|---|---|---|"
+            jq -r '"| \(.variant) | \(.trades) | \(if .trades>0 then (.wins*1000/.trades|round/10) else 0 end) | \(if .trades>0 then (.sum_r*100/.trades|round/100) else 0 end) | \(if .loss_r>0 then (.gain_r*100/.loss_r|round/100) else "-" end) | \(.net_pnl) | \(.half1_r) | \(.half2_r) |"' study.jsonl
+          } >> "$GITHUB_STEP_SUMMARY"

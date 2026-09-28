@@ -569,7 +569,7 @@ function mk_intraday_score_at(array $A, $i) {
     $add('orb', 'Opening-range breakout (15 min)', 0.10, $s, round($orl, 2) . '–' . round($orh, 2),
       $s > 0 ? 'Broke above the opening range high ' . round($orh, 2) . '.' : ($s < 0 ? 'Broke below the opening range low ' . round($orl, 2) . '.' : 'Still inside the opening range — no breakout yet.'));
   }
-  if ($A['volume_weighted'] && $i >= 6) {
+  if ($A['volume_weighted'] && $i >= 6 && ($GLOBALS['MK_VOLP'] ?? true)) {
     $sv = 0.0; $tv = 0.0; for ($j = $i - 5; $j <= $i; $j++) { $sv += $A['sv'][$j]; $tv += $C['v'][$j]; }
     if ($tv > 0) { $press = $sv / $tv; $vr = $A['vavg'][$i - 1] ? $C['v'][$i] / $A['vavg'][$i - 1] : null;
       $add('volp', 'Volume pressure (last 30 min)', 0.12, mk_clamp($press * 1.6), round($press, 2),
@@ -598,8 +598,9 @@ function mk_intraday_score_at(array $A, $i) {
 
 /* Entry needs participation: the trigger bar trades at least 1.2x the last 20 bars' average
    (skipped for instruments that report no volume, like indices) */
-function mk_vol_ok(array $A, $i, $mult = 1.2) {
-  if (!$A['volume_weighted'] || $i < 21 || !$A['vavg'][$i - 1]) return true;
+function mk_vol_ok(array $A, $i, $mult = null) {
+  $mult = $mult ?? ($GLOBALS['MK_VOL_MULT'] ?? 1.2);
+  if (!$mult || !$A['volume_weighted'] || $i < 21 || !$A['vavg'][$i - 1]) return true;
   return $A['C']['v'][$i] >= $mult * $A['vavg'][$i - 1];
 }
 function mk_vol_ratio(array $A, $i) { return ($A['volume_weighted'] && $i >= 21 && $A['vavg'][$i - 1]) ? round($A['C']['v'][$i] / $A['vavg'][$i - 1], 1) : null; }
