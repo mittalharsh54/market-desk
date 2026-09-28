@@ -1,0 +1,34 @@
+name: One-time cleanup — remove misplaced copy
+
+# The first deploys went to public_html/markets/ *inside* the FTP account's home,
+# which on this Hostinger account is already public_html — so they landed in
+# public_html/public_html/markets/. This removes that copy, but only after
+# checking the folder holds Market Desk's own files, and removes the extra
+# public_html/ folder only if it is then empty. Run once, then delete this file.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install lftp
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+      - name: Remove public_html/markets relative to the FTP home
+        env:
+          H: ${{ secrets.FTP_SERVER }}
+          U: ${{ secrets.FTP_USERNAME }}
+          P: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          lf() { lftp -u "$U,$P" -e "set net:max-retries 2; set net:timeout 20; $1; bye" "$H"; }
+          echo "== FTP home"; lf "cls -1"
+          echo "== Candidate folder"; list=$(lf "cls -1 public_html/markets/" || true); echo "$list"
+          for f in index.html api.php market_engine.php market.php lib.php; do
+            echo "$list" | grep -qx "public_html/markets/$f" || { echo "::error::public_html/markets/ does not look like the misplaced Market Desk copy (no $f). Not deleting anything."; exit 1; }
+          done
+          lf "rm -r public_html/markets"
+          echo "Removed public_html/markets (the misplaced copy)."
+          left=$(lf "cls -1a public_html/" | grep -v '/\.\{1,2\}$' || true)
+          if [ -z "$left" ]; then lf "rmdir public_html"; echo "Removed the empty extra public_html/ folder."; else echo "Extra public_html/ still has files, left alone:"; echo "$left"; fi
