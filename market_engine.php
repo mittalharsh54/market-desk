@@ -709,7 +709,7 @@ function mk_bt_stats(array $trades, $label, $benchRet = null) {
 }
 /* Swing: long when the daily score crosses up through +0.30; stop 2 ATR, target 4 ATR,
    exit if the score turns negative or after 30 sessions. Costs 0.25% round trip. */
-function mk_backtest_swing(array $A, $th = 0.30, $cost = 0.25) {
+function mk_backtest_swing(array $A, $th = 0.30, $cost = 0.25, $withTrades = false) {
   $C = $A['C']; $n = $A['n']; $trades = []; $start = min(210, $n - 1); $prevS = null; $in = null;
   $scores = []; for ($i = $start; $i < $n; $i++) $scores[$i] = mk_tech_score_at($A, $i)['score'];
   for ($i = $start; $i < $n - 1; $i++) {
@@ -719,10 +719,10 @@ function mk_backtest_swing(array $A, $th = 0.30, $cost = 0.25) {
       if ($C['l'][$j] <= $in['sl']) $hit = min($C['o'][$j], $in['sl']);
       elseif ($C['h'][$j] >= $in['tp']) $hit = max($C['o'][$j], $in['tp']);
       elseif ($s < 0 || $j - $in['i'] >= 30) $hit = $C['c'][$j];
-      if ($hit !== null) { $trades[] = ['date' => mk_ist_date($C['t'][$in['i']]), 'exit' => mk_ist_date($C['t'][$j]), 'side' => 'LONG', 'ret' => round(($hit / $in['e'] - 1) * 100 - $cost, 2), 'bars' => $j - $in['i']]; $in = null; }
+      if ($hit !== null) { $trades[] = ['date' => mk_ist_date($C['t'][$in['i']]), 'exit' => mk_ist_date($C['t'][$j]), 'side' => 'LONG', 'ret' => round(($hit / $in['e'] - 1) * 100 - $cost, 2), 'bars' => $j - $in['i'], 'score' => $in['s']]; $in = null; }
     }
     if (!$in && $prevS !== null && $s >= $th && $prevS < $th && $A['atr'][$i]) {
-      $e = $C['o'][$i + 1]; $in = ['i' => $i + 1, 'e' => $e, 'sl' => $e - 2 * $A['atr'][$i], 'tp' => $e + 4 * $A['atr'][$i]];
+      $e = $C['o'][$i + 1]; $in = ['i' => $i + 1, 'e' => $e, 'sl' => $e - 2 * $A['atr'][$i], 'tp' => $e + 4 * $A['atr'][$i], 's' => $s];
     }
     $prevS = $s;
   }
@@ -730,6 +730,7 @@ function mk_backtest_swing(array $A, $th = 0.30, $cost = 0.25) {
   $st = mk_bt_stats($trades, 'Swing (daily score ≥ +0.30, 2-ATR stop, 4-ATR target)', $bh);
   $st['period'] = mk_ist_date($C['t'][$start]) . ' → ' . mk_ist_date($C['t'][$n - 1]);
   $st['benchmark_label'] = 'Buy & hold over the same period';
+  if ($withTrades) $st['all'] = $trades;
   return $st;
 }
 /* Intraday: enter on a fresh cross of ±0.45 between 9:45 and 14:30, stop 1.2 ATR,
