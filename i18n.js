@@ -109,7 +109,7 @@
     "Higher highs & higher lows (uptrend)": "ऊँचे शिखर और ऊँचे निचले स्तर (अपट्रेंड)", "Lower highs & lower lows (downtrend)": "नीचे शिखर और नीचे निचले स्तर (डाउनट्रेंड)",
     "Expanding range (volatile)": "फैलता दायरा (उतार-चढ़ाव)", "Contracting range (coiling)": "सिकुड़ता दायरा (दबाव बन रहा)", "Nifty options (PCR)": "निफ्टी ऑप्शंस (PCR)",
     "Nifty valuation": "निफ्टी मूल्यांकन", "normal range": "सामान्य दायरा",
-    "Settings": "सेटिंग्स", "Light / dark": "लाइट / डार्क", "Sign out of Market Desk": "Market Desk से साइन आउट",
+    "Settings": "सेटिंग्स", "Telegram": "टेलीग्राम", "Language of the Telegram alerts": "टेलीग्राम अलर्ट की भाषा", "Light / dark": "लाइट / डार्क", "Sign out of Market Desk": "Market Desk से साइन आउट",
     "Used to size every trade plan": "हर ट्रेड योजना का आकार इसी से तय होता है", "Most you are willing to lose on one trade, as % of capital": "एक ट्रेड में आप पूंजी का अधिकतम कितना % खोने को तैयार हैं",
     "Phone alerts through your Telegram bot": "आपके टेलीग्राम बॉट से फ़ोन अलर्ट", "Browser notification + sound when a signal fires": "सिग्नल आने पर ब्राउज़र सूचना + आवाज़",
     "Research the universe again and replace today's list": "सभी शेयरों पर दोबारा रिसर्च करके आज की सूची बदलें", "NSE symbol or company — e.g. RELIANCE, TCS, HDFCBANK": "NSE सिंबल या कंपनी — जैसे RELIANCE, TCS, HDFCBANK",

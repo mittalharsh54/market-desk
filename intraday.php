@@ -35,11 +35,13 @@ const ID_MIN_QTY = 3;           // a stock must be affordable in at least this m
 function id_settings() {
   $j = json_decode((string) md_store_get('desk_settings'), true); $j = is_array($j) ? $j : [];
   return ['capital' => max(1000, (float) ($j['capital'] ?? 10000)), 'risk_pct' => min(5, max(0.1, (float) ($j['risk_pct'] ?? 1))), 'leverage' => in_array($lv = (int) ($j['leverage'] ?? 1), [1, 2, 3, 4, 5], true) ? $lv : 1,
-          'long_only' => !empty($j['long_only'])]; // "Buy only": no short selling
+          'long_only' => !empty($j['long_only']), // "Buy only": no short selling
+          'tg_lang' => in_array($j['tg_lang'] ?? 'hi', ['hi', 'en', 'both'], true) ? ($j['tg_lang'] ?? 'hi') : 'hi']; // Telegram message language
 }
 function id_settings_set(array $in) {
   $cur = id_settings(); foreach (['capital', 'risk_pct', 'leverage'] as $k) if (isset($in[$k]) && is_numeric($in[$k])) $cur[$k] = $in[$k] + 0;
   if (isset($in['long_only'])) $cur['long_only'] = (bool) $in['long_only'];
+  if (isset($in['tg_lang']) && in_array($in['tg_lang'], ['hi', 'en', 'both'], true)) $cur['tg_lang'] = $in['tg_lang'];
   md_store_set('desk_settings', json_encode($cur)); return id_settings();
 }
 function id_pos_budget(array $st) { return $st['capital'] * ID_POS_CAP * $st['leverage']; }
@@ -419,8 +421,26 @@ function id_tg_status() {
   return ['configured' => true, 'chat' => (bool) id_tg_chat()];
 }
 function id_money($x) { return '₹' . number_format((float) $x, (abs($x) < 1000 && floor($x) != $x) ? 2 : 0); }
+/* ---------- Telegram messages in Hindi or English (setting: tg_lang = hi | en | both) ---------- */
+function id_tg_lang() { return id_settings()['tg_lang']; }
+/* build a message with $build('hi'|'en'); "both" sends Hindi first, then English */
+function id_tg_compose(callable $build) {
+  $l = id_tg_lang(); if ($l !== 'both') return $build($l);
+  $hi = $build('hi'); $en = $build('en'); return ($hi && $en) ? $hi . "\n\n— English —\n" . $en : ($hi ?: $en);
+}
+function id_hi_reason($why) {
+  $map = ['Stop-loss hit' => 'स्टॉप-लॉस लगा', 'Target 2 hit' => 'टारगेट 2 पूरा', 'Trailing stop hit' => 'ट्रेलिंग स्टॉप लगा', 'Stopped at cost after Target 1' => 'टारगेट 1 के बाद लागत पर बाहर',
+          'Square-off at 3:15 PM' => '3:15 बजे स्क्वेयर-ऑफ़'];
+  if (isset($map[$why])) return $map[$why];
+  if (strpos($why, 'Signal reversed') === 0) return 'सिग्नल पलट गया';
+  if (strpos($why, 'daily loss limit') === 0) return 'दिन की नुकसान सीमा (' . ID_DAY_STOP_R . 'R) पूरी';
+  if (strpos($why, 'daily profit target') === 0) return 'दिन का मुनाफ़ा लक्ष्य (+' . ID_DAY_TARGET_R . 'R) पूरा — दिन की कमाई सुरक्षित';
+  if (preg_match('/^already (\d+) positions open/', $why, $m)) return 'पहले से ' . $m[1] . ' पोज़िशन खुली हैं';
+  return $why;
+}
 /* one event -> one clear message */
-function id_event_msg(array $p, array $e) {
+function id_event_msg(array $p, array $e, $lang = 'en') {
+  $hi = $lang === 'hi';
   $sym = htmlspecialchars($p['symbol']); $P = $p['state']['position'] ?? null; $t = $e['time'];
   switch ($e['type']) {
     case 'BUY': case 'SELL (SHORT)':
@@ -429,37 +449,60 @@ function id_event_msg(array $p, array $e) {
       $pos = $P && $P['entry_time'] === $t ? $P : null; $qty = $pos ? $pos['qty'] : ($tr['qty'] ?? $q);
       $stop = $pos ? $pos['init_stop'] : null; $t1 = $pos ? $pos['t1'] : null; $t2 = $pos ? $pos['t2'] : null;
       if (!$pos && preg_match('/Stop ₹([\d.]+), T1 ₹([\d.]+), T2 ₹([\d.]+), qty (\d+)/', $e['note'], $m)) { $stop = $m[1]; $t1 = $m[2]; $t2 = $m[3]; $qty = $m[4]; }
+      if ($hi) return ($buy ? "🟢 <b>खरीदें $sym</b>" : "🔻 <b>शॉर्ट करें $sym</b> (पहले बेचें, आज ही वापस खरीदें)") . " — $qty शेयर " . id_money($e['price']) . ' पर (≈' . id_money($qty * $e['price']) . ")\n"
+        . 'स्टॉप-लॉस ' . id_money($stop) . ' · टारगेट 1 ' . id_money($t1) . ' (आधा ' . ($buy ? 'बेचें' : 'वापस खरीदें') . ') · टारगेट 2 ' . id_money($t2) . "\n"
+        . "इंट्राडे (MIS)। स्टॉप-लॉस ऑर्डर तुरंत लगाएँ। <i>$t</i>";
       return ($buy ? "🟢 <b>BUY $sym</b>" : "🔻 <b>SHORT $sym</b> (sell first, buy back later today)") . " — $qty shares at " . id_money($e['price']) . ' (≈' . id_money($qty * $e['price']) . ")\n"
         . 'Stop-loss ' . id_money($stop) . ' · Target 1 ' . id_money($t1) . ' (' . ($buy ? 'sell' : 'buy back') . ' half) · Target 2 ' . id_money($t2) . "\n"
         . "Intraday (MIS). Place the stop-loss order right away. <i>$t</i>";
     case 'TARGET 1 HIT':
       $half = $P ? (int) floor($P['qty'] / 2) : null; $buy = $P ? $P['side'] === 'LONG' : true;
+      if ($hi) return "🎯 <b>$sym — टारगेट 1 पूरा</b> " . id_money($e['price']) . " पर\nअभी आधे " . ($half ? "($half शेयर) " : '') . ($buy ? 'बेचें' : 'वापस खरीदें') . ' और स्टॉप-लॉस को अपनी एंट्री ' . ($P ? id_money($P['entry']) : '') . " पर ले आएँ। <i>$t</i>";
       return "🎯 <b>$sym — Target 1 hit</b> at " . id_money($e['price']) . "\n" . ($buy ? 'SELL' : 'BUY BACK') . ' HALF' . ($half ? " ($half shares)" : '') . ' now and move the stop-loss to your entry ' . ($P ? id_money($P['entry']) : '') . ". <i>$t</i>";
     case 'TRAIL STOP':
+      if ($hi) return "🔼 <b>$sym — स्टॉप-लॉस " . id_money($e['price']) . " पर ले जाएँ</b>\nबाकी शेयरों पर मुनाफ़ा अब सुरक्षित है। <i>$t</i>";
       return "🔼 <b>$sym — move stop-loss to " . id_money($e['price']) . "</b>\nProfit on the rest is now locked in. <i>$t</i>";
     case 'EXIT — PROFIT': case 'EXIT — LOSS': case 'EXIT — FLAT':
       $icon = $e['type'] === 'EXIT — PROFIT' ? '✅' : ($e['type'] === 'EXIT — LOSS' ? '🔴' : '⚪');
       $why = preg_replace('/\s*\(.*$/', '', $e['note']); $net = preg_match('/net ₹([-\d,]+)/', $e['note'], $m) ? $m[1] : null;
+      if ($hi) return "$icon <b>$sym — " . id_money($e['price']) . " पर बाहर निकलें</b> (" . id_hi_reason($why) . ")\n" . ($net !== null ? 'नतीजा: चार्ज के बाद ₹' . $net . '। ' : '') . "बाकी शेयर भी बंद करें। <i>$t</i>";
       return "$icon <b>$sym — EXIT at " . id_money($e['price']) . "</b> ($why)\n" . ($net !== null ? 'Result: ₹' . $net . ' after charges. ' : '') . "Close any remaining shares. <i>$t</i>";
     case 'SKIPPED':
-      return "⏸ <b>$sym</b> — signal not taken: " . htmlspecialchars(preg_replace('/^Desk rule: /', '', $e['note'])) . " <i>$t</i>";
+      $why = preg_replace(['/^Desk rule: /', '/\.$/'], '', $e['note']);
+      if ($hi) return "⏸ <b>$sym</b> — सिग्नल नहीं लिया: " . htmlspecialchars(id_hi_reason($why)) . "। <i>$t</i>";
+      return "⏸ <b>$sym</b> — signal not taken: " . htmlspecialchars($why) . ". <i>$t</i>";
   }
   return null;
 }
-function id_list_msg(array $R) {
-  $S = $R['settings']; $lines = ['📋 <b>Today\'s 10 stocks</b> — plan for ' . id_money($S['capital']) . ' (up to ' . id_money($R['pos_budget']) . ' per stock, max ' . $R['rules']['max_open'] . ' at once)'];
+function id_list_msg(array $R, $lang = 'en') {
+  $hi = $lang === 'hi'; $S = $R['settings'];
+  $lines = [$hi ? '📋 <b>आज के 10 शेयर</b> — ' . id_money($S['capital']) . ' की योजना (हर शेयर में अधिकतम ' . id_money($R['pos_budget']) . ', एक साथ अधिकतम ' . $R['rules']['max_open'] . ')'
+                : '📋 <b>Today\'s 10 stocks</b> — plan for ' . id_money($S['capital']) . ' (up to ' . id_money($R['pos_budget']) . ' per stock, max ' . $R['rules']['max_open'] . ' at once)'];
   foreach ($R['picks'] as $p) {
     $lv = $p['state']['levels'] ?? []; $up = $p['dir'] === 'LONG';
     $trig = $up ? ($lv['buy_above'] ?? $p['setup']['pdh']) : ($lv['sell_below'] ?? $p['setup']['pdl']);
-    $lines[] = $p['rank'] . '. <b>' . htmlspecialchars($p['symbol']) . '</b>' . ($p['darkhorse'] ? ' 🐎' : '') . ' — ' . ($up ? '▲ BUY if above ' : '▼ SHORT if below ') . id_money($trig) . ' · up to ' . $p['plan']['max_qty'] . ' shares';
+    $lines[] = $p['rank'] . '. <b>' . htmlspecialchars($p['symbol']) . '</b>' . ($p['darkhorse'] ? ' 🐎' : '') . ' — '
+      . ($hi ? ($up ? '▲ ' . id_money($trig) . ' से ऊपर हो तो खरीदें' : '▼ ' . id_money($trig) . ' से नीचे हो तो शॉर्ट करें') . ' · अधिकतम ' . $p['plan']['max_qty'] . ' शेयर'
+             : ($up ? '▲ BUY if above ' : '▼ SHORT if below ') . id_money($trig) . ' · up to ' . $p['plan']['max_qty'] . ' shares');
   }
-  $lines[] = "\nWait for the BUY / SHORT message before acting — a level alone is not a signal.";
-  if (array_filter($R['picks'], function ($p) { return $p['dir'] !== 'LONG'; })) $lines[] = 'SHORT = profit if the price falls: sell first (Intraday/MIS), buy back before 3:15 PM. You don\'t need to own the shares.';
+  $short = (bool) array_filter($R['picks'], function ($p) { return $p['dir'] !== 'LONG'; });
+  if ($hi) {
+    $lines[] = "\nकार्रवाई से पहले 'खरीदें / शॉर्ट करें' मैसेज का इंतज़ार करें — सिर्फ़ स्तर पर पहुँचना सिग्नल नहीं है।";
+    if ($short) $lines[] = 'शॉर्ट = भाव गिरने पर मुनाफ़ा: पहले बेचें (इंट्राडे/MIS), 3:15 बजे से पहले वापस खरीदें। शेयर आपके पास होना ज़रूरी नहीं।';
+    $lines[] = '⚠ जाँच में ये इंट्राडे नियम चार्ज के बाद घाटे में रहे — पेपर-ट्रेड की सलाह।';
+  } else {
+    $lines[] = "\nWait for the BUY / SHORT message before acting — a level alone is not a signal.";
+    if ($short) $lines[] = 'SHORT = profit if the price falls: sell first (Intraday/MIS), buy back before 3:15 PM. You don\'t need to own the shares.';
+    $lines[] = '⚠ In testing these intraday rules lost money after charges — paper-trade them.';
+  }
   return implode("\n", $lines);
 }
-function id_summary_msg(array $R) {
-  $b = $R['book']; $lines = ['🏁 <b>Day summary</b> — ' . ($b['pnl'] >= 0 ? 'profit ' : 'loss ') . id_money($b['pnl']) . ' after ' . id_money($b['charges']) . ' charges (' . sprintf('%+.2f', $b['pnl_pct']) . '%)', $b['trades'] . ' trades · ' . $b['wins'] . ' won · ' . $b['losses'] . ' lost'];
-  foreach ($R['picks'] as $p) foreach ($p['state']['trades'] as $t) if (empty($t['skipped'])) $lines[] = '• ' . htmlspecialchars($p['symbol']) . ' ' . $t['side'] . ' ' . $t['entry_time'] . '→' . $t['exit_time'] . ': ' . id_money($t['pnl']);
+function id_summary_msg(array $R, $lang = 'en') {
+  $hi = $lang === 'hi'; $b = $R['book'];
+  $lines = $hi ? ['🏁 <b>दिन का सार</b> — ' . ($b['pnl'] >= 0 ? 'मुनाफ़ा ' : 'नुकसान ') . id_money($b['pnl']) . ' (' . id_money($b['charges']) . ' चार्ज के बाद, ' . sprintf('%+.2f', $b['pnl_pct']) . '%)', $b['trades'] . ' ट्रेड · ' . $b['wins'] . ' जीते · ' . $b['losses'] . ' हारे']
+               : ['🏁 <b>Day summary</b> — ' . ($b['pnl'] >= 0 ? 'profit ' : 'loss ') . id_money($b['pnl']) . ' after ' . id_money($b['charges']) . ' charges (' . sprintf('%+.2f', $b['pnl_pct']) . '%)', $b['trades'] . ' trades · ' . $b['wins'] . ' won · ' . $b['losses'] . ' lost'];
+  foreach ($R['picks'] as $p) foreach ($p['state']['trades'] as $t) if (empty($t['skipped']))
+    $lines[] = '• ' . htmlspecialchars($p['symbol']) . ' ' . ($hi ? ($t['side'] === 'LONG' ? 'खरीद' : 'शॉर्ट') : $t['side']) . ' ' . $t['entry_time'] . '→' . $t['exit_time'] . ': ' . id_money($t['pnl']);
   return implode("\n", $lines);
 }
 /* called every minute: build/lock the list, work out signals, send what is new */
@@ -472,15 +515,15 @@ function id_tick() {
     $tg = id_tg_status(); $out = ['date' => $date, 'phase' => $R['phase']['phase'], 'sent' => [], 'telegram' => $tg];
     $now = mk_ist_min(time()); $isToday = $date === id_today();
     $send = function ($msg) use (&$out, $tg) { if (!$tg['chat']) { $out['sent'][] = ['queued_no_chat' => strip_tags($msg)]; return; } $r = id_tg_send($msg); $out['sent'][] = ['ok' => $r['ok'] ?? false, 'text' => strip_tags($msg), 'error' => $r['description'] ?? null]; };
-    if (!empty($R['day']['locked']) && !$sent['list'] && $isToday) { $send(id_list_msg($R)); $sent['list'] = true; }
+    if (!empty($R['day']['locked']) && !$sent['list'] && $isToday) { $send(id_tg_compose(function ($l) use ($R) { return id_list_msg($R, $l); })); $sent['list'] = true; }
     foreach ($R['picks'] as $p) foreach ($p['state']['events'] as $e) {
       $k = $p['symbol'] . '|' . $e['time'] . '|' . $e['type']; if (isset($sent['events'][$k])) continue;
       $sent['events'][$k] = 1;
       list($h, $m) = array_map('intval', explode(':', $e['time']));
       if (!$isToday || $now - ($h * 60 + $m) > 15) continue; // old news (e.g. the job started late): record, don't spam
-      $msg = id_event_msg($p, $e); if ($msg) $send($msg);
+      $msg = id_tg_compose(function ($l) use ($p, $e) { return id_event_msg($p, $e, $l); }); if ($msg) $send($msg);
     }
-    if ($isToday && $now >= 932 && !$sent['summary'] && !empty($R['day']['locked'])) { $send(id_summary_msg($R)); $sent['summary'] = true; }
+    if ($isToday && $now >= 932 && !$sent['summary'] && !empty($R['day']['locked'])) { $send(id_tg_compose(function ($l) use ($R) { return id_summary_msg($R, $l); })); $sent['summary'] = true; }
     /* monthly momentum: announce a rebalance once (first trading day of the month) */
     if ($isToday && $tg['chat']) { try { mom_view(); $mm = mom_announce(); if ($mm) $send($mm); } catch (Exception $e) { $out['momentum_error'] = $e->getMessage(); } }
     md_store_set($key, json_encode($sent));

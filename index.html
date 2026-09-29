@@ -311,6 +311,7 @@
       <label title="Buy only = never short-sell; only stocks expected to go up are picked.">Trades <select id="tradeMode" style="padding:5px 6px"><option value="both">Buy &amp; short</option><option value="long">Buy only</option></select></label>
       <label title="Intraday leverage from your broker (MIS). 1x = no borrowing — recommended while you validate the system.">Leverage <select id="leverage" style="padding:5px 6px"><option value="1">1x</option><option value="2">2x</option><option value="3">3x</option><option value="5">5x</option></select></label>
       <label title="English / हिंदी">Language <select id="langSel" class="lang-sel" data-noi18n><option value="en">English</option><option value="hi">हिंदी</option></select></label>
+      <label title="Language of the Telegram alerts">Telegram <select id="tgLang" class="lang-sel" data-noi18n><option value="hi">हिंदी</option><option value="en">English</option><option value="both">हिंदी + English</option></select></label>
       <button class="btn btn-sm icon-btn" id="themeBtn" title="Light / dark" aria-label="Toggle light or dark theme">◐</button>
       <button class="btn btn-sm" id="logoutBtn" title="Sign out of Market Desk">Sign out</button>
     </div>
@@ -507,14 +508,14 @@
   /* ---------- tabs & settings ---------- */
   $("#capital").value = store.get("capital", 10000); $("#riskPct").value = store.get("risk", 1); $("#leverage").value = String(store.get("leverage", 1));
   /* the desk settings live on the server, so the automatic 9:27 lock plans for YOUR budget */
-  async function loadSettings() { try { const j = await api("mkt_settings"); $("#capital").value = j.settings.capital; $("#riskPct").value = j.settings.risk_pct; $("#leverage").value = String(j.settings.leverage); $("#tradeMode").value = j.settings.long_only ? "long" : "both";
+  async function loadSettings() { try { const j = await api("mkt_settings"); $("#capital").value = j.settings.capital; $("#riskPct").value = j.settings.risk_pct; $("#leverage").value = String(j.settings.leverage); $("#tradeMode").value = j.settings.long_only ? "long" : "both"; $("#tgLang").value = j.settings.tg_lang || "hi";
     store.set("capital", j.settings.capital); store.set("risk", j.settings.risk_pct); store.set("leverage", j.settings.leverage); } catch (e) {} }
   async function saveSettings() {
-    const body = { capital: Number($("#capital").value) || 10000, risk_pct: Number($("#riskPct").value) || 1, leverage: Number($("#leverage").value) || 1, long_only: $("#tradeMode").value === "long" };
+    const body = { capital: Number($("#capital").value) || 10000, risk_pct: Number($("#riskPct").value) || 1, leverage: Number($("#leverage").value) || 1, long_only: $("#tradeMode").value === "long", tg_lang: $("#tgLang").value };
     store.set("capital", body.capital); store.set("risk", body.risk_pct); store.set("leverage", body.leverage);
     try { await api("mkt_settings_set", {}, body); if (T10) loadTop10(); } catch (e) {} // an unlocked list is re-researched for the new budget
   }
-  ["#capital", "#riskPct", "#leverage", "#tradeMode"].forEach(id => $(id).onchange = saveSettings);
+  ["#capital", "#riskPct", "#leverage", "#tradeMode", "#tgLang"].forEach(id => $(id).onchange = saveSettings);
   function showTab(t) {
     $$(".tab").forEach(b => b.classList.toggle("on", b.dataset.tab === t)); $$(".panel").forEach(p => p.classList.toggle("on", p.id === "p-" + t));
     store.set("tab", t); if (t === "inputs") loadInputs(); if (t === "pulse" && !pulseLoaded) loadPulse(); if (t === "top10") loadTop10(); if (t === "mom") loadMom();

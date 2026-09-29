@@ -84,12 +84,18 @@ function mom_view() {
 function mom_announce() {
   $state = json_decode((string) md_store_get('mom_state'), true);
   if (!$state || !empty($state['announced'])) return null;
-  $L = ['📅 <b>Monthly momentum — ' . date('F Y', strtotime($state['month'] . '-01')) . '</b>'];
-  if (!$state['market_on']) $L[] = 'Market filter is OFF (Nifty below its 200-day average): hold <b>cash</b> this month.';
-  foreach ($state['sell'] as $h) $L[] = '🔻 SELL all ' . htmlspecialchars($h['symbol']) . ' (dropped out of the top 20)';
-  foreach ($state['buy'] as $h) $L[] = '🟢 BUY ' . $h['qty'] . ' ' . htmlspecialchars($h['symbol']) . ' (~' . id_money($h['amount']) . ', delivery/CNC)';
-  foreach ($state['holdings'] as $h) if (!empty($h['kept'])) $L[] = '✔ keep ' . htmlspecialchars($h['symbol']);
-  $L[] = 'Place orders after 9:15 AM today. Next check: first trading day of next month.';
+  $msg = id_tg_compose(function ($lang) use ($state) { return mom_msg($state, $lang); });
   $state['announced'] = true; md_store_set('mom_state', json_encode($state));
+  return $msg;
+}
+function mom_msg(array $state, $lang = 'en') {
+  $hi = $lang === 'hi'; $t = strtotime($state['month'] . '-01');
+  $hiMonths = ['जनवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर'];
+  $L = [$hi ? '📅 <b>मासिक मोमेंटम — ' . $hiMonths[(int) date('n', $t) - 1] . ' ' . date('Y', $t) . '</b>' : '📅 <b>Monthly momentum — ' . date('F Y', $t) . '</b>'];
+  if (!$state['market_on']) $L[] = $hi ? 'बाज़ार फ़िल्टर बंद है (निफ्टी अपने 200-दिन औसत से नीचे): इस महीने <b>नकद</b> रखें।' : 'Market filter is OFF (Nifty below its 200-day average): hold <b>cash</b> this month.';
+  foreach ($state['sell'] as $h) $L[] = $hi ? '🔻 ' . htmlspecialchars($h['symbol']) . ' पूरा बेचें (टॉप 20 से बाहर)' : '🔻 SELL all ' . htmlspecialchars($h['symbol']) . ' (dropped out of the top 20)';
+  foreach ($state['buy'] as $h) $L[] = $hi ? '🟢 ' . htmlspecialchars($h['symbol']) . ' के ' . $h['qty'] . ' शेयर खरीदें (~' . id_money($h['amount']) . ', डिलीवरी/CNC)' : '🟢 BUY ' . $h['qty'] . ' ' . htmlspecialchars($h['symbol']) . ' (~' . id_money($h['amount']) . ', delivery/CNC)';
+  foreach ($state['holdings'] as $h) if (!empty($h['kept'])) $L[] = $hi ? '✔ ' . htmlspecialchars($h['symbol']) . ' रखें' : '✔ keep ' . htmlspecialchars($h['symbol']);
+  $L[] = $hi ? 'आज 9:15 बजे के बाद ऑर्डर लगाएँ। अगली जाँच: अगले महीने का पहला ट्रेडिंग दिन।' : 'Place orders after 9:15 AM today. Next check: first trading day of next month.';
   return implode("\n", $L);
 }

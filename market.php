@@ -633,14 +633,17 @@ function mkt_dispatch($action) {
         $st = id_tg_status();
         if (!$st['configured']) throw new Exception('No Telegram bot token yet — add the TELEGRAM_BOT_TOKEN secret in GitHub and run the deploy.');
         id_tg_chat(true);
-        $r = id_tg_send("✅ <b>Market Desk alerts are connected.</b>\nYou will get BUY / SELL / stop-loss / target messages here during market hours.");
+        $r = id_tg_send(id_tg_compose(function ($l) { return $l === 'hi'
+          ? "✅ <b>Market Desk अलर्ट जुड़ गए हैं।</b>\nबाज़ार के समय यहाँ खरीदें / बेचें / स्टॉप-लॉस / टारगेट के मैसेज आएँगे, और हर महीने के पहले ट्रेडिंग दिन मासिक चयन।"
+          : "✅ <b>Market Desk alerts are connected.</b>\nYou will get BUY / SELL / stop-loss / target messages here during market hours, and the monthly picks on the first trading day of each month."; }));
         if (empty($r['ok'])) throw new Exception('Telegram: ' . ($r['description'] ?? 'send failed'));
         $out = ['sent' => true]; break;
       case 'mkt_settings': $out = ['settings' => id_settings(), 'pos_budget' => round(id_pos_budget(id_settings()))]; break;
       case 'mkt_settings_set':
-        $new = id_settings_set($b);
-        /* a new budget changes which stocks are affordable: rebuild a list that is not locked yet */
-        $ph = id_phase(); $dd = id_day_get($ph['date']); if ($dd && empty($dd['locked'])) md_store_set('id_day_' . str_replace('-', '', $ph['date']), '');
+        $old = id_settings(); $new = id_settings_set($b);
+        /* a new budget or trade type changes which stocks qualify: rebuild a list that is not locked yet (not for a language change) */
+        $moved = false; foreach (['capital', 'risk_pct', 'leverage', 'long_only'] as $k) if ($old[$k] != $new[$k]) $moved = true;
+        $ph = id_phase(); $dd = id_day_get($ph['date']); if ($moved && $dd && empty($dd['locked'])) md_store_set('id_day_' . str_replace('-', '', $ph['date']), '');
         $out = ['settings' => $new, 'pos_budget' => round(id_pos_budget($new))]; break;
       case 'mkt_ai': $out = mkt_ai_note((string) $g('symbol', ''), $capital, $risk); break;
       default: fail(400, 'Unknown market action.');
