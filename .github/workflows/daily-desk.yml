@@ -22,6 +22,10 @@ on:
         description: "Research again and replace the current list"
         type: boolean
         default: false
+      paper:
+        description: "Only report how today's stored list is doing (does not rebuild or lock it)"
+        type: boolean
+        default: false
 
 jobs:
   run:
@@ -38,6 +42,9 @@ jobs:
           U="${URL%/}/"; J=$(mktemp)
           curl -s -m 30 -c "$J" -b "$J" -X POST -H "Content-Type: application/json" \
             -d "$(jq -n --arg p "$APP_PASSWORD" '{password:$p}')" "${U}api.php?action=login" | jq -c . || { echo "::error::login failed"; exit 1; }
+          if [ "${{ inputs.paper && '1' || '' }}" = "1" ]; then
+            curl -s -m 200 -b "$J" "${U}api.php?action=mkt_paper" | jq .; exit 0
+          fi
           for try in 1 2 3; do
             r=$(curl -s -m 280 -b "$J" "${U}api.php?action=mkt_top10${REPICK:+&refresh=1}")
             if echo "$r" | jq -e '.ok' >/dev/null 2>&1; then

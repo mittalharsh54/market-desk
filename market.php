@@ -627,6 +627,18 @@ function mkt_dispatch($action) {
       case 'mkt_diag': $out = mkt_diag(); break;
       case 'mkt_top10': $out = id_top10($force, $capital, $risk); break;
       case 'mkt_momentum': $out = mom_view(); break;
+      /* read-only paper check: replay today's stored list over today's bars, without rebuilding or locking it */
+      case 'mkt_paper':
+        $d = id_day_get((string) $g('date', id_today()));
+        if (!$d || empty($d['picks'])) throw new Exception('No stored list for that date.');
+        $lv = id_live($d, $capital, $risk);
+        $out = ['date' => $d['date'], 'built_at_ist' => gmdate('Y-m-d H:i', ($d['repicked_at'] ?? $d['built_at']) + MK_IST), 'locked' => !empty($d['locked']), 'entries_from' => $lv['entries_from'], 'book' => $lv['book'],
+                'picks' => array_map(function ($p) { return ['symbol' => $p['symbol'], 'dir' => $p['dir'], 'status' => $p['state']['status'], 'day_r' => $p['state']['day_r'],
+                  'price' => $p['state']['live']['price'] ?? null, 'chg_pct' => $p['state']['live']['chg_pct'] ?? null,
+                  'trades' => array_map(function ($t) { return array_intersect_key($t, array_flip(['side', 'entry', 'entry_time', 'exit', 'exit_time', 'reason', 'r', 'pnl', 'qty', 'skipped'])); }, $p['state']['trades'] ?? []),
+                  'position' => $p['state']['position'] ? array_intersect_key($p['state']['position'], array_flip(['side', 'entry', 'time', 'stop', 't1', 't2', 'qty', 'open_pnl', 't1_hit'])) : null,
+                  'events' => array_map(function ($e) { return $e['time'] . ' ' . $e['type'] . ($e['price'] ? ' @' . $e['price'] : ''); }, $p['state']['events'] ?? [])]; }, $lv['picks'])];
+        break;
       case 'mkt_tick': $out = id_tick(); break;
       case 'mkt_tg_status': $out = id_tg_status(); break;
       case 'mkt_tg_test':
