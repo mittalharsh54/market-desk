@@ -41,7 +41,7 @@ jobs:
           curl -s -m 30 "${U}api.php?action=auth_status"; echo
           curl -s -m 30 -c "$J" -b "$J" -X POST -H "Content-Type: application/json" \
             -d "$(jq -n --arg p "$APP_PASSWORD" '{password:$p}')" "${U}api.php?action=login" | jq -c . || FAIL=1
-          st=$(curl -s -m 30 -b "$J" "${U}api.php?action=mkt_status"); echo "$st" | jq -c '{ok, market}' || { echo "::error::mkt_status failed: $st"; FAIL=1; }
+          st=$(curl -s -m 30 -b "$J" "${U}api.php?action=mkt_status"); echo "$st" | jq -c '{ok, market, cron_last, cron_cmd}' || { echo "::error::mkt_status failed: $st"; FAIL=1; }
 
           echo "== Data-source diagnostics (from the server)"
           curl -s -m 120 -b "$J" "${U}api.php?action=mkt_diag" | jq . || true

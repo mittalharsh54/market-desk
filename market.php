@@ -612,7 +612,7 @@ function mkt_dispatch($action) {
   $DS = id_settings(); $capital = max(0, (float) $g('capital', $DS['capital'])); $risk = min(5, max(0.1, (float) $g('risk', $DS['risk_pct'])));
   try {
     switch ($action) {
-      case 'mkt_status': $out = ['market' => mk_market_status(), 'universes' => array_map(function ($u) { return ['label' => $u['label'], 'count' => count($u['symbols'])]; }, mkt_universes()), 'fields' => mkt_inputs_fields()]; break;
+      case 'mkt_status': $out = ['market' => mk_market_status(), 'universes' => array_map(function ($u) { return ['label' => $u['label'], 'count' => count($u['symbols'])]; }, mkt_universes()), 'fields' => mkt_inputs_fields(), 'cron_last' => json_decode((string) md_store_get('cron_last'), true), 'cron_cmd' => 'php ' . __DIR__ . '/cron.php']; break;
       case 'mkt_macro': $out = mkt_macro($force); break;
       case 'mkt_analyze': $out = mkt_analyze((string) $g('symbol', ''), $capital, $risk, $force); break;
       case 'mkt_scan': $c = $g('symbols', ''); $out = mkt_scan((string) $g('universe', 'nifty50'), is_array($c) ? $c : preg_split('/[\s,]+/', (string) $c), $capital, $risk, $force); break;
