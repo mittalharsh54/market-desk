@@ -33,7 +33,7 @@ jobs:
           c=$(code "${U}i18n.js"); if [ "$c" = "200" ]; then echo "ok: i18n.js served"; else echo "::error::i18n.js not served ($c)"; FAIL=1; fi
 
           echo "== Private files must not be served"
-          for f in config.php config.sample.php lib.php market.php market_engine.php README.md .ftp-deploy-sync-state.json tools/test-market-engine.php tools/dev-server.php data/inputs.json; do
+          for f in config.php config.sample.php lib.php market.php market_engine.php core.php momentum.php README.md .ftp-deploy-sync-state.json tools/test-market-engine.php tools/dev-server.php data/inputs.json; do
             c=$(code "$U$f"); if [ "$c" = "200" ]; then echo "::error::$f is publicly readable (HTTP 200)"; FAIL=1; else echo "ok: $f -> $c"; fi
           done
 
@@ -53,6 +53,11 @@ jobs:
                           flows: .flows, options: (.options|if . then {pcr, max_pain, expiry} else null end),
                           news_items: (.news.items|length), news_sources_ok: .news.sources_ok}' || { echo "::error::macro not JSON: ${m:0:300}"; FAIL=1; }
           n=$(echo "$m" | jq '.instruments|length' 2>/dev/null || echo 0); [ "${n:-0}" -ge 10 ] || { echo "::error::Server could fetch only ${n:-0} market instruments"; FAIL=1; }
+
+          echo "== Core portfolio (ETF prices from the server)"
+          cp=$(curl -s -m 120 -b "$J" "${U}api.php?action=mkt_core")
+          echo "$cp" | jq -c '{error, tradeable, strategy, invested, left, rows: [.rows[]? | {symbol, price, units, as_of}]}' || { echo "::error::mkt_core not JSON: ${cp:0:300}"; FAIL=1; }
+          miss=$(echo "$cp" | jq '[.rows[]? | select(.price == null)] | length' 2>/dev/null || echo 9); [ "${miss:-9}" = "0" ] || { echo "::error::Core portfolio: ${miss} ETF(s) without a price"; FAIL=1; }
 
           echo "== Stock analysis (RELIANCE)"
           a=$(curl -s -m 170 -b "$J" "${U}api.php?action=mkt_analyze&symbol=RELIANCE")
