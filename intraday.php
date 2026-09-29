@@ -366,6 +366,12 @@ function id_top10($force, $capital, $riskPct) {
         || (!$day['locked'] && in_array($ph['phase'], ['preopen', 'opening'], true) && time() >= $morning && $day['built_at'] < $morning)
         || (!$day['locked'] && $ph['phase'] === 'live');
   if ($ph['phase'] === 'closed' && $day && !empty($day['picks'])) $stale = false;
+  /* the 9:25 lock was missed (no scheduled run): a list researched before the open is still an honest
+     prediction — lock it as it is instead of re-picking late with hindsight */
+  $open = strtotime($date . ' 09:15:00 Asia/Kolkata');
+  if (!$force && $day && !empty($day['picks']) && !$day['locked'] && $ph['phase'] === 'live' && mk_ist_min(time()) >= 575 && $day['built_at'] < $open) {
+    $day['locked'] = true; $day['locked_late'] = time(); id_day_put($day); $stale = false;
+  }
   if ($force && $ph['phase'] !== 'closed') $stale = true;
   $built = false;
   if ($stale) {
