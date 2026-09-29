@@ -12,7 +12,7 @@ on:
       study:
         description: "Which study"
         type: choice
-        options: [open-close, lab, swing, intraday-grid, intraday-volume]
+        options: [open-close, lab, pro, swing, intraday-grid, intraday-volume]
         default: open-close
 
 jobs:
@@ -50,3 +50,13 @@ jobs:
         run: |
           php tools/open-close-study.php "${{ inputs.stocks }}" 3 | tee study.jsonl
           { echo '```'; cat study.jsonl; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Professional playbooks (10 years of index funds / ETFs / factor indices, hold-out = last third)
+        if: inputs.study == 'pro'
+        run: |
+          php tools/pro-lab.php 10 | tee study.jsonl
+          {
+            echo "| Strategy | Train CAGR | Train max fall | Hold-out CAGR | Hold-out max fall | Beats Nifty both | Safer both |"
+            echo "|---|---|---|---|---|---|---|"
+            jq -r '"| \(.strategy) | \(.train.cagr_pct) | \(.train.max_dd_pct) | \(.holdout.cagr_pct) | \(.holdout.max_dd_pct) | \(.beats_nifty_both // "-") | \(.safer_than_nifty_both // "-") |"' study.jsonl
+            echo '```'; cat study.jsonl; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

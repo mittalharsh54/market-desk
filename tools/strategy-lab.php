@@ -25,7 +25,7 @@ function lab_cost_rs($v) { return $v * (0.002 + 0.00015 + 2 * (0.0000297 + 0.000
 $syms = array_slice(id_universe(), 0, $max);
 $keys = ['NIFTY' => 'NSE_INDEX|Nifty 50'];
 foreach ($syms as $s) { $k = mkt_upstox_key(mkt_norm_symbol($s) ?: $s); if ($k) $keys[$s] = $k[0]; }
-$gk = mkt_upstox_key('GOLDBEES'); if ($gk) $keys['GOLDETF'] = $gk[0]; // gold ETF, for the Nifty/gold switch
+$gk = mkt_upstox_key('GOLDBEES.NS'); if ($gk) $keys['GOLDETF'] = $gk[0]; // gold ETF, for the Nifty/gold switch
 $want = [];
 foreach ($keys as $s => $k) for ($y = 0; $y <= $years; $y++)
   $want["$s|$y"] = ['url' => 'https://api.upstox.com/v2/historical-candle/' . rawurlencode($k) . '/day/' . $d($y * 365) . '/' . $d($y * 365 + 364), 'headers' => ['Accept: application/json']];
