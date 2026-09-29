@@ -70,6 +70,15 @@
             "swing": "kept current rule; it did not beat the Nifty after charges in both halves",
             "positional_note": "best passing strategy Weekly momentum rotation + market filter is not built into the app yet",
             "positional": "best tested: Momentum rotation + market filter with 4 positions (hold-out 5.1% a year vs baselines -2.8%)",
+            "intraday_hold": "no open-to-close or gap strategy made money after charges in both periods (11 tested)",
+            "portfolio": "core portfolio: Equal weight: Nifty, midcap, Nasdaq, gold 25% each (hold-out 24.1% a year, worst fall -13.1%, vs Nifty 6.3% / -15.8%); 3 of 19 playbooks passed"
+        },
+        {
+            "date": "2026-09-29",
+            "intraday": "kept current rule; no setting made money after charges in both halves",
+            "swing": "kept current rule; it did not beat the Nifty after charges in both halves",
+            "positional_note": "best passing strategy Weekly momentum rotation + market filter is not built into the app yet",
+            "positional": "best tested: Momentum rotation + market filter with 4 positions (hold-out 5.1% a year vs baselines -2.8%)",
             "intraday_hold": "no open-to-close or gap strategy made money after charges in both periods (11 tested)"
         },
         {
@@ -92,8 +101,8 @@
         "tradeable": true,
         "strategy": "Momentum rotation + market filter",
         "slots": 4,
-        "configs_tested": 48,
-        "strategies_tested": 18,
+        "configs_tested": 49,
+        "strategies_tested": 19,
         "passed": [
             "Weekly momentum rotation + market filter / 6",
             "Momentum rotation + market filter / 4",
@@ -1193,6 +1202,28 @@
                         "avg_net_ret_pct": -0.36
                     },
                     "end_value": 12557
+                },
+                {
+                    "strategy": "Nifty ETF / gold ETF switch",
+                    "slots": 1,
+                    "index": true,
+                    "train": {
+                        "cagr_pct": 17.9,
+                        "max_dd_pct": -11.8,
+                        "growth_pct": 54.3,
+                        "trades": 5,
+                        "win_pct": 80,
+                        "avg_net_ret_pct": 9.59
+                    },
+                    "holdout": {
+                        "cagr_pct": -3.9,
+                        "max_dd_pct": -19.9,
+                        "growth_pct": -5.1,
+                        "trades": 1,
+                        "win_pct": 0,
+                        "avg_net_ret_pct": -3.32
+                    },
+                    "end_value": 14644
                 }
             ]
         }
@@ -1268,5 +1299,630 @@
                 "holdout_pf": 0.99
             }
         ]
+    },
+    "portfolio": {
+        "tradeable": true,
+        "strategy": "Equal weight: Nifty, midcap, Nasdaq, gold 25% each",
+        "school": "economists (1/N diversification, DeMiguel-Garlappi-Uppal 2009) + advisors (spread and rebalance)",
+        "plan": {
+            "method": "fixed",
+            "weights": {
+                "NIFTY": 0.25,
+                "MID": 0.25,
+                "NASDAQ": 0.25,
+                "GOLD": 0.25
+            }
+        },
+        "tested": "2026-09-29",
+        "playbooks_tested": 19,
+        "passed": [
+            "Equal weight: Nifty, midcap, Nasdaq, gold 25% each",
+            "Risk parity: Nifty, midcap, Nasdaq, gold weighted by 1 / volatility",
+            "Advisor growth: 50% Nifty / 20% midcap / 10% Nasdaq / 10% gold / 10% debt"
+        ],
+        "evidence": {
+            "baseline": {
+                "strategy": "Nifty 50 buy & hold",
+                "baseline": true,
+                "train": {
+                    "cagr_pct": 12.4,
+                    "max_dd_pct": -38.4,
+                    "vol_pct": 17.7,
+                    "return_per_risk": 0.36,
+                    "growth_pct": 116.3
+                },
+                "holdout": {
+                    "cagr_pct": 6.3,
+                    "max_dd_pct": -15.8,
+                    "vol_pct": 12.9,
+                    "return_per_risk": 0.02,
+                    "growth_pct": 22.2
+                },
+                "thirds": [
+                    "2016-10..2020-02 10.9",
+                    "2020-02..2023-06 14.3",
+                    "2023-06..2026-09 6.3"
+                ],
+                "from": "2016-10-26",
+                "holdout_from": "2023-06-08",
+                "to": "2026-09-28",
+                "instruments": {
+                    "NIFTY": "Nifty 50 (index fund)",
+                    "MID": "nifty midcap 150",
+                    "MOM": "nifty200momentm30",
+                    "LOWVOL": "nifty100 lowvol30",
+                    "QUAL": "nifty200 qualty30",
+                    "VALUE": "nifty50 value 20",
+                    "NASDAQ": "MON100",
+                    "GOLD": "GOLDBEES"
+                },
+                "first_dates": {
+                    "NIFTY": "2015-10-05",
+                    "MID": "2015-10-05",
+                    "MOM": "2015-10-05",
+                    "LOWVOL": "2015-10-05",
+                    "QUAL": "2015-10-05",
+                    "VALUE": "2015-10-05",
+                    "NASDAQ": "2015-10-05",
+                    "GOLD": "2015-10-05"
+                },
+                "missing": [
+                    "ALPLV"
+                ]
+            },
+            "results": [
+                {
+                    "strategy": "Advisor classic: 60% Nifty / 20% gold / 20% debt",
+                    "school": "financial advisors (strategic asset allocation, rebalancing)",
+                    "train": {
+                        "cagr_pct": 11.1,
+                        "max_dd_pct": -23.6,
+                        "vol_pct": 10.7,
+                        "return_per_risk": 0.48,
+                        "growth_pct": 101.1
+                    },
+                    "holdout": {
+                        "cagr_pct": 11.4,
+                        "max_dd_pct": -12.7,
+                        "vol_pct": 9.6,
+                        "return_per_risk": 0.56,
+                        "growth_pct": 43
+                    },
+                    "beats_nifty_both": false,
+                    "safer_than_nifty_both": true,
+                    "thirds": [
+                        "2016-10..2020-02 9.5",
+                        "2020-02..2023-06 13.1",
+                        "2023-06..2026-09 11.4"
+                    ],
+                    "trades": 14,
+                    "costs_rs": 125,
+                    "end_value": 28737,
+                    "passed": false
+                },
+                {
+                    "strategy": "Advisor growth: 50% Nifty / 20% midcap / 10% Nasdaq / 10% gold / 10% debt",
+                    "school": "wealth managers (core-satellite, global diversification)",
+                    "train": {
+                        "cagr_pct": 13.3,
+                        "max_dd_pct": -28,
+                        "vol_pct": 12.8,
+                        "return_per_risk": 0.58,
+                        "growth_pct": 129
+                    },
+                    "holdout": {
+                        "cagr_pct": 14.3,
+                        "max_dd_pct": -11.3,
+                        "vol_pct": 11.1,
+                        "return_per_risk": 0.75,
+                        "growth_pct": 55.7
+                    },
+                    "beats_nifty_both": true,
+                    "safer_than_nifty_both": true,
+                    "thirds": [
+                        "2016-10..2020-02 11.2",
+                        "2020-02..2023-06 15.9",
+                        "2023-06..2026-09 14.3"
+                    ],
+                    "trades": 11,
+                    "costs_rs": 76,
+                    "end_value": 35628,
+                    "passed": true
+                },
+                {
+                    "strategy": "Trend following: Nifty, midcap, Nasdaq, gold, each 25% only above its 10-month average",
+                    "school": "Faber (2007) / Moskowitz-Ooi-Pedersen time-series momentum",
+                    "train": {
+                        "cagr_pct": 9.2,
+                        "max_dd_pct": -22.4,
+                        "vol_pct": 9.6,
+                        "return_per_risk": 0.34,
+                        "growth_pct": 79.2
+                    },
+                    "holdout": {
+                        "cagr_pct": 21.2,
+                        "max_dd_pct": -11.1,
+                        "vol_pct": 10.9,
+                        "return_per_risk": 1.39,
+                        "growth_pct": 88.8
+                    },
+                    "beats_nifty_both": false,
+                    "safer_than_nifty_both": false,
+                    "thirds": [
+                        "2016-10..2020-02 5.1",
+                        "2020-02..2023-06 13.8",
+                        "2023-06..2026-09 21.2"
+                    ],
+                    "trades": 89,
+                    "costs_rs": 942,
+                    "end_value": 33817,
+                    "passed": false
+                },
+                {
+                    "strategy": "Dual momentum: best of Nifty / midcap / Nasdaq by 12-month return, else gold, else debt",
+                    "school": "Antonacci dual momentum (relative + absolute)",
+                    "train": {
+                        "cagr_pct": 5.3,
+                        "max_dd_pct": -39.6,
+                        "vol_pct": 21.2,
+                        "return_per_risk": -0.03,
+                        "growth_pct": 41.2
+                    },
+                    "holdout": {
+                        "cagr_pct": 31.2,
+                        "max_dd_pct": -26,
+                        "vol_pct": 20.8,
+                        "return_per_risk": 1.22,
+                        "growth_pct": 145.7
+                    },
+                    "beats_nifty_both": false,
+                    "safer_than_nifty_both": false,
+                    "thirds": [
+                        "2016-10..2020-02 -1",
+                        "2020-02..2023-06 12.1",
+                        "2023-06..2026-09 31.2"
+                    ],
+                    "trades": 57,
+                    "costs_rs": 948,
+                    "end_value": 34672,
+                    "passed": false
+                },
+                {
+                    "strategy": "Multi-factor: momentum + low-vol + quality + value, 25% each",
+                    "school": "business-school factor research (Fama-French, Carhart, Novy-Marx, AQR)",
+                    "train": {
+                        "cagr_pct": 13.7,
+                        "max_dd_pct": -28.9,
+                        "vol_pct": 16.4,
+                        "return_per_risk": 0.47,
+                        "growth_pct": 133.9
+                    },
+                    "holdout": {
+                        "cagr_pct": 7.6,
+                        "max_dd_pct": -23.3,
+                        "vol_pct": 13.1,
+                        "return_per_risk": 0.12,
+                        "growth_pct": 27.4
+                    },
+                    "beats_nifty_both": true,
+                    "safer_than_nifty_both": false,
+                    "thirds": [
+                        "2016-10..2020-02 12.2",
+                        "2020-02..2023-06 15.7",
+                        "2023-06..2026-09 7.6"
+                    ],
+                    "trades": 8,
+                    "costs_rs": 41,
+                    "end_value": 29787,
+                    "passed": false
+                },
+                {
+                    "strategy": "Multi-factor + trend: each factor 25% only above its 10-month average",
+                    "school": "factor research + trend following",
+                    "train": {
+                        "cagr_pct": 8,
+                        "max_dd_pct": -18.8,
+                        "vol_pct": 11.5,
+                        "return_per_risk": 0.18,
+                        "growth_pct": 66.9
+                    },
+                    "holdout": {
+                        "cagr_pct": 7.7,
+                        "max_dd_pct": -19.7,
+                        "vol_pct": 9.7,
+                        "return_per_risk": 0.17,
+                        "growth_pct": 27.8
+                    },
+                    "beats_nifty_both": false,
+                    "safer_than_nifty_both": false,
+                    "thirds": [
+                        "2016-10..2020-02 5.4",
+                        "2020-02..2023-06 11.2",
+                        "2023-06..2026-09 7.7"
+                    ],
+                    "trades": 76,
+                    "costs_rs": 787,
+                    "end_value": 21315,
+                    "passed": false
+                },
+                {
+                    "strategy": "Factor momentum: the 2 strongest factors over 6 months, if above their 10-month average",
+                    "school": "factor momentum (Gupta-Kelly 2019, Arnott et al.)",
+                    "train": {
+                        "cagr_pct": 8.9,
+                        "max_dd_pct": -24.6,
+                        "vol_pct": 13.2,
+                        "return_per_risk": 0.22,
+                        "growth_pct": 75.5
+                    },
+                    "holdout": {
+                        "cagr_pct": 6.5,
+                        "max_dd_pct": -23.4,
+                        "vol_pct": 11.9,
+                        "return_per_risk": 0.04,
+                        "growth_pct": 23.2
+                    },
+                    "beats_nifty_both": false,
+                    "safer_than_nifty_both": false,
+                    "thirds": [
+                        "2016-10..2020-02 9.3",
+                        "2020-02..2023-06 8.9",
+                        "2023-06..2026-09 6.5"
+                    ],
+                    "trades": 114,
+                    "costs_rs": 1506,
+                    "end_value": 21611,
+                    "passed": false
+                },
+                {
+                    "strategy": "Risk parity: Nifty, midcap, Nasdaq, gold weighted by 1 / volatility",
+                    "school": "Dalio all-weather / bank risk budgeting",
+                    "train": {
+                        "cagr_pct": 13.8,
+                        "max_dd_pct": -25,
+                        "vol_pct": 11.3,
+                        "return_per_risk": 0.69,
+                        "growth_pct": 135.2
+                    },
+                    "holdout": {
+                        "cagr_pct": 22.2,
+                        "max_dd_pct": -13.7,
+                        "vol_pct": 11.8,
+                        "return_per_risk": 1.37,
+                        "growth_pct": 93.9
+                    },
+                    "beats_nifty_both": true,
+                    "safer_than_nifty_both": true,
+                    "thirds": [
+                        "2016-10..2020-02 12.2",
+                        "2020-02..2023-06 15.7",
+                        "2023-06..2026-09 22.2"
+                    ],
+                    "trades": 32,
+                    "costs_rs": 240,
+                    "end_value": 45583,
+                    "passed": true
+                },
+                {
+                    "strategy": "Volatility target: Nifty sized to 12% yearly volatility, rest in debt",
+                    "school": "bank risk desks (Moreira-Muir 2017 volatility-managed portfolios)",
+                    "train": {
+                        "cagr_pct": 8,
+                        "max_dd_pct": -33.1,
+                        "vol_pct": 13.6,
+                        "return_per_risk": 0.14,
+                        "growth_pct": 66
+                    },
+                    "holdout": {
+                        "cagr_pct": 5.3,
+                        "max_dd_pct": -14.8,
+                        "vol_pct": 11.8,
+                        "return_per_risk": -0.06,
+                        "growth_pct": 18.8
+                    },
+                    "beats_nifty_both": false,
+                    "safer_than_nifty_both": false,
+                    "thirds": [
+                        "2016-10..2020-02 9.3",
+                        "2020-02..2023-06 7",
+                        "2023-06..2026-09 5.3"
+                    ],
+                    "trades": 44,
+                    "costs_rs": 422,
+                    "end_value": 19716,
+                    "passed": false
+                },
+                {
+                    "strategy": "Momentum 30 index + market filter (Nifty above its 200-DMA)",
+                    "school": "momentum research; the index version of our monthly picks",
+                    "train": {
+                        "cagr_pct": 10.7,
+                        "max_dd_pct": -19.8,
+                        "vol_pct": 14.8,
+                        "return_per_risk": 0.31,
+                        "growth_pct": 95.4
+                    },
+                    "holdout": {
+                        "cagr_pct": 18.3,
+                        "max_dd_pct": -14.5,
+                        "vol_pct": 15.1,
+                        "return_per_risk": 0.82,
+                        "growth_pct": 74.5
+                    },
+                    "beats_nifty_both": false,
+                    "safer_than_nifty_both": false,
+                    "thirds": [
+                        "2016-10..2020-02 5.7",
+                        "2020-02..2023-06 16.3",
+                        "2023-06..2026-09 18.3"
+                    ],
+                    "trades": 22,
+                    "costs_rs": 388,
+                    "end_value": 34081,
+                    "passed": false
+                },
+                {
+                    "strategy": "Momentum 30 index + market filter, sized to 15% volatility",
+                    "school": "Barroso & Santa-Clara (2015) risk-managed momentum",
+                    "train": {
+                        "cagr_pct": 8.9,
+                        "max_dd_pct": -19.9,
+                        "vol_pct": 12.8,
+                        "return_per_risk": 0.23,
+                        "growth_pct": 75.9
+                    },
+                    "holdout": {
+                        "cagr_pct": 19.1,
+                        "max_dd_pct": -8.9,
+                        "vol_pct": 12.8,
+                        "return_per_risk": 1.02,
+                        "growth_pct": 78.1
+                    },
+                    "beats_nifty_both": false,
+                    "safer_than_nifty_both": false,
+                    "thirds": [
+                        "2016-10..2020-02 4.7",
+                        "2020-02..2023-06 13.7",
+                        "2023-06..2026-09 19.1"
+                    ],
+                    "trades": 42,
+                    "costs_rs": 509,
+                    "end_value": 31311,
+                    "passed": false
+                },
+                {
+                    "strategy": "Factor dual momentum: 70% in the strongest of Momentum / Alpha-LowVol / Quality / Nifty (12-1), 15% gold, rest debt; equity to debt when Nifty < 200-DMA",
+                    "school": "research synthesis: dual momentum on factor ETFs + gold + trend filter",
+                    "train": {
+                        "cagr_pct": 6.9,
+                        "max_dd_pct": -13.3,
+                        "vol_pct": 10.2,
+                        "return_per_risk": 0.09,
+                        "growth_pct": 55.9
+                    },
+                    "holdout": {
+                        "cagr_pct": 18.1,
+                        "max_dd_pct": -10.5,
+                        "vol_pct": 11.2,
+                        "return_per_risk": 1.08,
+                        "growth_pct": 73.4
+                    },
+                    "beats_nifty_both": false,
+                    "safer_than_nifty_both": false,
+                    "thirds": [
+                        "2016-10..2020-02 5.1",
+                        "2020-02..2023-06 9.2",
+                        "2023-06..2026-09 18.1"
+                    ],
+                    "trades": 50,
+                    "costs_rs": 665,
+                    "end_value": 27021,
+                    "passed": false
+                },
+                {
+                    "strategy": "Risk parity without Nasdaq: Nifty, midcap, gold by 1 / volatility",
+                    "school": "robustness check",
+                    "train": {
+                        "cagr_pct": 12.4,
+                        "max_dd_pct": -25.8,
+                        "vol_pct": 10.9,
+                        "return_per_risk": 0.58,
+                        "growth_pct": 116.1
+                    },
+                    "holdout": {
+                        "cagr_pct": 17.5,
+                        "max_dd_pct": -15.9,
+                        "vol_pct": 12.1,
+                        "return_per_risk": 0.95,
+                        "growth_pct": 70.3
+                    },
+                    "beats_nifty_both": false,
+                    "safer_than_nifty_both": false,
+                    "thirds": [
+                        "2016-10..2020-02 9.7",
+                        "2020-02..2023-06 15.4",
+                        "2023-06..2026-09 17.5"
+                    ],
+                    "trades": 32,
+                    "costs_rs": 255,
+                    "end_value": 36776,
+                    "passed": false
+                },
+                {
+                    "strategy": "Risk parity, Nifty + gold only",
+                    "school": "robustness check",
+                    "train": {
+                        "cagr_pct": 11.4,
+                        "max_dd_pct": -21.1,
+                        "vol_pct": 10.2,
+                        "return_per_risk": 0.53,
+                        "growth_pct": 104.1
+                    },
+                    "holdout": {
+                        "cagr_pct": 16.9,
+                        "max_dd_pct": -18,
+                        "vol_pct": 12.4,
+                        "return_per_risk": 0.87,
+                        "growth_pct": 67.5
+                    },
+                    "beats_nifty_both": false,
+                    "safer_than_nifty_both": false,
+                    "thirds": [
+                        "2016-10..2020-02 10.4",
+                        "2020-02..2023-06 12.7",
+                        "2023-06..2026-09 16.9"
+                    ],
+                    "trades": 32,
+                    "costs_rs": 275,
+                    "end_value": 34176,
+                    "passed": false
+                },
+                {
+                    "strategy": "Advisor growth without Nasdaq: 60% Nifty / 20% midcap / 10% gold / 10% debt",
+                    "school": "robustness check",
+                    "train": {
+                        "cagr_pct": 11.9,
+                        "max_dd_pct": -31.1,
+                        "vol_pct": 13.9,
+                        "return_per_risk": 0.43,
+                        "growth_pct": 110.8
+                    },
+                    "holdout": {
+                        "cagr_pct": 11.3,
+                        "max_dd_pct": -12.9,
+                        "vol_pct": 11.3,
+                        "return_per_risk": 0.46,
+                        "growth_pct": 42.3
+                    },
+                    "beats_nifty_both": false,
+                    "safer_than_nifty_both": true,
+                    "thirds": [
+                        "2016-10..2020-02 9.5",
+                        "2020-02..2023-06 14.9",
+                        "2023-06..2026-09 11.3"
+                    ],
+                    "trades": 6,
+                    "costs_rs": 41,
+                    "end_value": 29989,
+                    "passed": false
+                },
+                {
+                    "strategy": "Equal weight: Nifty, midcap, Nasdaq, gold 25% each",
+                    "school": "economists (1/N diversification, DeMiguel-Garlappi-Uppal 2009) + advisors (spread and rebalance)",
+                    "train": {
+                        "cagr_pct": 16.1,
+                        "max_dd_pct": -25.4,
+                        "vol_pct": 12.3,
+                        "return_per_risk": 0.82,
+                        "growth_pct": 168.7
+                    },
+                    "holdout": {
+                        "cagr_pct": 24.1,
+                        "max_dd_pct": -13.1,
+                        "vol_pct": 12.5,
+                        "return_per_risk": 1.44,
+                        "growth_pct": 104
+                    },
+                    "beats_nifty_both": true,
+                    "safer_than_nifty_both": true,
+                    "thirds": [
+                        "2016-10..2020-02 14.2",
+                        "2020-02..2023-06 18.4",
+                        "2023-06..2026-09 24.1"
+                    ],
+                    "trades": 22,
+                    "costs_rs": 169,
+                    "end_value": 54780,
+                    "passed": true
+                },
+                {
+                    "strategy": "Council (balanced): advisors + trend + dual momentum + factors + risk desk, averaged",
+                    "school": "all of the above, equal say",
+                    "train": {
+                        "cagr_pct": 7.5,
+                        "max_dd_pct": -26.9,
+                        "vol_pct": 11.4,
+                        "return_per_risk": 0.13,
+                        "growth_pct": 61.7
+                    },
+                    "holdout": {
+                        "cagr_pct": 15.7,
+                        "max_dd_pct": -11.3,
+                        "vol_pct": 11,
+                        "return_per_risk": 0.89,
+                        "growth_pct": 62
+                    },
+                    "beats_nifty_both": false,
+                    "safer_than_nifty_both": false,
+                    "thirds": [
+                        "2016-10..2020-02 4.3",
+                        "2020-02..2023-06 11.2",
+                        "2023-06..2026-09 15.7"
+                    ],
+                    "trades": 178,
+                    "costs_rs": 1561,
+                    "end_value": 26189,
+                    "passed": false
+                },
+                {
+                    "strategy": "Council (growth): trend + dual momentum + factors + factor momentum + momentum 30, averaged",
+                    "school": "the return-seeking schools, equal say",
+                    "train": {
+                        "cagr_pct": 6.8,
+                        "max_dd_pct": -26.1,
+                        "vol_pct": 11.8,
+                        "return_per_risk": 0.07,
+                        "growth_pct": 55
+                    },
+                    "holdout": {
+                        "cagr_pct": 16.9,
+                        "max_dd_pct": -10.8,
+                        "vol_pct": 11.7,
+                        "return_per_risk": 0.93,
+                        "growth_pct": 67.6
+                    },
+                    "beats_nifty_both": false,
+                    "safer_than_nifty_both": false,
+                    "thirds": [
+                        "2016-10..2020-02 2.7",
+                        "2020-02..2023-06 11.5",
+                        "2023-06..2026-09 16.9"
+                    ],
+                    "trades": 272,
+                    "costs_rs": 2475,
+                    "end_value": 25967,
+                    "passed": false
+                },
+                {
+                    "strategy": "Council (all 12 playbooks averaged)",
+                    "school": "every school above, equal say",
+                    "train": {
+                        "cagr_pct": 9.6,
+                        "max_dd_pct": -20.7,
+                        "vol_pct": 11.4,
+                        "return_per_risk": 0.32,
+                        "growth_pct": 83.3
+                    },
+                    "holdout": {
+                        "cagr_pct": 15.2,
+                        "max_dd_pct": -11.1,
+                        "vol_pct": 10.8,
+                        "return_per_risk": 0.84,
+                        "growth_pct": 59.5
+                    },
+                    "beats_nifty_both": false,
+                    "safer_than_nifty_both": false,
+                    "thirds": [
+                        "2016-10..2020-02 7.1",
+                        "2020-02..2023-06 12.5",
+                        "2023-06..2026-09 15.2"
+                    ],
+                    "trades": 137,
+                    "costs_rs": 1202,
+                    "end_value": 29225,
+                    "passed": false
+                }
+            ]
+        }
     }
 }
