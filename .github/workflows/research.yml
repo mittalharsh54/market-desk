@@ -12,8 +12,8 @@ on:
       study:
         description: "Which study"
         type: choice
-        options: [lab, swing, intraday-grid, intraday-volume]
-        default: lab
+        options: [open-close, lab, swing, intraday-grid, intraday-volume]
+        default: open-close
 
 jobs:
   study:
@@ -39,4 +39,9 @@ jobs:
         if: inputs.study == 'lab'
         run: |
           php tools/strategy-lab.php "${{ inputs.stocks }}" 4 | tee study.jsonl
+          { echo '```'; cat study.jsonl; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Open-to-close hold of the Top 10 direction (3 years, hold-out = last third)
+        if: inputs.study == 'open-close'
+        run: |
+          php tools/open-close-study.php "${{ inputs.stocks }}" 3 | tee study.jsonl
           { echo '```'; cat study.jsonl; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
