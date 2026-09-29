@@ -537,3 +537,52 @@ function id_tick() {
     return $out;
   } finally { flock($lock, LOCK_UN); fclose($lock); }
 }
+
+/* ---------- "Signals now": one press, everything actionable at this moment ----------
+   Same engine and rules as the Top 10 (no second opinion that could contradict it):
+   today's list plus its runners-up and dark horses, replayed up to this minute. */
+function id_now() {
+  $S = id_settings(); $R = id_top10(false, $S['capital'], $S['risk_pct']);
+  $date = $R['day']['date']; $day = id_day_get($date);
+  $items = [];
+  $classify = function ($p, $src) use (&$items) {
+    $st = $p['state']; $P = $st['position'] ?? null; $L = $st['live'] ?? null; $lv = $st['levels'] ?? [];
+    $mins = function ($hhmm) { if (!$hhmm) return null; list($h, $m) = array_map('intval', explode(':', $hhmm)); return mk_ist_min(time()) - ($h * 60 + $m); };
+    $x = ['symbol' => $p['symbol'], 'source' => $src, 'dir' => $p['dir'], 'status' => $st['status'], 'price' => $L['price'] ?? ($p['setup']['close'] ?? null), 'chg_pct' => $L['chg_pct'] ?? null,
+          'qty_max' => $p['plan']['max_qty'] ?? null, 'day_pnl' => $st['day_pnl'] ?? 0];
+    if ($P) {
+      $age = $mins($P['entry_time'] ?? null); $px = $x['price'] ?: $P['entry'];
+      $drift = $P['risk'] ? ($px - $P['entry']) * ($P['side'] === 'LONG' || $P['side'] === 1 ? 1 : -1) / $P['risk'] : 0; // in R: how far it already ran
+      $side = ($P['side'] === 'LONG' || $P['side'] === 1) ? 'LONG' : 'SHORT';
+      $x += ['side' => $side, 'entry' => $P['entry'], 'entry_time' => $P['entry_time'] ?? null, 'minutes_since_entry' => $age, 'stop' => $P['stop'], 't1' => $P['t1'], 't2' => $P['t2'], 'qty' => $P['qty'],
+             'ran_r' => round($drift, 2), 't1_hit' => !empty($P['t1_hit'])];
+      /* fresh = just fired; late = fired earlier but price is still close to the entry, so taking it now is nearly the same trade */
+      $x['action'] = $age !== null && $age <= 10 ? 'NOW' : (abs($drift) <= 0.3 && mk_ist_min(time()) < 865 && empty($P['t1_hit']) ? 'LATE_OK' : 'MISSED');
+    } else {
+      $x['action'] = preg_match('/DONE|NO TRADE|SKIPPED/', $st['status']) ? 'DONE' : 'WAIT';
+      $x['trigger'] = $p['dir'] === 'LONG' ? ($lv['buy_above'] ?? ($p['setup']['pdh'] ?? null)) : ($lv['sell_below'] ?? ($p['setup']['pdl'] ?? null));
+    }
+    $items[] = $x;
+  };
+  foreach ($R['picks'] as $p) $classify($p, 'top10');
+  /* backups researched with the same list: replay them with the same engine */
+  if ($day) {
+    $have = array_column($R['picks'], 'symbol'); $extra = [];
+    foreach (array_merge($day['runners_up'] ?? [], $day['darkhorses'] ?? []) as $r) if (!in_array($r['symbol'], $have, true) && !isset($extra[$r['symbol']])) $extra[$r['symbol']] = $r;
+    $extra = array_slice($extra, 0, 16, true);
+    if ($extra) {
+      $Dd = id_fetch(array_keys($extra), ['d'], $date); $N = id_fetch(['^NSEI'], ['d'], $date)['^NSEI']['d'] ?? null;
+      $picks = [];
+      foreach ($extra as $sym => $r) { $C = $Dd[$sym]['d'] ?? null; $st = $C ? mk_daily_setup($C, $N) : null; if ($st) $picks[] = ['symbol' => $sym, 'dir' => $r['dir'], 'setup' => $st]; }
+      if ($picks) {
+        $pseudo = ['date' => $date, 'picks' => $picks, 'built_at' => $day['built_at'], 'market' => $day['market'] ?? []];
+        foreach (id_live($pseudo, $S['capital'], $S['risk_pct'])['picks'] as $p) $classify($p, 'backup');
+      }
+    }
+  }
+  $order = ['NOW' => 0, 'LATE_OK' => 1, 'WAIT' => 2, 'MISSED' => 3, 'DONE' => 4];
+  usort($items, function ($a, $b) use ($order) { return [$order[$a['action']], $a['source'] === 'top10' ? 0 : 1] <=> [$order[$b['action']], $b['source'] === 'top10' ? 0 : 1]; });
+  $mom = null; try { $M = mom_view(); $mom = ['market_on' => $M['rank']['market_on'], 'mode' => $M['mode'], 'holdings' => array_column($M['holdings'], 'symbol'), 'next' => $M['next_rebalance'], 'tradeable' => !empty($M['evidence']['tradeable'])]; } catch (Exception $e) {}
+  return ['at_ist' => gmdate('H:i', time() + MK_IST), 'date' => $date, 'phase' => $R['phase'], 'market' => mk_market_status(), 'items' => $items, 'book' => $R['book'],
+          'intraday_tested' => !empty(md_rules()['intraday']['tradeable']), 'momentum' => $mom, 'minutes_left' => max(0, 865 - mk_ist_min(time()))];
+}

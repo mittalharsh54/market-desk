@@ -288,6 +288,18 @@
     .summary > div { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
     .cells { grid-template-columns: minmax(0, 1fr); }
   }
+
+  /* ---- "Signals now" sheet ---- */
+  .nowbtn { font-weight: 800; }
+  .sheet { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.45); display: flex; align-items: flex-start; justify-content: center; padding: 24px 12px; overflow-y: auto; }
+  .sheet[hidden] { display: none; }
+  .sheet-card { width: 100%; max-width: 760px; }
+  .nowrow { border-top: 1px solid var(--line); padding: 10px 0; }
+  .nowrow .t { font-weight: 800; font-size: 16px; }
+  .nowrow .lv { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; margin-top: 4px; }
+  .nowrow .lv b { font-variant-numeric: tabular-nums; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 5px; background: var(--surface-2); color: var(--text-dim); margin-left: 6px; }
+  @media (max-width: 700px) { .sheet { padding: 0; } .sheet-card { border-radius: 0; min-height: 100%; } }
 </style>
 </head>
 <body class="locked">
@@ -298,10 +310,12 @@
   <button class="btn primary" type="submit" id="loginGo">Sign in</button>
   <p class="small" style="margin:10px 0 0" data-noi18n><a href="#" class="langlink" data-lang="hi">हिंदी में देखें</a> · <a href="#" class="langlink" data-lang="en">English</a></p>
 </form></div>
+<div id="nowSheet" class="sheet" hidden><div class="sheet-card card"><div class="ch"><h2 id="nowTitle">Signals now</h2><span class="spacer"></span><button class="btn btn-sm" id="nowAgain">↻</button><button class="btn btn-sm" id="nowClose" aria-label="Close">✕</button></div><div id="nowBody"></div></div></div>
 <div class="wrap">
   <div class="head">
     <h1>Market Desk</h1>
     <span class="pill" id="mktPill"><span class="dot"></span><span id="mktPhase">…</span></span>
+    <button class="btn btn-sm primary nowbtn" id="nowBtn" title="Check every stock right now and show what to do at this moment">⚡ Signals now</button>
     <button class="btn btn-sm mob-only" id="langBtn" data-noi18n title="English / हिंदी"></button>
     <button class="btn btn-sm mob-only" id="setBtn" aria-expanded="false" title="Settings" style="margin-left:0">⚙</button>
     <span class="spacer"></span>
@@ -1221,6 +1235,53 @@
 
   /* ---------- theme ---------- */
   const savedTheme = store.get("theme", null); if (savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
+  /* ---------- ⚡ Signals now ---------- */
+  let lastNow = null;
+  async function loadNow() {
+    $("#nowSheet").hidden = false; document.body.style.overflow = "hidden";
+    $("#nowBody").innerHTML = `<div class="loading"><span class="spin"></span>${L("Checking every stock right now…", "अभी हर शेयर की जाँच हो रही है…")}</div>`;
+    try { lastNow = await api("mkt_now"); renderNow(lastNow); } catch (e) { $("#nowBody").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+  }
+  function closeNow() { $("#nowSheet").hidden = true; document.body.style.overflow = ""; }
+  $("#nowBtn").onclick = loadNow; $("#nowAgain").onclick = loadNow; $("#nowClose").onclick = closeNow;
+  $("#nowSheet").onclick = e => { if (e.target.id === "nowSheet") closeNow(); };
+  function renderNow(N) {
+    $("#nowTitle").textContent = L("Signals now", "अभी के सिग्नल") + " · " + N.at_ist + " IST";
+    const open = N.market && N.market.open, it = N.items || [];
+    const cnt = k => it.filter(x => x.action === k).length;
+    let h = "";
+    if (!open) h += `<div class="warnbox" style="margin:0 0 10px">${L("<b>The market is closed.</b> No new trades now. Below is how today's signals ended; the next signals come after 9:30 AM on the next trading day.", "<b>बाज़ार बंद है।</b> अभी कोई नया ट्रेड नहीं। नीचे आज के सिग्नल का हाल है; अगले सिग्नल अगले ट्रेडिंग दिन सुबह 9:30 के बाद।")}</div>`;
+    else if (N.minutes_left <= 0) h += `<div class="warnbox" style="margin:0 0 10px">${L("After 2:25 PM no new trades are taken — only manage what is open. Everything closes by 3:15 PM.", "2:25 के बाद कोई नया ट्रेड नहीं — सिर्फ़ खुले ट्रेड संभालें। सब कुछ 3:15 तक बंद।")}</div>`;
+    if (!N.intraday_tested) h += `<div class="warnbox" style="margin:0 0 10px">${L("Intraday signals are for <b>paper trading</b>: in testing they lost money after charges.", "इंट्राडे सिग्नल <b>पेपर-ट्रेड</b> के लिए हैं: जाँच में ये चार्ज के बाद घाटे में रहे।")}</div>`;
+    h += `<div class="summary"><div><span>${L("Act now", "अभी करें")}</span><b class="${cnt("NOW") ? "good" : ""}">${cnt("NOW") + cnt("LATE_OK")}</b><em>${L("fresh signals", "ताज़ा सिग्नल")}</em></div>
+      <div><span>${L("Waiting", "इंतज़ार")}</span><b>${cnt("WAIT")}</b><em>${L("no trigger yet", "अभी ट्रिगर नहीं")}</em></div>
+      <div><span>${L("Today so far", "आज अब तक")}</span><b class="${N.book.pnl + N.book.open_pnl >= 0 ? "good" : "bad"}">${inr(N.book.pnl + N.book.open_pnl, 0)}</b><em>${L("Top 10, after charges", "टॉप 10, चार्ज के बाद")}</em></div></div>`;
+    const lvl = (a, b) => `<span>${a} <b>${b}</b></span>`;
+    const src = x => `<span class="tag">${x.source === "top10" ? L("Top 10", "टॉप 10") : L("backup", "बैकअप")}</span>`;
+    const row = x => {
+      const long = (x.side || x.dir) === "LONG"; let t = "", sub = "", lv = "";
+      if (x.action === "NOW" || x.action === "LATE_OK") {
+        t = long ? L("🟢 BUY NOW", "🟢 अभी खरीदें") : L("🔻 SHORT NOW", "🔻 अभी शॉर्ट करें");
+        sub = x.action === "NOW" ? L(`Signal at ${x.entry_time} — fresh.`, `सिग्नल ${x.entry_time} पर — ताज़ा।`) : L(`Signal at ${x.entry_time}; price is still close to the entry, so it is nearly the same trade.`, `सिग्नल ${x.entry_time} पर; भाव अभी भी एंट्री के पास है, इसलिए लगभग वही ट्रेड है।`);
+        lv = lvl(L("Shares", "शेयर"), x.qty) + lvl(L("Entry ≈", "एंट्री ≈"), "₹" + fmt(x.price)) + lvl(L("Stop-loss", "स्टॉप-लॉस"), "₹" + fmt(x.stop)) + lvl(L("Target 1", "टारगेट 1"), "₹" + fmt(x.t1)) + lvl(L("Target 2", "टारगेट 2"), "₹" + fmt(x.t2));
+      } else if (x.action === "MISSED") {
+        t = L("⏭ Don't chase", "⏭ पीछा न करें");
+        sub = L(`Signal came at ${x.entry_time} and price has already moved ${x.ran_r > 0 ? "+" : ""}${x.ran_r}R. If you are in it: stop-loss ₹${fmt(x.stop)}, targets ₹${fmt(x.t1)} / ₹${fmt(x.t2)}.`, `सिग्नल ${x.entry_time} पर आया और भाव ${x.ran_r > 0 ? "+" : ""}${x.ran_r}R चल चुका है। अगर आप ट्रेड में हैं: स्टॉप-लॉस ₹${fmt(x.stop)}, टारगेट ₹${fmt(x.t1)} / ₹${fmt(x.t2)}।`);
+      } else if (x.action === "WAIT") {
+        t = L("⏳ Wait", "⏳ रुकें");
+        sub = x.trigger ? (long ? L(`Buy only if it goes above ₹${fmt(x.trigger)} and the page confirms.`, `₹${fmt(x.trigger)} से ऊपर जाए और पेज पुष्टि करे, तभी खरीदें।`) : L(`Short only if it falls below ₹${fmt(x.trigger)} and the page confirms.`, `₹${fmt(x.trigger)} से नीचे जाए और पेज पुष्टि करे, तभी शॉर्ट करें।`)) : "";
+      } else { t = L("✔ Done for today", "✔ आज के लिए पूरा"); sub = x.day_pnl ? L(`Result ${inr(x.day_pnl, 0)} after charges.`, `नतीजा चार्ज के बाद ${inr(x.day_pnl, 0)}।`) : L("No trade today.", "आज कोई ट्रेड नहीं।"); }
+      return `<div class="nowrow"><div><b>${esc(x.symbol)}</b>${src(x)} <span class="tiny dim">₹${fmt(x.price)}${x.chg_pct != null ? " · " + (x.chg_pct >= 0 ? "+" : "") + fmt(x.chg_pct) + "%" : ""}</span></div>
+        <div class="t" style="color:var(${x.action === "NOW" || x.action === "LATE_OK" ? (long ? "--bull" : "--bear") : "--text"})">${t}</div><div class="small dim">${sub}</div>${lv ? `<div class="lv">${lv}</div>` : ""}</div>`;
+    };
+    const act = it.filter(x => x.action === "NOW" || x.action === "LATE_OK"), rest = it.filter(x => !(x.action === "NOW" || x.action === "LATE_OK"));
+    h += `<h3 class="mt">${L("Do this now", "अभी यह करें")}</h3>` + (act.length ? act.map(row).join("") : `<p class="small dim">${L("Nothing to act on at this moment — no stock has a fresh signal. Press ↻ again in a few minutes.", "इस पल कुछ करने को नहीं — किसी शेयर में ताज़ा सिग्नल नहीं। कुछ मिनट बाद ↻ फिर दबाएँ।")}</p>`);
+    h += `<details class="mt"><summary class="small">${L("All other stocks", "बाकी सभी शेयर")} (${rest.length})</summary>${rest.map(row).join("")}</details>`;
+    if (N.momentum) { const M = N.momentum;
+      h += `<div class="${M.market_on ? "okbox" : "warnbox"} mt">${L(`<b>Monthly picks (tested):</b> ${M.market_on ? "market filter ON" : "market filter OFF — hold cash"}${M.holdings && M.holdings.length ? " · hold " + M.holdings.join(", ") : ""} · next check ${M.next}.`, `<b>मासिक चयन (परखा हुआ):</b> ${M.market_on ? "बाज़ार फ़िल्टर चालू" : "बाज़ार फ़िल्टर बंद — नकद रखें"}${M.holdings && M.holdings.length ? " · रखें: " + M.holdings.join(", ") : ""} · अगली जाँच ${M.next}।`)}</div>`; }
+    $("#nowBody").innerHTML = h;
+  }
+  I18N.onChange(() => { if (lastNow && !$("#nowSheet").hidden) renderNow(lastNow); });
   $("#setBtn").onclick = () => { const h = $(".head"); h.classList.toggle("open"); $("#setBtn").setAttribute("aria-expanded", h.classList.contains("open")); };
   /* English / हिंदी */
   $("#langSel").value = I18N.lang;
