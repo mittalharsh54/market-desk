@@ -4,6 +4,8 @@ name: Daily learning
 # update rules.json, which the app uses. A change is adopted only if it made money
 # after charges in both halves of the test period on enough trades (tools/learn.php).
 # The decision log is kept in rules.json and shown on the Intraday page.
+# The studies run one after another (not in parallel) so the data provider does not
+# throttle them; a study that loads under 90% of the stocks publishes nothing.
 
 on:
   schedule:
@@ -27,6 +29,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: intraday, path: intraday.jsonl }
   swing:
+    needs: [intraday]
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -35,6 +39,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: swing, path: swing.jsonl }
   lab:
+    needs: [swing]
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -43,6 +49,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: lab, path: lab.jsonl }
   opencl:
+    needs: [lab]
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:

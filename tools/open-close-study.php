@@ -13,6 +13,7 @@
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 require_once __DIR__ . '/../lib.php';
 require_once __DIR__ . '/../market.php';
+require_once __DIR__ . '/_fetch.php';
 ini_set('memory_limit', '2048M'); set_time_limit(0);
 
 $max = (int) ($argv[1] ?? 260); $years = max(2, (int) ($argv[2] ?? 3));
@@ -26,7 +27,7 @@ foreach ($syms as $s) { $k = mkt_upstox_key(mkt_norm_symbol($s) ?: $s); if ($k) 
 $want = [];
 foreach ($keys as $s => $k) for ($y = 0; $y <= $years; $y++)
   $want["$s|$y"] = ['url' => 'https://api.upstox.com/v2/historical-candle/' . rawurlencode($k) . '/day/' . $d($y * 365) . '/' . $d($y * 365 + 364), 'headers' => ['Accept: application/json']];
-$res = mkt_http_multi($want, 30, 6);
+$res = study_fetch($want);
 $D = [];
 foreach ($keys as $s => $k) {
   $C = null;
@@ -39,6 +40,7 @@ $dates = array_map('mk_ist_date', $N['t']); $T = count($dates);
 /* index every stock by date */
 $ix = []; foreach ($D as $s => $C) foreach ($C['t'] as $i => $t) $ix[$s][mk_ist_date($t)] = $i;
 $start = 260; $split = $start + (int) (2 * ($T - $start) / 3);
+study_require_coverage(count($D), count($keys) - 1);
 fwrite(STDERR, count($D) . " stocks, test " . $dates[$start] . " → " . $dates[$T - 1] . ", hold-out from " . $dates[$split] . "\n");
 
 function oc_slice(array $C, $end, $len = 260) { $a = max(0, $end - $len + 1); $o = []; foreach ($C as $k => $v) $o[$k] = array_slice($v, $a, $end - $a + 1); return $o; }
@@ -79,7 +81,8 @@ for ($k = $start; $k < $T; $k++) {
     /* go: trade with the gap; stop if the gap fills (price back at yesterday's close) */
     $fill = $up ? $c['l'] <= $c['pc'] : $c['h'] >= $c['pc'];
     $go = $fill ? -abs($c['o'] - $c['pc']) / $c['o'] * 100 : ($up ? 1 : -1) * ($c['c'] / $c['o'] - 1) * 100;
-    $gaps[] = ['k' => $k, 'day' => $day, 'up' => $up, 'fade' => $fade - $COST, 'go' => $go - $COST, 'gross_fade' => $fade, 'gross_go' => $go];
+    $gaps[] = ['k' => $k, 'day' => $day, 'up' => $up, 'fade' => $fade - $COST, 'go' => $go - $COST, 'gross_fade' => $fade, 'gross_go' => $go,
+               'fade_slip' => $fade - $COST - 0.10, 'gross_fade_slip' => $fade - 0.10]; // 0.05% worse price on the way in and out (opening spreads)
   }
   foreach ($picked as $r => $c) {
     $raw = $c['dir'] * ($c['c'] / $c['o'] - 1) * 100;
@@ -122,7 +125,7 @@ foreach ($sets as $name => $f) {
       'gross_avg_pct' => round(array_sum(array_column($R, 'gross')) / max(1, count($R)), 3), 'tuning' => oc_stats($tr, $fld), 'holdout' => oc_stats($ho, $fld)]), "\n";
   }
 }
-foreach (['fade' => 'Gap fade (5 biggest gaps 1.5–5%, target = yesterday\'s close, 0.5-ATR stop)', 'go' => 'Gap and go (5 biggest gaps 1.5–5%, stop if the gap fills)'] as $f => $name) {
+foreach (['fade' => 'Gap fade (5 biggest gaps 1.5–5%, target = yesterday\'s close, 0.5-ATR stop)', 'fade_slip' => 'Gap fade + 0.05% slippage each way', 'go' => 'Gap and go (5 biggest gaps 1.5–5%, stop if the gap fills)'] as $f => $name) {
   $R = array_map(function ($g) use ($f) { return ['k' => $g['k'], 'day' => $g['day'], 'net' => $g[$f], 'gross' => $g['gross_' . $f], 'right' => $g['gross_' . $f] > 0 ? 1 : 0]; }, $gaps);
   $tr = array_values(array_filter($R, function ($r) use ($split) { return $r['k'] < $split; })); $ho = array_values(array_filter($R, function ($r) use ($split) { return $r['k'] >= $split; }));
   echo json_encode(['strategy' => $name, 'win_before_costs_pct' => round(array_sum(array_column($R, 'right')) / max(1, count($R)) * 100, 1), 'gross_avg_pct' => round(array_sum(array_column($R, 'gross')) / max(1, count($R)), 3), 'tuning' => oc_stats($tr), 'holdout' => oc_stats($ho)]), "\n";

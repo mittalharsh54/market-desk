@@ -8,6 +8,7 @@
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 require_once __DIR__ . '/../lib.php';
 require_once __DIR__ . '/../market.php';
+require_once __DIR__ . '/_fetch.php';
 ini_set('memory_limit', '1024M'); set_time_limit(0);
 
 $max = (int) ($argv[1] ?? 120); $shard = (int) ($argv[2] ?? 0); $shards = max(1, (int) ($argv[3] ?? 1));
@@ -41,7 +42,7 @@ $want = []; $keys = ['NIFTY' => 'NSE_INDEX|Nifty 50'];
 foreach ($syms as $s) { $k = mkt_upstox_key(mkt_norm_symbol($s) ?: $s); if ($k) $keys[$s] = $k[0]; }
 foreach ($keys as $s => $k) foreach ([[0, 29], [30, 59]] as $j => $r)
   $want["$s|$j"] = ['url' => 'https://api.upstox.com/v3/historical-candle/' . rawurlencode($k) . '/minutes/5/' . $d($r[0]) . '/' . $d($r[1]), 'headers' => ['Accept: application/json']];
-$res = mkt_http_multi($want, 30, 6);
+$res = study_fetch($want);
 $data = [];
 foreach ($keys as $s => $k) {
   $parts = [];
@@ -50,6 +51,7 @@ foreach ($keys as $s => $k) {
   if (count($C['c']) > 75 * 8) $data[$s] = $C;
 }
 $bench = $data['NIFTY'] ?? null; unset($data['NIFTY']);
+study_require_coverage(count($data), count($keys) - 1);
 fwrite(STDERR, count($data) . " stocks with data (shard $shard/$shards)\n");
 
 function slice_c(array $C, $a, $b) { $o = []; foreach ($C as $k => $v) $o[$k] = array_slice($v, $a, $b - $a + 1); return $o; }

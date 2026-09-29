@@ -12,6 +12,7 @@
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 require_once __DIR__ . '/../lib.php';
 require_once __DIR__ . '/../market.php';
+require_once __DIR__ . '/_fetch.php';
 ini_set('memory_limit', '2048M'); set_time_limit(0);
 
 $max = (int) ($argv[1] ?? 260); $years = max(3, (int) ($argv[2] ?? 4));
@@ -28,7 +29,7 @@ $gk = mkt_upstox_key('GOLDBEES'); if ($gk) $keys['GOLDETF'] = $gk[0]; // gold ET
 $want = [];
 foreach ($keys as $s => $k) for ($y = 0; $y <= $years; $y++)
   $want["$s|$y"] = ['url' => 'https://api.upstox.com/v2/historical-candle/' . rawurlencode($k) . '/day/' . $d($y * 365) . '/' . $d($y * 365 + 364), 'headers' => ['Accept: application/json']];
-$res = getenv('LAB_SYNTH') ? [] : mkt_http_multi($want, 30, 6);
+$res = getenv('LAB_SYNTH') ? [] : study_fetch($want);
 $D = [];
 foreach ($keys as $s => $k) {
   $C = null;
@@ -55,6 +56,7 @@ foreach ($D as $s => $C) {
 }
 $start = 260; if ($T - $start < 250) { fwrite(STDERR, "not enough history\n"); exit(1); }
 $split = $start + (int) (2 * ($T - $start) / 3);
+if (!getenv('LAB_SYNTH')) study_require_coverage(count($P), count(array_diff(array_keys($keys), ['NIFTY', 'GOLDETF'])));
 fwrite(STDERR, count($P) . " stocks, " . $dates[$start] . " → " . $dates[$T - 1] . ", hold-out from " . $dates[$split] . "\n");
 
 /* ---------- indicators on the calendar ---------- */

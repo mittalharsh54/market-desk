@@ -9,6 +9,7 @@
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 require_once __DIR__ . '/../lib.php';
 require_once __DIR__ . '/../market.php';
+require_once __DIR__ . '/_fetch.php';
 ini_set('memory_limit', '1024M'); set_time_limit(0);
 
 $max = (int) ($argv[1] ?? 260); $years = max(2, (int) ($argv[2] ?? 3));
@@ -29,7 +30,7 @@ foreach ($syms as $s) { $k = mkt_upstox_key(mkt_norm_symbol($s) ?: $s); if ($k) 
 $want = [];
 foreach ($keys as $s => $k) for ($y = 0; $y < $years + 1; $y++)
   $want["$s|$y"] = ['url' => 'https://api.upstox.com/v2/historical-candle/' . rawurlencode($k) . '/day/' . $d($y * 365) . '/' . $d($y * 365 + 364), 'headers' => ['Accept: application/json']];
-$res = mkt_http_multi($want, 30, 6);
+$res = study_fetch($want);
 $data = [];
 foreach ($keys as $s => $k) {
   $C = null;
@@ -40,6 +41,7 @@ $N = $data['NIFTY'] ?? null; unset($data['NIFTY']);
 if (!$N) { fwrite(STDERR, "no Nifty data\n"); exit(1); }
 $nifty = []; foreach ($N['t'] as $i => $t) $nifty[mk_ist_date($t)] = $N['c'][$i];
 $ndates = array_keys($nifty);
+study_require_coverage(count($data), count($keys) - 1);
 fwrite(STDERR, count($data) . " stocks, Nifty " . reset($ndates) . " → " . end($ndates) . "\n");
 $first = $ndates[min(210, count($ndates) - 1)]; $mid = $ndates[(int) ((array_search($first, $ndates) + count($ndates) - 1) / 2)];
 
