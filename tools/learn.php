@@ -65,11 +65,23 @@ if ($L) {
   /* must beat BOTH baselines (Nifty and equal-weight of the same stocks) in the tuning period AND the hold-out,
      with a drawdown a small account can live with */
   $ok = function ($r) use ($bar) { return $r['train']['cagr_pct'] > $bar('train') && $r['holdout']['cagr_pct'] > $bar('holdout') && $r['holdout']['max_dd_pct'] > -30 && $r['train']['max_dd_pct'] > -35; };
-  $valid = array_values(array_filter($rows, $ok));
+  /* robustness: the more set-ups we try, the easier a lucky one passes. A stock strategy must also beat both
+     baselines on AVERAGE across all its account sizes (2, 4 and 6 positions), not only in its best one. */
+  $avg = [];
+  foreach ($rows as $r) { $avg[$r['strategy']]['train'][] = $r['train']['cagr_pct']; $avg[$r['strategy']]['holdout'][] = $r['holdout']['cagr_pct']; }
+  $robust = function ($r) use ($avg, $bar) { $a = $avg[$r['strategy']]; if (count($a['train']) < 2) return true;
+    return array_sum($a['train']) / count($a['train']) > $bar('train') && array_sum($a['holdout']) / count($a['holdout']) > $bar('holdout'); };
+  $valid = array_values(array_filter($rows, function ($r) use ($ok, $robust) { return $ok($r) && $robust($r); }));
   usort($valid, function ($a, $b) { return $b['holdout']['cagr_pct'] <=> $a['holdout']['cagr_pct']; });
   $best = $valid[0] ?? null;
+  /* the app can only run strategies it has code for (momentum.php); others are reported but not switched on */
+  $runnable = ['Momentum rotation + market filter'];
+  $validRun = array_values(array_filter($valid, function ($r) use ($runnable) { return in_array($r['strategy'], $runnable, true); }));
+  if ($best && !in_array($best['strategy'], $runnable, true)) $log['positional_note'] = 'best passing strategy ' . $best['strategy'] . ' is not built into the app yet';
+  $best = $validRun[0] ?? null;
   $rules['positional'] = ['tradeable' => (bool) $best, 'strategy' => $best['strategy'] ?? null, 'slots' => $best['slots'] ?? null,
-    'evidence' => ['tested' => $today, 'baselines' => $base, 'results' => array_map(function ($r) { return array_intersect_key($r, array_flip(['strategy', 'slots', 'train', 'holdout', 'end_value'])); }, $rows)]];
+    'configs_tested' => count($rows), 'strategies_tested' => count($avg), 'passed' => array_map(function ($r) { return $r['strategy'] . ' / ' . $r['slots']; }, $valid),
+    'evidence' => ['tested' => $today, 'baselines' => $base, 'results' => array_map(function ($r) { return array_intersect_key($r, array_flip(['strategy', 'slots', 'index', 'train', 'holdout', 'end_value'])); }, $rows)]];
   $log['positional'] = $best ? 'best tested: ' . $best['strategy'] . ' with ' . $best['slots'] . ' positions (hold-out ' . $best['holdout']['cagr_pct'] . '% a year vs baselines ' . $bar('holdout') . '%)'
                              : 'no strategy beat buy-and-hold in both the tuning period and the hold-out';
 }
