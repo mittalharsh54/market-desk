@@ -30,6 +30,8 @@ jobs:
           c=$(code "$U"); echo "GET / -> $c"
           if curl -s -m 30 "$U" | grep -q "<title>Market Desk</title>"; then echo "ok: Market Desk page served"; else echo "::error::Market Desk page not found at $U"; FAIL=1; fi
 
+          c=$(code "${U}i18n.js"); if [ "$c" = "200" ]; then echo "ok: i18n.js served"; else echo "::error::i18n.js not served ($c)"; FAIL=1; fi
+
           echo "== Private files must not be served"
           for f in config.php config.sample.php lib.php market.php market_engine.php README.md .ftp-deploy-sync-state.json tools/test-market-engine.php tools/dev-server.php data/inputs.json; do
             c=$(code "$U$f"); if [ "$c" = "200" ]; then echo "::error::$f is publicly readable (HTTP 200)"; FAIL=1; else echo "ok: $f -> $c"; fi

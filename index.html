@@ -6,6 +6,7 @@
 <meta name="description" content="Market Desk — Indian stock market research: global and national factors, intraday, swing and long-term buy/sell calls.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='9' fill='white'/%3E%3Cpath d='M7 28 L15 19 L21 24 L33 11' stroke='%232a78d6' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <title>Market Desk</title>
+<script src="i18n.js"></script>
 <style>
   :root {
     color-scheme: light dark;
@@ -229,6 +230,64 @@
   #login .btn { width: 100%; justify-content: center; }
   body.locked .wrap { display: none; }
   .method h3 { margin: 16px 0 6px; } .method p, .method li { font-size: 13.5px; color: var(--text-dim); } .method code { font-family: var(--mono); font-size: 12px; }
+
+  /* ================= phones & small tablets ================= */
+  .tabs { scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .factor.f3 { grid-template-columns: minmax(140px, 1fr) 150px 70px; }
+  .lang-sel { padding: 5px 6px; }
+  html[lang=en] .hi-only { display: none; }
+  .mob-only { display: none; }
+  @media (max-width: 700px) {
+    .mob-only { display: inline-flex; margin-left: auto; }
+    .head .settings { display: none; }
+    .head.open .settings { display: grid; }
+    table.plan-t td.empty { display: none; }
+  }
+  html[lang=hi] body { font-family: var(--sans), "Noto Sans Devanagari", "Kohinoor Devanagari", "Mangal", sans-serif; }
+  @media (max-width: 700px) {
+    body { font-size: 14.5px; }
+    .wrap { padding: 10px 12px 72px; }
+    .head { gap: 8px; margin-bottom: 8px; }
+    .head h1 { font-size: 19px; }
+    .head .spacer { display: none; }
+    .settings { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .settings label { flex-direction: column; align-items: stretch; gap: 3px; font-size: 11.5px; }
+    .settings input, .settings select { width: 100% !important; min-height: 40px; font-size: 16px; } /* 16px stops iOS zooming into fields */
+    .settings .btn { min-height: 40px; justify-content: center; }
+    .tabs { position: sticky; top: 0; z-index: 30; background: var(--bg); margin: 0 -12px 12px; padding: 0 8px; box-shadow: 0 6px 10px -8px rgba(0,0,0,.35); }
+    .tab { padding: 12px 11px; font-size: 14px; }
+    .card { padding: 12px; border-radius: 12px; }
+    .ch { gap: 6px; }
+    .ch .btn, .btn-sm { min-height: 38px; }
+    .summary { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+    .summary > div { padding: 8px 9px; border-radius: 10px; }
+    .summary span, .summary em { font-size: 10.5px; line-height: 1.3; }
+    .summary b { font-size: 16px; line-height: 1.2; overflow-wrap: anywhere; }
+    .acttitle { font-size: 19px; }
+    .cells { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cell b { font-size: 17px; }
+    .pick .px b { font-size: 16px; }
+    /* action tables become one card per stock */
+    table.plan-t, table.plan-t tbody { display: block; }
+    table.plan-t thead { display: none; }
+    table.plan-t tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; padding: 10px 2px; border-bottom: 1px solid var(--line); }
+    table.plan-t td { display: block; padding: 0; border: 0; text-align: left !important; font-size: 14px; }
+    table.plan-t td[data-l]::before { content: attr(data-l); display: block; font-size: 10.5px; font-weight: 650; color: var(--text-faint); text-transform: uppercase; letter-spacing: .04em; }
+    table.plan-t td:first-child { grid-column: 1 / -1; font-size: 15px; }
+    table.plan-t td:nth-child(2) { grid-column: 1 / -1; }
+    table.plan-t .dopill { white-space: normal; font-size: 13px; }
+    /* every other table scrolls inside its card instead of widening the page */
+    .panel table:not(.plan-t) { display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .factor.f3 { grid-template-columns: minmax(0, 1fr) 76px 46px; gap: 8px; }
+    .warnbox, .okbox { font-size: 13px; }
+    svg { max-width: 100%; }
+  }
+  @media (max-width: 380px) {
+    .summary { grid-template-columns: minmax(0, 1fr); }
+    .summary > div { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .cells { grid-template-columns: minmax(0, 1fr); }
+  }
 </style>
 </head>
 <body class="locked">
@@ -237,17 +296,21 @@
   <p class="dim small" id="loginMsg">Indian stock market research. Enter your password.</p>
   <input type="password" id="loginPw" placeholder="Password" autocomplete="current-password">
   <button class="btn primary" type="submit" id="loginGo">Sign in</button>
+  <p class="small" style="margin:10px 0 0" data-noi18n><a href="#" class="langlink" data-lang="hi">हिंदी में देखें</a> · <a href="#" class="langlink" data-lang="en">English</a></p>
 </form></div>
 <div class="wrap">
   <div class="head">
     <h1>Market Desk</h1>
     <span class="pill" id="mktPill"><span class="dot"></span><span id="mktPhase">…</span></span>
+    <button class="btn btn-sm mob-only" id="langBtn" data-noi18n title="English / हिंदी"></button>
+    <button class="btn btn-sm mob-only" id="setBtn" aria-expanded="false" title="Settings" style="margin-left:0">⚙</button>
     <span class="spacer"></span>
     <div class="settings">
       <label title="Used to size every trade plan">Capital ₹ <input id="capital" type="number" min="1000" step="1000" inputmode="numeric"></label>
       <label title="Most you are willing to lose on one trade, as % of capital">Risk / trade % <input id="riskPct" type="number" min="0.1" max="5" step="0.1" style="width:70px"></label>
       <label title="Buy only = never short-sell; only stocks expected to go up are picked.">Trades <select id="tradeMode" style="padding:5px 6px"><option value="both">Buy &amp; short</option><option value="long">Buy only</option></select></label>
       <label title="Intraday leverage from your broker (MIS). 1x = no borrowing — recommended while you validate the system.">Leverage <select id="leverage" style="padding:5px 6px"><option value="1">1x</option><option value="2">2x</option><option value="3">3x</option><option value="5">5x</option></select></label>
+      <label title="English / हिंदी">Language <select id="langSel" class="lang-sel" data-noi18n><option value="en">English</option><option value="hi">हिंदी</option></select></label>
       <button class="btn btn-sm icon-btn" id="themeBtn" title="Light / dark" aria-label="Toggle light or dark theme">◐</button>
       <button class="btn btn-sm" id="logoutBtn" title="Sign out of Market Desk">Sign out</button>
     </div>
@@ -338,6 +401,16 @@
 
   <!-- ================= METHOD ================= -->
   <section class="panel" id="p-method">
+    <div class="card method hi-only" style="margin-bottom:14px">
+      <h2>Market Desk कैसे काम करता है — सार</h2>
+      <ul class="plain">
+        <li><b>मासिक चयन (परखा हुआ):</b> हर महीने के पहले ट्रेडिंग दिन, पिछले 12 महीनों में सबसे मज़बूत (ताज़ा महीना छोड़कर) और अपने 200-दिन औसत से ऊपर वाले 4 शेयर, बराबर रकम से, डिलीवरी में। जब तक शेयर टॉप 20 में रहे, उसे रखें। जब निफ्टी अपने 200-दिन औसत से नीचे हो, सब बेचकर नकद रखें।</li>
+        <li><b>इंट्राडे टॉप 10:</b> हर दिन ~250 शेयरों की जाँच, 60 का गहराई से अध्ययन, 10 का चयन; 9:25 बजे सूची लॉक। सिग्नल तभी आता है जब 5-मिनट का स्कोर सीमा पार करे, भाव VWAP और शुरुआती दायरे से ऊपर/नीचे हो और वॉल्यूम सामान्य से 1.5 गुना हो। जाँच में ये नियम चार्ज के बाद घाटे में रहे — इसलिए सिर्फ़ पेपर-ट्रेड और सीखने के लिए।</li>
+        <li><b>रोज़ सीखना:</b> हर ट्रेडिंग दिन शाम 4:10 बजे सभी नियम ताज़ा डेटा पर दोबारा परखे जाते हैं। कोई नियम तभी अपनाया जाता है जब वह चार्ज के बाद दोनों समय-हिस्सों में फ़ायदेमंद हो, या (लंबी अवधि वाले) निफ्टी और बराबर-रकम वाले पोर्टफ़ोलियो दोनों को हराए — उस बाद के समय में भी जिस पर उसे ट्यून नहीं किया गया।</li>
+        <li><b>जोखिम:</b> यह रिसर्च टूल है, निवेश सलाह नहीं। पिछले नतीजे भविष्य की गारंटी नहीं। उतनी ही रकम लगाएँ जिसके 30% गिरने पर भी आप सहज रहें।</li>
+      </ul>
+      <p class="small dim">नीचे पूरी तकनीकी जानकारी अंग्रेज़ी में है।</p>
+    </div>
     <div class="card method">
       <h2>How Market Desk decides</h2>
       <p>Every call is the output of explicit, weighted rules — no black box. Each factor gets a score from −1 (bearish) to +1 (bullish) and a one-line reason; the page shows all of them so you can disagree with any.</p>
@@ -456,32 +529,46 @@
   }
   $("#momRefresh").onclick = loadMom;
   $("#momBody").addEventListener("click", e => { const x = e.target.closest("[data-sym]"); if (x) { e.preventDefault(); analyze(x.dataset.sym); } });
+  let lastMom = null;
   function renderMom(M) {
+    lastMom = M;
     const R = M.rank, E = M.evidence || {}, ev = E.evidence || {}, res = (ev.results || []).find(r => r.strategy === E.strategy && r.slots === E.slots), base = ev.baselines || [];
-    const bl = part => base.map(b => `${esc(b.strategy)} ${b[part].cagr_pct}%`).join(" · ");
-    const dstr = d => new Date(d + "T12:00:00+05:30").toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", weekday: "short", day: "numeric", month: "short" });
-    let h = `<div class="${E.tradeable ? "okbox" : "warnbox"}" style="margin:0 0 10px">${res ? `<b>Why this strategy:</b> it is the only one of 5 strategies (15 account set-ups) that beat both Nifty buy-and-hold and equal-weight buy-and-hold of the same stocks, in the tuning years <i>and</i> in a hold-out it was never tuned on, with a worst fall under 30%.
-      Tuning years (${esc(base[0] ? base[0].from : "")} → ${esc(base[0] ? base[0].holdout_from : "")}): <b>${res.train.cagr_pct}% a year</b>, worst fall ${res.train.max_dd_pct}% (baselines: ${bl("train")}).
-      Hold-out (→ ${esc(base[0] ? base[0].to : "")}): <b>${res.holdout.cagr_pct}% a year</b>, worst fall ${res.holdout.max_dd_pct}% (baselines: ${bl("holdout")}).
-      <br><b>Be realistic:</b> the hold-out edge is small and rests on few trades; the test uses today's stock list, which flatters momentum; a single stock can fall 20–30%. Expect losing months, and judge it over a year, not a week.` : "<b>Not tested yet.</b> The daily learning run has not approved a positional strategy."}</div>`;
+    const bn = n => L(n, { "Nifty 50 buy & hold": "निफ्टी 50 खरीदकर रखना", "Equal-weight buy & hold of the same stocks": "इन्हीं शेयरों को बराबर रकम से खरीदकर रखना" }[n] || n);
+    const bl = part => base.map(b => `${esc(bn(b.strategy))} ${b[part].cagr_pct}%`).join(" · ");
+    const dstr = d => new Date(d + "T12:00:00+05:30").toLocaleDateString(I18N.lang === "hi" ? "hi-IN" : "en-IN", { timeZone: "Asia/Kolkata", weekday: "short", day: "numeric", month: "short" });
+    const b0 = base[0] || {}, tested = E.strategies_tested || 5, cfg = E.configs_tested || 15;
+    let h = `<div class="${E.tradeable ? "okbox" : "warnbox"}" style="margin:0 0 10px">${res ? L(
+      `<b>Why this strategy:</b> it is the only one of ${tested} strategies (${cfg} account set-ups) that beat both Nifty buy-and-hold and equal-weight buy-and-hold of the same stocks, in the tuning years <i>and</i> in a hold-out it was never tuned on, with a worst fall under 30%.
+      Tuning years (${esc(b0.from || "")} → ${esc(b0.holdout_from || "")}): <b>${res.train.cagr_pct}% a year</b>, worst fall ${res.train.max_dd_pct}% (baselines: ${bl("train")}).
+      Hold-out (→ ${esc(b0.to || "")}): <b>${res.holdout.cagr_pct}% a year</b>, worst fall ${res.holdout.max_dd_pct}% (baselines: ${bl("holdout")}).
+      <br><b>Be realistic:</b> the hold-out edge is small and rests on few trades; the test uses today's stock list, which flatters momentum; a single stock can fall 20–30%. Expect losing months, and judge it over a year, not a week.`,
+      `<b>यह रणनीति क्यों:</b> ${tested} रणनीतियों (${cfg} खाता सेटअप) में से सिर्फ़ यही है जिसने निफ्टी को खरीदकर रखने और इन्हीं शेयरों को बराबर रकम से रखने — दोनों को हराया, जाँच के सालों में <i>और</i> उस बाद के समय में भी जिस पर इसे ट्यून नहीं किया गया था, और सबसे बड़ी गिरावट 30% से कम रही।
+      जाँच के साल (${esc(b0.from || "")} → ${esc(b0.holdout_from || "")}): <b>सालाना ${res.train.cagr_pct}%</b>, सबसे बड़ी गिरावट ${res.train.max_dd_pct}% (तुलना: ${bl("train")})।
+      बाद का समय (→ ${esc(b0.to || "")}): <b>सालाना ${res.holdout.cagr_pct}%</b>, सबसे बड़ी गिरावट ${res.holdout.max_dd_pct}% (तुलना: ${bl("holdout")})।
+      <br><b>यथार्थ रहें:</b> बाद के समय में फ़ायदा छोटा है और कम ट्रेडों पर टिका है; जाँच में आज के शेयरों की सूची इस्तेमाल हुई, जो मोमेंटम को बेहतर दिखाती है; एक शेयर 20–30% गिर सकता है। घाटे वाले महीने आएँगे — इसे एक साल में परखें, एक हफ़्ते में नहीं।`)
+      : L("<b>Not tested yet.</b> The daily learning run has not approved a positional strategy.", "<b>अभी परखा नहीं गया।</b> रोज़ के लर्निंग रन ने अभी कोई रणनीति मंज़ूर नहीं की है।")}</div>`;
     h += `<div class="summary">
-      <div><span>Market filter</span><b class="${R.market_on ? "good" : "bad"}">${R.market_on ? "ON — invest" : "OFF — hold cash"}</b><em>Nifty ${fmt(R.nifty, 0)} vs 200-day avg ${fmt(R.nifty_200dma, 0)} (${esc(R.nifty_as_of)})</em></div>
-      <div><span>${M.mode === "preview" ? "Starts" : "This month"}</span><b>${M.mode === "preview" ? dstr(M.starts) : esc(M.month)}</b><em>${M.mode === "preview" ? "first trading day of the month" : "set on " + esc(M.rebalanced_on)}</em></div>
-      <div><span>Next check</span><b>${dstr(M.next_rebalance)}</b><em>${M.slots} stocks × ~₹${fmt(M.per_slot, 0)} of your ₹${fmt(M.capital, 0)}</em></div></div>`;
+      <div><span>${L("Market filter", "बाज़ार फ़िल्टर")}</span><b class="${R.market_on ? "good" : "bad"}">${R.market_on ? L("ON — invest", "चालू — निवेश करें") : L("OFF — hold cash", "बंद — नकद रखें")}</b><em>${L("Nifty", "निफ्टी")} ${fmt(R.nifty, 0)} ${L("vs 200-day avg", "बनाम 200-दिन औसत")} ${fmt(R.nifty_200dma, 0)} (${esc(R.nifty_as_of)})</em></div>
+      <div><span>${M.mode === "preview" ? L("Starts", "शुरुआत") : L("This month", "इस महीने")}</span><b>${M.mode === "preview" ? dstr(M.starts) : esc(M.month)}</b><em>${M.mode === "preview" ? L("first trading day of the month", "महीने का पहला ट्रेडिंग दिन") : L("set on ", "तय: ") + esc(M.rebalanced_on)}</em></div>
+      <div><span>${L("Next check", "अगली जाँच")}</span><b>${dstr(M.next_rebalance)}</b><em>${L(`${M.slots} stocks × ~₹${fmt(M.per_slot, 0)} of your ₹${fmt(M.capital, 0)}`, `${M.slots} शेयर × ~₹${fmt(M.per_slot, 0)} (आपके ₹${fmt(M.capital, 0)} में से)`)}</em></div></div>`;
     const hold = M.holdings || [];
-    h += `<div class="card mt"><h2>${M.mode === "preview" ? "Preview — what you would buy on " + dstr(M.starts) : "What to hold this month"}</h2>`;
-    if (M.mode === "preview") h += `<p class="small dim">You are starting mid-month. The strategy buys on the first trading day of the month, from the previous close — wait until then; this list may still change.</p>`;
-    if (!hold.length) h += `<p><b>Hold cash.</b> ${R.market_on ? "No stock qualified within your budget." : "The Nifty is below its 200-day average, so the market filter says stay out. The filter is what kept the worst fall near 28% instead of 60% in the test."}</p>`;
-    else h += `<div class="tbl"><table class="plan-t"><thead><tr><th>Stock</th><th>Do this</th><th class="r">Shares</th><th class="r">Price ref.</th><th class="r">Amount</th></tr></thead><tbody>
-      ${hold.map(x => `<tr><td><a href="#" data-sym="${esc(x.symbol)}"><b>${esc(x.symbol)}</b></a><div class="tiny dim">${esc(x.name)}</div></td><td><span class="dopill ${x.kept ? "wait" : "buy"}">${x.kept ? "KEEP" : M.mode === "preview" ? "BUY on " + dstr(M.starts) : "BUY (delivery)"}</span></td>
-        <td class="r num">${x.qty}</td><td class="r num">₹${fmt(x.buy_ref)}</td><td class="r num">₹${fmt(x.amount, 0)}</td></tr>`).join("")}</tbody></table></div>`;
-    if ((M.sell || []).length) h += `<p class="small"><b>Sell this month:</b> ${M.sell.map(x => esc(x.symbol)).join(", ")} — dropped out of the top 20.</p>`;
-    h += `<details class="mt"><summary class="small">How to place the orders</summary><ol class="small">
+    h += `<div class="card mt"><h2>${M.mode === "preview" ? L("Preview — what you would buy on ", "झलक — इस दिन आप क्या खरीदेंगे: ") + dstr(M.starts) : L("What to hold this month", "इस महीने क्या रखें")}</h2>`;
+    if (M.mode === "preview") h += `<p class="small dim">${L("You are starting mid-month. The strategy buys on the first trading day of the month, from the previous close — wait until then; this list may still change.", "आप महीने के बीच में शुरू कर रहे हैं। यह रणनीति महीने के पहले ट्रेडिंग दिन, पिछले बंद भाव के आधार पर खरीदती है — तब तक रुकें; यह सूची अभी बदल सकती है।")}</p>`;
+    if (!hold.length) h += `<p>${R.market_on ? L("<b>Hold cash.</b> No stock qualified within your budget.", "<b>नकद रखें।</b> आपके बजट में कोई शेयर योग्य नहीं निकला।")
+      : L("<b>Hold cash.</b> The Nifty is below its 200-day average, so the market filter says stay out. The filter is what kept the worst fall near 28% instead of 60% in the test.", "<b>नकद रखें।</b> निफ्टी अपने 200-दिन के औसत से नीचे है, इसलिए बाज़ार फ़िल्टर बाहर रहने को कहता है। जाँच में इसी फ़िल्टर ने सबसे बड़ी गिरावट 60% की जगह लगभग 28% पर रोकी।")}</p>`;
+    else h += `<div class="tbl"><table class="plan-t"><thead><tr><th>${L("Stock", "शेयर")}</th><th>${L("Do this", "क्या करें")}</th><th class="r">${L("Shares", "शेयर संख्या")}</th><th class="r">${L("Price ref.", "संदर्भ भाव")}</th><th class="r">${L("Amount", "राशि")}</th></tr></thead><tbody>
+      ${hold.map(x => `<tr><td><a href="#" data-sym="${esc(x.symbol)}"><b>${esc(x.symbol)}</b></a><div class="tiny dim">${esc(x.name)}</div></td><td><span class="dopill ${x.kept ? "wait" : "buy"}">${x.kept ? L("KEEP", "रखें") : M.mode === "preview" ? L("BUY on ", "खरीदें: ") + dstr(M.starts) : L("BUY (delivery)", "खरीदें (डिलीवरी)")}</span></td>
+        <td class="r num" data-l="Shares">${x.qty}</td><td class="r num" data-l="Price ref.">₹${fmt(x.buy_ref)}</td><td class="r num" data-l="Amount">₹${fmt(x.amount, 0)}</td></tr>`).join("")}</tbody></table></div>`;
+    if ((M.sell || []).length) h += `<p class="small"><b>${L("Sell this month:", "इस महीने बेचें:")}</b> ${M.sell.map(x => esc(x.symbol)).join(", ")} — ${L("dropped out of the top 20.", "टॉप 20 से बाहर हो गए।")}</p>`;
+    h += `<details class="mt"><summary class="small">${L("How to place the orders", "ऑर्डर कैसे लगाएँ")}</summary><ol class="small">${L(`
       <li>On the first trading day of the month, after 9:15 AM: sell anything marked SELL, then buy each stock as <b>Delivery (CNC)</b>, not intraday.</li>
       <li>No stop-loss orders and no daily watching — the rule is checked once a month. A holding is sold only when it drops out of the top 20 or the market filter turns off.</li>
-      <li>Charges on ₹10,000 run about ₹16 per stock sold (DP charge) plus 0.1% STT each way — that is why this checks monthly, not daily.</li></ol></details></div>`;
-    h += `<div class="card mt"><h2>Top 20 by momentum</h2><p class="small dim">12-month return skipping the latest month, only stocks above their 200-day average. ${R.ranked} of ${R.screened} stocks qualified.</p>
-      <div class="tbl"><table class="small"><thead><tr><th>#</th><th>Stock</th><th class="r">12-1 month</th><th class="r">Last month</th><th class="r">Above 200-DMA</th><th class="r">Price</th></tr></thead><tbody>
+      <li>Charges on ₹10,000 run about ₹16 per stock sold (DP charge) plus 0.1% STT each way — that is why this checks monthly, not daily.</li>`, `
+      <li>महीने के पहले ट्रेडिंग दिन, 9:15 बजे के बाद: जो "बेचें" लिखा हो उसे बेचें, फिर हर शेयर <b>डिलीवरी (CNC)</b> में खरीदें, इंट्राडे में नहीं।</li>
+      <li>कोई स्टॉप-लॉस ऑर्डर नहीं और रोज़ देखने की ज़रूरत नहीं — नियम महीने में एक बार जाँचा जाता है। शेयर तभी बिकता है जब वह टॉप 20 से बाहर हो या बाज़ार फ़िल्टर बंद हो जाए।</li>
+      <li>₹10,000 पर हर बेचे गए शेयर पर लगभग ₹16 (DP चार्ज) और दोनों तरफ़ 0.1% STT लगता है — इसीलिए जाँच महीने में एक बार होती है, रोज़ नहीं।</li>`)}</ol></details></div>`;
+    h += `<div class="card mt"><h2>${L("Top 20 by momentum", "मोमेंटम में टॉप 20")}</h2><p class="small dim">${L(`12-month return skipping the latest month, only stocks above their 200-day average. ${R.ranked} of ${R.screened} stocks qualified.`, `पिछले 12 महीने का रिटर्न (सबसे ताज़ा महीना छोड़कर), सिर्फ़ 200-दिन औसत से ऊपर वाले शेयर। ${R.screened} में से ${R.ranked} शेयर योग्य।`)}</p>
+      <div class="tbl"><table class="small"><thead><tr><th>#</th><th>${L("Stock", "शेयर")}</th><th class="r">${L("12-1 month", "12-1 महीना")}</th><th class="r">${L("Last month", "पिछला महीना")}</th><th class="r">${L("Above 200-DMA", "200-DMA से ऊपर")}</th><th class="r">${L("Price", "भाव")}</th></tr></thead><tbody>
       ${R.top.map((r, i) => `<tr><td>${i + 1}</td><td><a href="#" data-sym="${esc(r.symbol)}"><b>${esc(r.symbol)}</b></a></td><td class="r num">${r.mom_12_1}%</td><td class="r num">${r.ret_1m}%</td><td class="r num">${r.above_200dma_pct}%</td><td class="r num">₹${fmt(r.price)}</td></tr>`).join("")}</tbody></table></div></div>`;
     $("#momBody").innerHTML = h;
   }
@@ -653,7 +740,7 @@
     /* what's moving the market */
     const comps = R.components.slice().sort((a, b) => b.weight * b.score - a.weight * a.score);
     h += `<div class="grid g2"><div class="card"><div class="ch"><h2>What's moving the market</h2><span class="dim small">factor score · weight</span></div>
-      ${comps.map(c => `<div class="factor" style="grid-template-columns:minmax(140px,1fr) 150px 70px"><div class="fl">${esc(c.label)}<small>weight ${Math.round(c.weight * 100)}%</small></div><div>${meter(c.score)}</div><div class="num small r" style="text-align:right">${sc(c.score)}</div></div>`).join("")}
+      ${comps.map(c => `<div class="factor f3"><div class="fl">${esc(c.label)}<small>weight ${Math.round(c.weight * 100)}%</small></div><div>${meter(c.score)}</div><div class="num small r" style="text-align:right">${sc(c.score)}</div></div>`).join("")}
       </div>`;
     /* sectors */
     h += `<div class="card"><div class="ch"><h2>Sector tailwinds today</h2><span class="dim small">macro drivers × sensitivity, + index momentum</span></div>
@@ -1019,7 +1106,7 @@
     const S = p.state, A = actionOf(p), st = p.setup, ed = p.edge, nw = p.news;
     const ev = (S.events || []).slice().reverse();
     return `<div class="card pick act-${A.kind}" data-sym="${esc(p.symbol)}">
-      ${A.fresh ? `<div class="actnow">⚡ NEW SIGNAL — ACT NOW</div>` : ""}
+      ${A.fresh ? `<div class="actnow">${L("⚡ NEW SIGNAL — ACT NOW", "⚡ नया सिग्नल — अभी कार्रवाई करें")}</div>` : ""}
       <div class="top"><div style="min-width:0"><h3 style="margin:0;font-size:18px">${esc(p.symbol)}${p.darkhorse ? ' <span title="' + esc(p.darkhorse.why.join("; ")) + '">🐎</span>' : ""}</h3>
         <div class="tiny faint">${esc(p.name || "")} · ${esc(p.sector)} · pick #${p.rank}</div></div>
         <div class="px">${S.live ? `<b>₹${fmt(S.live.price)}</b>${chg(S.live.chg_pct)}<div class="tiny faint">at ${esc(S.live.time)}</div>` : `<b>₹${fmt(st.close)}</b><div class="tiny faint">yesterday's close</div>`}</div></div>
@@ -1028,11 +1115,11 @@
       ${A.cells.length ? `<div class="cells">${A.cells.map(c => `<div class="cell ${c[3]}"><span>${esc(c[0])}</span><b>${c[1]}</b><em>${esc(c[2])}</em></div>`).join("")}</div>` : ""}
       ${(S.skipped || []).map(x => `<div class="warnbox">${esc(x)}</div>`).join("")}
       <div class="links">
-        ${ev.length ? `<details><summary>Today's signals (${ev.length})</summary><ul class="tl">${ev.map(e => `<li><span class="num faint">${esc(e.time)}</span><span><b>${esc(e.type)}</b>${e.price ? " @ ₹" + fmt(e.price) : ""} <span class="dim">${esc(e.note)}</span></span></li>`).join("")}</ul></details>` : ""}
+        ${ev.length ? `<details><summary>${L("Today's signals", "आज के सिग्नल")} (${ev.length})</summary><ul class="tl">${ev.map(e => `<li><span class="num faint">${esc(e.time)}</span><span><b>${esc(e.type)}</b>${e.price ? " @ ₹" + fmt(e.price) : ""} <span class="dim">${esc(e.note)}</span></span></li>`).join("")}</ul></details>` : ""}
         <details><summary>Why this stock?</summary>
-          <p class="small">${p.dir === "LONG" ? "Expected to go <b>up</b> today" : "Expected to go <b>down</b> today"} — main reasons:</p>
+          <p class="small">${p.dir === "LONG" ? L("Expected to go <b>up</b> today — main reasons:", "आज <b>ऊपर</b> जाने की उम्मीद — मुख्य कारण:") : L("Expected to go <b>down</b> today — main reasons:", "आज <b>नीचे</b> जाने की उम्मीद — मुख्य कारण:")}</p>
           <ul class="plain">${(p.factors || []).filter(f => Math.abs(f.score) >= 0.3).sort((a, b) => Math.abs(b.score * b.weight) - Math.abs(a.score * a.weight)).slice(0, 5).map(f => `<li class="small">${f.score > 0 ? "✔" : "✖"} <b>${esc(f.label)}:</b> ${esc(f.note)}</li>`).join("")}</ul>
-          ${ed ? `<p class="small">In the last 60 days these exact rules gave ${ed.trades} signals on ${esc(p.symbol)}: ${ed.win_rate}% winners, profit factor ${ed.profit_factor ?? "—"}.</p>` : ""}
+          ${ed ? `<p class="small">${L(`In the last 60 days these exact rules gave ${ed.trades} signals on ${esc(p.symbol)}: ${ed.win_rate}% winners, profit factor ${ed.profit_factor ?? "—"}.`, `पिछले 60 दिनों में इन्हीं नियमों ने ${esc(p.symbol)} पर ${ed.trades} सिग्नल दिए: ${ed.win_rate}% सफल, प्रॉफ़िट फ़ैक्टर ${ed.profit_factor ?? "—"}।`)}</p>` : ""}
           ${nw && nw.flags.length ? `<p class="small"><b>News:</b> ${nw.flags.map(esc).join(" · ")}</p>` : ""}
           <details><summary class="small">All research factors</summary>${factorRows(p.factors, true)}
             <div class="kv mt"><div><span>Daily range</span><b>${st.atr_pct}%</b></div><div><span>Turnover</span><b>₹${fmt(st.turnover_cr, 0)} cr</b></div><div><span>vs Nifty 5d / 20d</span><b>${pct(st.rs_5d, 1)} / ${pct(st.rs_20d, 1)}</b></div>
@@ -1042,14 +1129,17 @@
         </details>
       </div></div>`;
   }
-  function learnBox(L) {
-    const I = L && L.intraday, E = I && I.evidence;
-    if (!E) return `<div class="warnbox" style="margin:0 0 10px"><b>Not yet tested.</b> Paper-trade only until the daily learning run has tested these rules.</div>`;
-    const pos = I.tradeable;
-    return `<div class="${pos ? "okbox" : "warnbox"}" style="margin:0 0 10px"><b>${pos ? "Tested edge: these rules made money after charges." : "Tested result — read before trading real money."}</b>
-      Last tested ${esc(E.tested)} on ${fmt(E.stock_days, 0)} stock-days (${fmt(E.trades, 0)} trades, rule: ${esc(E.variant)}): won ${E.win_pct}% of trades, ${E.gross_r_per_trade >= 0 ? "+" : ""}${E.gross_r_per_trade}R a trade before charges, <b>${E.net_r_per_trade >= 0 ? "+" : ""}${E.net_r_per_trade}R after charges</b>; first half ${E.half1_net_r}R, second half ${E.half2_net_r}R.
-      ${pos ? "Still: size small, use the stop-loss every time." : "No setting tried so far is profitable after charges in both halves, so use this list to paper-trade and learn."}
-      ${L.last ? `<br><span class="tiny">Learning run ${esc(L.last.date)}: ${esc(L.last.intraday || "")}</span>` : ""}</div>`;
+  function learnBox(Lr) {
+    const I = Lr && Lr.intraday, E = I && I.evidence;
+    if (!E) return `<div class="warnbox" style="margin:0 0 10px">${L("<b>Not yet tested.</b> Paper-trade only until the daily learning run has tested these rules.", "<b>अभी परखा नहीं गया।</b> जब तक रोज़ का लर्निंग रन इन नियमों को न परखे, सिर्फ़ पेपर-ट्रेड करें।")}</div>`;
+    const pos = I.tradeable, sg = x => (x >= 0 ? "+" : "") + x;
+    return `<div class="${pos ? "okbox" : "warnbox"}" style="margin:0 0 10px">${L(`<b>${pos ? "Tested edge: these rules made money after charges." : "Tested result — read before trading real money."}</b>
+      Last tested ${esc(E.tested)} on ${fmt(E.stock_days, 0)} stock-days (${fmt(E.trades, 0)} trades, rule: ${esc(E.variant)}): won ${E.win_pct}% of trades, ${sg(E.gross_r_per_trade)}R a trade before charges, <b>${sg(E.net_r_per_trade)}R after charges</b>; first half ${E.half1_net_r}R, second half ${E.half2_net_r}R.
+      ${pos ? "Still: size small, use the stop-loss every time." : "No setting tried so far is profitable after charges in both halves, so use this list to paper-trade and learn."}`,
+      `<b>${pos ? "परखा हुआ फ़ायदा: इन नियमों ने चार्ज के बाद भी कमाई की।" : "जाँच का नतीजा — असली पैसा लगाने से पहले पढ़ें।"}</b>
+      आख़िरी जाँच ${esc(E.tested)}, ${fmt(E.stock_days, 0)} शेयर-दिनों पर (${fmt(E.trades, 0)} ट्रेड): ${E.win_pct}% ट्रेड सफल, चार्ज से पहले प्रति ट्रेड ${sg(E.gross_r_per_trade)}R, <b>चार्ज के बाद ${sg(E.net_r_per_trade)}R</b>; पहला आधा ${E.half1_net_r}R, दूसरा आधा ${E.half2_net_r}R।
+      ${pos ? "फिर भी: छोटी रकम लगाएँ, हर बार स्टॉप-लॉस लगाएँ।" : "अब तक आज़माई कोई भी सेटिंग दोनों हिस्सों में चार्ज के बाद फ़ायदेमंद नहीं रही, इसलिए इस सूची से सिर्फ़ पेपर-ट्रेड करें और सीखें।"}`)}
+      ${Lr.last ? `<br><span class="tiny">${L("Learning run", "लर्निंग रन")} ${esc(Lr.last.date)}: ${esc(Lr.last.intraday || Lr.last.positional || "")}</span>` : ""}</div>`;
   }
   function renderTop10() {
     const J = T10, ph = J.phase, d = J.day, b = J.book, tr = J.track, SET = J.settings;
@@ -1059,7 +1149,9 @@
     const builtAt = d.built_at ? new Date(d.built_at * 1000).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
     const morning = Date.parse(d.date + "T08:45:00+05:30") / 1000;
     const nextStep = d.locked ? "Locked for the day — it will not change." : d.built_at < morning ? "It is re-checked once at 8:45 AM with overnight news and global markets, then locked at 9:25 AM." : "It locks at 9:25 AM once the opening range is known.";
-    let h = `<p class="small dim" style="margin:0 0 8px">List for <b>${esc(d.date)}</b>, researched ${esc(builtAt)} IST (${d.researched} stocks studied in depth). Refreshing this page does not change it. ${nextStep} Stocks already on the list keep their place unless a newcomer is clearly better.</p>
+    const nextHi = d.locked ? "दिन भर के लिए लॉक — अब नहीं बदलेगी।" : d.built_at < morning ? "सुबह 8:45 बजे रात की ख़बरों और वैश्विक बाज़ारों के साथ एक बार दोबारा जाँची जाएगी, फिर 9:25 बजे लॉक होगी।" : "शुरुआती दायरा बनने के बाद 9:25 बजे लॉक होगी।";
+    let h = `<p class="small dim" style="margin:0 0 8px">${L(`List for <b>${esc(d.date)}</b>, researched ${esc(builtAt)} IST (${d.researched} stocks studied in depth). Refreshing this page does not change it. ${nextStep} Stocks already on the list keep their place unless a newcomer is clearly better.`,
+      `<b>${esc(d.date)}</b> की सूची, रिसर्च ${esc(builtAt)} IST (${d.researched} शेयरों का गहराई से अध्ययन)। पेज रिफ़्रेश करने से सूची नहीं बदलती। ${nextHi} सूची में पहले से मौजूद शेयर तभी हटते हैं जब कोई नया शेयर साफ़ तौर पर बेहतर हो।`)}</p>
     ${learnBox(J.learned)}
     <div class="summary">
         <div><span>Your budget</span><b>₹${fmt(SET.capital, 0)}</b><em>up to ₹${fmt(J.pos_budget, 0)} per stock · max ${J.rules.max_open} at once</em></div>
@@ -1071,18 +1163,24 @@
       ${picks.map(p => { const A = p.A, P = p.state.position, lv = p.state.levels || {}, st = p.setup; const kept = (p.state.trades || []).filter(t => !t.skipped); const net = kept.reduce((a, t) => a + (t.pnl || 0), 0);
         const trig = p.dir === "LONG" ? (lv.buy_above || st.pdh) : (lv.sell_below || st.pdl);
         return `<tr class="click" data-goto-card="${esc(p.symbol)}"><td><b>${esc(p.symbol)}</b>${p.darkhorse ? " 🐎" : ""}<div class="tiny" style="color:var(${p.dir === "LONG" ? "--bull" : "--bear"})">${p.dir === "LONG" ? "▲ BUY trade" : "▼ SHORT trade"}</div></td><td><span class="dopill ${A.kind}">${esc(A.title)}</span></td>
-          <td class="r num">${P ? P.qty : "up to " + p.plan.max_qty}</td>
-          <td class="r num">${P ? "₹" + fmt(P.entry) : (A.kind === "wait" ? (p.dir === "LONG" ? "buy if above ₹" : "short if below ₹") + fmt(trig) : "—")}</td>
-          <td class="r num">${P ? "₹" + fmt(P.stop) : "—"}</td><td class="r num">${P ? "₹" + fmt(P.t1_hit ? P.t2 : P.t1) : "—"}</td>
-          <td class="r num">${P ? inr(P.open_pnl, 0) : kept.length ? inr(net, 0) : "—"}</td></tr>`; }).join("")}
+          <td class="r num" data-l="Shares">${P ? P.qty : "up to " + p.plan.max_qty}</td>
+          <td class="r num" data-l="Enter at">${P ? "₹" + fmt(P.entry) : (A.kind === "wait" ? (p.dir === "LONG" ? "buy if above ₹" : "short if below ₹") + fmt(trig) : "—")}</td>
+          <td class="r num${P ? "" : " empty"}" data-l="Stop-loss">${P ? "₹" + fmt(P.stop) : "—"}</td><td class="r num${P ? "" : " empty"}" data-l="Target">${P ? "₹" + fmt(P.t1_hit ? P.t2 : P.t1) : "—"}</td>
+          <td class="r num${P || kept.length ? "" : " empty"}" data-l="Profit / loss">${P ? inr(P.open_pnl, 0) : kept.length ? inr(net, 0) : "—"}</td></tr>`; }).join("")}
       </tbody></table></div>
-      ${picks.some(p => p.dir !== "LONG") ? `<p class="small dim mt">▼ <b>SHORT trade</b> = you profit if the price <b>falls</b>. You do <b>not</b> need to own the shares: sell first as <b>Intraday (MIS)</b>, then buy the same shares back before 3:15 PM. Nothing happens unless the price drops below the level shown and the page says <b>SELL NOW (short)</b>. Don't want to short? Set <b>Trades → Buy only</b> at the top.</p>` : ""}
-      <details class="mt"><summary class="small">How to place the orders</summary><ol class="small">
+      ${picks.some(p => p.dir !== "LONG") ? `<p class="small dim mt">${L(`▼ <b>SHORT trade</b> = you profit if the price <b>falls</b>. You do <b>not</b> need to own the shares: sell first as <b>Intraday (MIS)</b>, then buy the same shares back before 3:15 PM. Nothing happens unless the price drops below the level shown and the page says <b>SELL NOW (short)</b>. Don't want to short? Set <b>Trades → Buy only</b> at the top.`,
+        `▼ <b>शॉर्ट ट्रेड</b> = भाव <b>गिरने</b> पर आपको मुनाफ़ा होता है। शेयर आपके पास होना <b>ज़रूरी नहीं</b>: पहले <b>इंट्राडे (MIS)</b> में बेचें, फिर 3:15 बजे से पहले वही शेयर वापस खरीद लें। जब तक भाव दिखाए गए स्तर से नीचे न जाए और पेज पर <b>अभी बेचें (शॉर्ट)</b> न लिखा आए, कुछ न करें। शॉर्ट नहीं करना? ऊपर <b>ट्रेड → सिर्फ़ खरीद</b> चुनें।`)}</p>` : ""}
+      <details class="mt"><summary class="small">${L("How to place the orders", "ऑर्डर कैसे लगाएँ")}</summary><ol class="small">${L(`
         <li><b>BUY NOW</b>: buy the shown shares as <b>Intraday (MIS)</b> at market price. Straight after, place a <b>stop-loss sell order</b> at the stop-loss price.</li>
         <li>At <b>Target 1</b>: sell half the shares, and change the stop-loss to your buy price — the rest of the trade can no longer lose.</li>
         <li>Sell the rest at <b>Target 2</b>, or when the (trailing) stop-loss shown on the card is hit. This page moves the stop for you — update your order when it changes.</li>
         <li><b>SELL NOW (short)</b> is the mirror: sell first, buy back at the stop-loss or targets.</li>
-        <li>Everything is closed by <b>3:15 PM</b>. Profit/loss shown is after brokerage (0.03% or ₹20), STT, exchange fees, stamp duty and GST.</li>
+        <li>Everything is closed by <b>3:15 PM</b>. Profit/loss shown is after brokerage (0.03% or ₹20), STT, exchange fees, stamp duty and GST.</li>`, `
+        <li><b>अभी खरीदें</b>: दिखाए गए शेयर <b>इंट्राडे (MIS)</b> में मार्केट भाव पर खरीदें। तुरंत बाद स्टॉप-लॉस भाव पर <b>स्टॉप-लॉस सेल ऑर्डर</b> लगाएँ।</li>
+        <li><b>टारगेट 1</b> पर: आधे शेयर बेचें और स्टॉप-लॉस को अपने खरीद भाव पर ले आएँ — अब बाकी ट्रेड में नुकसान नहीं होगा।</li>
+        <li>बाकी शेयर <b>टारगेट 2</b> पर बेचें, या जब कार्ड पर दिखाया (ट्रेलिंग) स्टॉप-लॉस लगे। पेज आपके लिए स्टॉप बदलता है — बदलने पर अपना ऑर्डर भी बदलें।</li>
+        <li><b>अभी बेचें (शॉर्ट)</b> इसका उल्टा है: पहले बेचें, स्टॉप-लॉस या टारगेट पर वापस खरीदें।</li>
+        <li>सब कुछ <b>3:15 बजे</b> तक बंद। दिखाया गया लाभ/हानि ब्रोकरेज (0.03% या ₹20), STT, एक्सचेंज फ़ीस, स्टांप ड्यूटी और GST के बाद है।</li>`)}
       </ol></details></div>
       <div class="t10 mt">${picks.map(pickCard).join("")}</div>`;
     if (d.darkhorses && d.darkhorses.length) h += `<div class="card mt"><h2>🐎 Dark horses</h2><p class="small dim">Less-followed stocks with unusual volume and a breakout or breakdown. They only enter the list above on merit.</p>
@@ -1122,6 +1220,15 @@
 
   /* ---------- theme ---------- */
   const savedTheme = store.get("theme", null); if (savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
+  $("#setBtn").onclick = () => { const h = $(".head"); h.classList.toggle("open"); $("#setBtn").setAttribute("aria-expanded", h.classList.contains("open")); };
+  /* English / हिंदी */
+  $("#langSel").value = I18N.lang;
+  $("#langSel").onchange = () => I18N.set($("#langSel").value);
+  const langBtnLabel = () => { $("#langBtn").textContent = I18N.lang === "hi" ? "EN" : "हिं"; };
+  $("#langBtn").onclick = () => { I18N.set(I18N.lang === "hi" ? "en" : "hi"); $("#langSel").value = I18N.lang; };
+  langBtnLabel(); I18N.onChange(langBtnLabel);
+  document.querySelectorAll(".langlink").forEach(a => a.onclick = e => { e.preventDefault(); I18N.set(a.dataset.lang); $("#langSel").value = I18N.lang; });
+  I18N.onChange(() => { if (T10) renderTop10(); if (lastMom) renderMom(lastMom); });
   $("#themeBtn").onclick = () => {
     const cur = document.documentElement.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     const next = cur === "dark" ? "light" : "dark"; document.documentElement.setAttribute("data-theme", next); store.set("theme", next); setTimeout(redrawAll, 30);

@@ -25,7 +25,8 @@ The optional **✨ AI notes** have Claude write a research note or a market outl
 ## Files
 
 ```
-index.html          the app (one page, no build step)
+index.html          the app (one page, no build step; works on phones)
+i18n.js             English / हिंदी switch (header button; remembered per browser)
 api.php             JSON API + password login
 lib.php             config, file storage, login, Claude call
 market.php          data fetching: Yahoo Finance, NSE, RSS; assembles each view
