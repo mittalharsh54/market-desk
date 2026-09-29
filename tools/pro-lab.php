@@ -135,6 +135,17 @@ $S['Factor dual momentum: 70% in the strongest of Momentum / Alpha-LowVol / Qual
     if (!$up('NIFTY', $k)) return $w; $best = null; $br = null;
     foreach (['MOM', 'ALPLV', 'QUAL', 'NIFTY'] as $a) if ($has($a, $k)) { $r = $A[$a]['c'][$k - 21] / $A[$a]['c'][$k - 252] - 1; if ($br === null || $r > $br) { $best = $a; $br = $r; } }
     if ($best) $w[$best] = 0.7; return $w; }];
+/* robustness: are the diversified portfolios only good because Nasdaq had a great decade? */
+$S['Risk parity without Nasdaq: Nifty, midcap, gold by 1 / volatility'] = ['who' => 'robustness check',
+  'fn' => function ($k) use ($vol, $has) { $iv = []; foreach (['NIFTY', 'MID', 'GOLD'] as $a) if ($has($a, $k)) { $v = $vol($a, $k, 252); if ($v) $iv[$a] = 1 / $v; }
+    $s = array_sum($iv); $w = []; foreach ($iv as $a => $x) $w[$a] = $x / $s; return $w; }];
+$S['Risk parity, Nifty + gold only'] = ['who' => 'robustness check',
+  'fn' => function ($k) use ($vol, $has) { $iv = []; foreach (['NIFTY', 'GOLD'] as $a) if ($has($a, $k)) { $v = $vol($a, $k, 252); if ($v) $iv[$a] = 1 / $v; }
+    $s = array_sum($iv); $w = []; foreach ($iv as $a => $x) $w[$a] = $x / $s; return $w; }];
+$S['Advisor growth without Nasdaq: 60% Nifty / 20% midcap / 10% gold / 10% debt'] = ['who' => 'robustness check',
+  'fn' => function ($k) use ($live) { return $live(['NIFTY' => 0.6, 'MID' => 0.2, 'GOLD' => 0.1], $k); }];
+$S['Equal weight: Nifty, midcap, Nasdaq, gold 25% each'] = ['who' => 'robustness check (1/N, DeMiguel et al. 2009)',
+  'fn' => function ($k) use ($live) { return $live(['NIFTY' => 0.25, 'MID' => 0.25, 'NASDAQ' => 0.25, 'GOLD' => 0.25], $k); }];
 /* the collective: average the target weights of several independent schools of thought */
 $blend = function (array $names) use (&$S) { return function ($k) use ($names, &$S) { $w = [];
   foreach ($names as $n) foreach (($S[$n]['fn'])($k) as $a => $x) $w[$a] = ($w[$a] ?? 0) + $x / count($names); return $w; }; };
@@ -143,7 +154,7 @@ $S['Council (balanced): advisors + trend + dual momentum + factors + risk desk, 
   'fn' => $blend([$names[0], $names[2], $names[3], $names[5], $names[8]])];
 $S['Council (growth): trend + dual momentum + factors + factor momentum + momentum 30, averaged'] = ['who' => 'the return-seeking schools, equal say',
   'fn' => $blend([$names[2], $names[3], $names[5], $names[6], $names[9]])];
-$S['Council (all 12 playbooks averaged)'] = ['who' => 'every school above, equal say', 'fn' => $blend($names)];
+$S['Council (all 12 playbooks averaged)'] = ['who' => 'every school above, equal say', 'fn' => $blend(array_slice($names, 0, 12))];
 
 /* ---------- account simulation ---------- */
 /* ETF delivery charges: no STT on buys and 0.001% on equity-ETF sales (0.1% each way on shares), stamp duty 0.015% on buys,
@@ -192,10 +203,13 @@ function pl_stats(array $eq, $a, $b, array $dates) {
     'return_per_risk' => $vol > 0 ? round(($cagr - PL_CASH) / $vol, 2) : null, 'growth_pct' => round(($v1 / $v0 - 1) * 100, 1)];
 }
 
+function pl_thirds(array $eq, $start, $T, array $dates) { $o = []; $n = $T - $start;
+  for ($i = 0; $i < 3; $i++) { $a = $start + (int) ($i * $n / 3); $b = $start + (int) (($i + 1) * $n / 3) - 1; $o[] = substr($dates[$a], 0, 7) . '..' . substr($dates[$b], 0, 7) . ' ' . pl_stats($eq, $a, $b, $dates)['cagr_pct']; }
+  return $o; }
 /* ---------- baseline: Nifty 50 bought and held (no costs at all) ---------- */
 $nEq = []; for ($k = $start; $k < $T; $k++) $nEq[$k] = 10000 * $A['NIFTY']['c'][$k] / $A['NIFTY']['c'][$start];
 $bT = pl_stats($nEq, $start, $split, $dates); $bH = pl_stats($nEq, $split, $T - 1, $dates);
-echo json_encode(['strategy' => 'Nifty 50 buy & hold', 'baseline' => true, 'train' => $bT, 'holdout' => $bH, 'from' => $dates[$start], 'holdout_from' => $dates[$split], 'to' => $dates[$T - 1],
+echo json_encode(['strategy' => 'Nifty 50 buy & hold', 'baseline' => true, 'train' => $bT, 'holdout' => $bH, 'thirds' => pl_thirds($nEq, $start, $T, $dates), 'from' => $dates[$start], 'holdout_from' => $dates[$split], 'to' => $dates[$T - 1],
   'instruments' => $found, 'first_dates' => $first, 'missing' => $missing]), "\n";
 
 foreach ($S as $name => $s) {
@@ -204,7 +218,7 @@ foreach ($S as $name => $s) {
   $beats = $tr['cagr_pct'] > $bT['cagr_pct'] && $ho['cagr_pct'] > $bH['cagr_pct'];
   $safer = $tr['max_dd_pct'] > $bT['max_dd_pct'] && $ho['max_dd_pct'] > $bH['max_dd_pct'] && $tr['return_per_risk'] > $bT['return_per_risk'] && $ho['return_per_risk'] > $bH['return_per_risk'];
   echo json_encode(['strategy' => $name, 'school' => $s['who'], 'train' => $tr, 'holdout' => $ho,
-    'beats_nifty_both' => $beats, 'safer_than_nifty_both' => $safer,
+    'beats_nifty_both' => $beats, 'safer_than_nifty_both' => $safer, 'thirds' => pl_thirds($R['eq'], $start, $T, $dates),
     'trades' => $R['trades'], 'signal_switches' => $R['switches'], 'costs_rs' => round($R['costs']), 'end_value' => round(end($R['eq'])),
     'weights_now' => array_map(function ($x) { return round($x, 2); }, $R['weights_now'])]), "\n";
 }
