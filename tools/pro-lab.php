@@ -44,6 +44,7 @@ $SPEC = [ // er = yearly fund cost deducted from an index (an ETF's own price al
   'LOWVOL' => ['label' => 'Nifty100 Low Volatility 30', 'find' => [['100', 'lowvol', '30'], ['tr']], 'er' => 0.003],
   'QUAL'   => ['label' => 'Nifty200 Quality 30', 'find' => [['200', 'qual', '30'], ['tr']], 'er' => 0.003],
   'VALUE'  => ['label' => 'Nifty50 Value 20', 'find' => [['50', 'value', '20'], ['tr']], 'er' => 0.003],
+  'ALPLV'  => ['label' => 'Nifty Alpha Low-Volatility 30', 'find' => [['alpha', 'lowvol', '30'], ['tr', 'quality']], 'er' => 0.004],
   'NASDAQ' => ['label' => 'Nasdaq 100 ETF (MON100)', 'eq' => 'MON100', 'er' => 0],
   'GOLD'   => ['label' => 'Gold ETF (GOLDBEES)', 'eq' => 'GOLDBEES', 'er' => 0],
 ];
@@ -127,6 +128,13 @@ $S['Volatility target: Nifty sized to 12% yearly volatility, rest in debt'] = ['
   'fn' => function ($k) use ($vol) { $v = $vol('NIFTY', $k, 63); return $v ? ['NIFTY' => min(1.0, 0.12 / $v)] : []; }];
 $S['Momentum 30 index + market filter (Nifty above its 200-DMA)'] = ['who' => 'momentum research; the index version of our monthly picks',
   'fn' => function ($k) use ($up, $has) { return ($up('NIFTY', $k) && $has('MOM', $k, 1)) ? ['MOM' => 1.0] : []; }];
+$S['Momentum 30 index + market filter, sized to 15% volatility'] = ['who' => 'Barroso & Santa-Clara (2015) risk-managed momentum',
+  'fn' => function ($k) use ($up, $has, $vol) { if (!$up('NIFTY', $k) || !$has('MOM', $k, 126)) return []; $v = $vol('MOM', $k, 126); return $v ? ['MOM' => min(1.0, 0.15 / $v)] : []; }];
+$S['Factor dual momentum: 70% in the strongest of Momentum / Alpha-LowVol / Quality / Nifty (12-1), 15% gold, rest debt; equity to debt when Nifty < 200-DMA'] = ['who' => 'research synthesis: dual momentum on factor ETFs + gold + trend filter',
+  'fn' => function ($k) use ($up, $has, $A) { $w = $has('GOLD', $k, 1) ? ['GOLD' => 0.15] : [];
+    if (!$up('NIFTY', $k)) return $w; $best = null; $br = null;
+    foreach (['MOM', 'ALPLV', 'QUAL', 'NIFTY'] as $a) if ($has($a, $k)) { $r = $A[$a]['c'][$k - 21] / $A[$a]['c'][$k - 252] - 1; if ($br === null || $r > $br) { $best = $a; $br = $r; } }
+    if ($best) $w[$best] = 0.7; return $w; }];
 /* the collective: average the target weights of several independent schools of thought */
 $blend = function (array $names) use (&$S) { return function ($k) use ($names, &$S) { $w = [];
   foreach ($names as $n) foreach (($S[$n]['fn'])($k) as $a => $x) $w[$a] = ($w[$a] ?? 0) + $x / count($names); return $w; }; };
@@ -135,10 +143,13 @@ $S['Council (balanced): advisors + trend + dual momentum + factors + risk desk, 
   'fn' => $blend([$names[0], $names[2], $names[3], $names[5], $names[8]])];
 $S['Council (growth): trend + dual momentum + factors + factor momentum + momentum 30, averaged'] = ['who' => 'the return-seeking schools, equal say',
   'fn' => $blend([$names[2], $names[3], $names[5], $names[6], $names[9]])];
+$S['Council (all 12 playbooks averaged)'] = ['who' => 'every school above, equal say', 'fn' => $blend($names)];
 
 /* ---------- account simulation ---------- */
-function pl_buy_cost($v) { return $v * (0.001 + 0.00015 + (0.0000297 + 0.000001) * 1.18); }        // STT, stamp duty, exchange + SEBI fees (+GST)
-function pl_sell_cost($v) { return $v * (0.001 + (0.0000297 + 0.000001) * 1.18) + 15.93; }          // STT, fees, DP charge per sale
+/* ETF delivery charges: no STT on buys and 0.001% on equity-ETF sales (0.1% each way on shares), stamp duty 0.015% on buys,
+   exchange + SEBI fees with GST, the Rs 15.93 DP charge per sale, and 0.05% each way for the bid-ask spread / premium to NAV */
+function pl_buy_cost($v) { return $v * (0.00015 + (0.0000297 + 0.000001) * 1.18 + 0.0005); }
+function pl_sell_cost($v) { return $v * (0.00001 + (0.0000297 + 0.000001) * 1.18 + 0.0005) + 15.93; }
 function pl_run(callable $wfn, array $A, array $dates, $start, $T) {
   $cash = 10000.0; $u = []; $eq = []; $n = 0; $costs = 0.0; $switches = 0;
   for ($k = $start; $k < $T; $k++) {
