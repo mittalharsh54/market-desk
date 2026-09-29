@@ -332,6 +332,7 @@
   </div>
 
   <div class="tabs" role="tablist">
+    <button class="tab" data-tab="core">Core portfolio ✓ tested</button>
     <button class="tab" data-tab="mom">Monthly picks ✓ tested</button>
     <button class="tab on" data-tab="top10">Intraday Top 10</button>
     <button class="tab" data-tab="pulse">Market pulse</button>
@@ -354,6 +355,11 @@
     </div>
     <div id="t10Flash"></div>
     <div id="t10Body"><div class="loading"><span class="spin"></span>Researching today's list — screening ~170 liquid F&amp;O stocks, then studying the best 40 in depth…</div></div>
+  </section>
+
+  <section class="panel" id="p-core">
+    <div class="ch" style="margin-bottom:10px"><span class="pill">Core portfolio · ETFs · delivery (CNC) · checked once a month</span><span class="spacer"></span><button class="btn btn-sm" id="coreRefresh">↻ Refresh</button></div>
+    <div id="coreBody"><div class="loading"><span class="spin"></span>Loading the tested ETF mix…</div></div>
   </section>
 
   <section class="panel" id="p-mom">
@@ -532,10 +538,83 @@
   ["#capital", "#riskPct", "#leverage", "#tradeMode", "#tgLang"].forEach(id => $(id).onchange = saveSettings);
   function showTab(t) {
     $$(".tab").forEach(b => b.classList.toggle("on", b.dataset.tab === t)); $$(".panel").forEach(p => p.classList.toggle("on", p.id === "p-" + t));
-    store.set("tab", t); if (t === "inputs") loadInputs(); if (t === "pulse" && !pulseLoaded) loadPulse(); if (t === "top10") loadTop10(); if (t === "mom") loadMom();
+    store.set("tab", t); if (t === "inputs") loadInputs(); if (t === "pulse" && !pulseLoaded) loadPulse(); if (t === "top10") loadTop10(); if (t === "mom") loadMom(); if (t === "core") loadCore();
     if (t === "stock" || t === "pulse") setTimeout(redrawAll, 30);
   }
   $$(".tab").forEach(b => b.onclick = () => showTab(b.dataset.tab));
+
+  /* ---------- Core portfolio (professional playbooks, tools/pro-lab.php) ---------- */
+  let lastCore = null;
+  async function loadCore() {
+    $("#coreBody").innerHTML = `<div class="loading"><span class="spin"></span>${L("Loading the tested ETF mix…", "परखा हुआ ETF मिश्रण लोड हो रहा है…")}</div>`;
+    try { renderCore(await api("mkt_core")); } catch (e) { $("#coreBody").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+  }
+  $("#coreRefresh").onclick = loadCore;
+  const coreUnits = () => { try { return JSON.parse(localStorage.getItem("md-core-units") || "{}"); } catch (e) { return {}; } };
+  $("#coreBody").addEventListener("input", e => { const x = e.target.closest("[data-units]"); if (!x) return;
+    const u = coreUnits(); u[x.dataset.units] = Math.max(0, parseInt(x.value, 10) || 0); try { localStorage.setItem("md-core-units", JSON.stringify(u)); } catch (err) {}
+    coreDrift(); });
+  function coreDrift() {
+    const C = lastCore; if (!C || !C.rows) return; const u = coreUnits();
+    const val = C.rows.map(r => (u[r.symbol] || 0) * (r.price || 0)), tot = val.reduce((a, b) => a + b, 0);
+    let any = false;
+    C.rows.forEach((r, i) => { const cell = $(`[data-act="${r.symbol}"]`); if (!cell) return;
+      if (!tot) { cell.innerHTML = `<span class="dopill buy">${L("BUY", "खरीदें")} ${r.units}</span>`; return; }
+      const cur = val[i] / tot * 100, drift = cur - r.target_pct;
+      if (Math.abs(drift) <= C.band_pts) { cell.innerHTML = `<span class="dopill wait">${L("OK", "ठीक")}</span><div class="tiny dim">${fmt(cur, 1)}% ${L("now", "अभी")}</div>`; return; }
+      const want = Math.round((tot * r.target_pct / 100 - val[i]) / r.price);
+      if (!want) { cell.innerHTML = `<span class="dopill wait">${L("OK", "ठीक")}</span><div class="tiny dim">${fmt(cur, 1)}% ${L("now — as close as whole units allow", "अभी — पूरी यूनिट में इससे पास नहीं")}</div>`; return; }
+      any = true;
+      cell.innerHTML = `<span class="dopill ${want > 0 ? "buy" : "short"}">${want > 0 ? L("BUY", "खरीदें") : L("SELL", "बेचें")} ${Math.abs(want)}</span><div class="tiny dim">${fmt(cur, 1)}% ${L("now", "अभी")} · ${drift > 0 ? "+" : ""}${fmt(drift, 1)} ${L("pts", "अंक")}</div>`; });
+    const n = $("#coreNote"); if (n) n.innerHTML = !tot ? L("Enter the units you already hold to see if a rebalance is due. Starting fresh? Buy the units shown.", "आपके पास पहले से जितनी यूनिट हैं, वे डालें — ऐप बताएगा कि संतुलन ज़रूरी है या नहीं। नई शुरुआत? दिखाई गई यूनिट खरीदें।")
+      : any ? L("<b>Rebalance due:</b> at least one ETF is more than 5 points away from its target. Sell first, then buy.", "<b>संतुलन ज़रूरी:</b> कम से कम एक ETF अपने लक्ष्य से 5 अंक से ज़्यादा दूर है। पहले बेचें, फिर खरीदें।")
+      : L("<b>No action.</b> Every ETF is within 5 points of its target — leave it alone.", "<b>कुछ न करें।</b> हर ETF अपने लक्ष्य के 5 अंक के भीतर है — इसे छोड़ दें।");
+  }
+  function renderCore(C) {
+    lastCore = C; const P = C.evidence || {}, ev = P.evidence || {}, nb = ev.baseline || {}, res = ev.results || [];
+    const me = res.find(r => r.strategy === P.strategy);
+    const sn = s => L(s, ({ "Nifty 50 buy & hold": "निफ्टी 50 खरीदकर रखना" })[s] || s);
+    const dstr = d => new Date(d + "T12:00:00+05:30").toLocaleDateString(I18N.lang === "hi" ? "hi-IN" : "en-IN", { timeZone: "Asia/Kolkata", weekday: "short", day: "numeric", month: "short" });
+    if (!C.tradeable || !me) { $("#coreBody").innerHTML = `<div class="warnbox">${L("<b>Not approved yet.</b> The daily learning run tests the professional playbooks after the close; nothing has passed yet.", "<b>अभी मंज़ूर नहीं।</b> रोज़ बाज़ार बंद होने के बाद लर्निंग रन पेशेवर रणनीतियाँ परखता है; अभी कोई पास नहीं हुई।")}</div>`; return; }
+    let h = `<div class="okbox" style="margin:0 0 10px">${L(
+      `<b>Why this plan:</b> we tested ${P.playbooks_tested} textbook strategies that financial advisors, business-school research, economists and bank risk desks recommend — over ten years of real NSE prices in a ₹10,000 account after charges, with the last third kept aside as a hold-out. ${P.passed.length} passed: more return than the Nifty <i>and</i> smaller falls, in the tuning years, the hold-out, and every third of the decade. This is the one with the best return per unit of risk in the tuning years.
+      <br>Tuning (${esc(nb.from || "")} → ${esc(nb.holdout_from || "")}): <b>${me.train.cagr_pct}% a year</b>, worst fall ${me.train.max_dd_pct}% — Nifty ${nb.train.cagr_pct}%, worst fall ${nb.train.max_dd_pct}%.
+      Hold-out (→ ${esc(nb.to || "")}): <b>${me.holdout.cagr_pct}% a year</b>, worst fall ${me.holdout.max_dd_pct}% — Nifty ${nb.holdout.cagr_pct}%, worst fall ${nb.holdout.max_dd_pct}%.
+      <br><b>Be realistic:</b> gold and US stocks had an unusually good decade in rupees; the next one may not repeat it. The mix will still fall in a crash (about −25% at worst in the test) — it just tends to fall less than the Nifty alone.`,
+      `<b>यह योजना क्यों:</b> हमने ${P.playbooks_tested} किताबी रणनीतियाँ परखीं जो वित्तीय सलाहकार, बिज़नेस स्कूल रिसर्च, अर्थशास्त्री और बैंकों के रिस्क डेस्क सुझाते हैं — दस साल के असली NSE भावों पर, ₹10,000 के खाते में, सारे चार्ज घटाकर, और आख़िरी एक-तिहाई समय अलग रखकर। ${P.passed.length} पास हुईं: निफ्टी से ज़्यादा रिटर्न <i>और</i> कम गिरावट — जाँच के सालों में, बाद के समय में, और दशक के हर एक-तिहाई हिस्से में। यह वह है जिसका जाँच के सालों में जोखिम के हिसाब से रिटर्न सबसे अच्छा रहा।
+      <br>जाँच (${esc(nb.from || "")} → ${esc(nb.holdout_from || "")}): <b>सालाना ${me.train.cagr_pct}%</b>, सबसे बड़ी गिरावट ${me.train.max_dd_pct}% — निफ्टी ${nb.train.cagr_pct}%, गिरावट ${nb.train.max_dd_pct}%।
+      बाद का समय (→ ${esc(nb.to || "")}): <b>सालाना ${me.holdout.cagr_pct}%</b>, सबसे बड़ी गिरावट ${me.holdout.max_dd_pct}% — निफ्टी ${nb.holdout.cagr_pct}%, गिरावट ${nb.holdout.max_dd_pct}%।
+      <br><b>यथार्थ रहें:</b> पिछले दशक में सोना और अमेरिकी शेयर रुपये में असामान्य रूप से अच्छे रहे; अगला दशक ऐसा न भी हो। बड़ी गिरावट में यह मिश्रण भी गिरेगा (जाँच में सबसे बुरा लगभग −25%) — बस आमतौर पर अकेले निफ्टी से कम।`)}</div>`;
+    h += `<div class="summary">
+      <div><span>${L("Plan", "योजना")}</span><b>${esc(sn(P.strategy))}</b><em>${esc(P.school || "")}</em></div>
+      <div><span>${L("Your money", "आपकी रकम")}</span><b>₹${fmt(C.capital, 0)}</b><em>${L(`₹${fmt(C.invested, 0)} in ETFs, ₹${fmt(C.left, 0)} left over`, `₹${fmt(C.invested, 0)} ETF में, ₹${fmt(C.left, 0)} बचे`)}</em></div>
+      <div><span>${L("Next check", "अगली जाँच")}</span><b>${dstr(C.next_check)}</b><em>${L("first trading day of the month · Telegram reminder", "महीने का पहला ट्रेडिंग दिन · टेलीग्राम याद दिलाएगा")}</em></div></div>`;
+    h += `<div class="card mt"><h2>${L("What to hold", "क्या रखें")}</h2><p class="small dim" id="coreNote"></p>
+      <div class="tbl"><table class="plan-t"><thead><tr><th>ETF</th><th class="r">${L("Target", "लक्ष्य")}</th><th class="r">${L("Price", "भाव")}</th><th class="r">${L("Units for you", "आपके लिए यूनिट")}</th><th class="r">${L("Amount", "राशि")}</th><th class="r">${L("You hold (units)", "आपके पास (यूनिट)")}</th><th>${L("Do this", "क्या करें")}</th></tr></thead><tbody>
+      ${C.rows.map(r => `<tr><td><b>${esc(r.symbol || "—")}</b><div class="tiny dim">${esc(L(r.what[0], r.what[1]))}</div></td><td class="r num" data-l="${L("Target", "लक्ष्य")}">${r.target_pct}%</td>
+        <td class="r num" data-l="${L("Price", "भाव")}">${r.price ? "₹" + fmt(r.price) : "—"}</td><td class="r num" data-l="${L("Units for you", "आपके लिए यूनिट")}">${r.units}</td><td class="r num" data-l="${L("Amount", "राशि")}">${r.amount != null ? "₹" + fmt(r.amount, 0) : "—"}</td>
+        <td class="r" data-l="${L("You hold (units)", "आपके पास (यूनिट)")}"><input type="number" min="0" step="1" inputmode="numeric" data-units="${esc(r.symbol || "")}" value="${coreUnits()[r.symbol] || ""}" placeholder="0" style="width:74px;text-align:right"></td>
+        <td data-act="${esc(r.symbol || "")}"></td></tr>`).join("")}</tbody></table></div>
+      <details class="mt"><summary class="small">${L("How to follow it", "कैसे अपनाएँ")}</summary><ol class="small">${L(`
+        <li>Buy the units shown as <b>Delivery (CNC)</b>, any day after 9:15 AM, with limit orders near the price. ETFs pay no STT on buying.</li>
+        <li>On the first trading day of each month, enter the units you hold here. Rebalance <b>only</b> when an ETF is more than 5 points off its target — that keeps charges (about ₹16 per ETF sold) small.</li>
+        <li>Adding money later? Put it into whichever ETF is furthest below its target.</li>
+        <li>Before buying an ETF, check on NSE that its price is close to its iNAV — international ETFs (Nasdaq) sometimes trade at a premium.</li>
+        <li>Keep an emergency fund (3–6 months of expenses) outside this. Gold and international ETFs are taxed differently from Indian equity — check before selling.</li>`, `
+        <li>दिखाई गई यूनिट <b>डिलीवरी (CNC)</b> में खरीदें, किसी भी दिन 9:15 के बाद, भाव के पास लिमिट ऑर्डर से। ETF खरीदने पर STT नहीं लगता।</li>
+        <li>हर महीने के पहले ट्रेडिंग दिन यहाँ अपनी यूनिट डालें। संतुलन <b>तभी</b> करें जब कोई ETF अपने लक्ष्य से 5 अंक से ज़्यादा दूर हो — इससे चार्ज (हर बेचे गए ETF पर लगभग ₹16) कम रहते हैं।</li>
+        <li>बाद में और पैसा लगाना हो? उसे उस ETF में डालें जो अपने लक्ष्य से सबसे ज़्यादा नीचे हो।</li>
+        <li>ETF खरीदने से पहले NSE पर देखें कि उसका भाव iNAV के पास है — विदेशी ETF (नैस्डैक) कभी-कभी प्रीमियम पर बिकते हैं।</li>
+        <li>आपातकालीन फ़ंड (3–6 महीने का ख़र्च) इससे अलग रखें। सोने और विदेशी ETF पर टैक्स भारतीय शेयरों से अलग है — बेचने से पहले जाँचें।</li>`)}</ol></details></div>`;
+    const verdict = r => r.passed ? `<span class="good">✓ ${L("passed", "पास")}</span>` : `<span class="dim">✗</span>`;
+    h += `<div class="card mt"><h2>${L("What each school recommends — and how it tested", "हर विचारधारा क्या कहती है — और परखने पर क्या निकला")}</h2>
+      <p class="small dim">${L("Yearly return (CAGR) and worst fall, after charges. Tuning years first, then the hold-out. Pass = beat the Nifty with smaller falls in both, and in every third of the decade.", "सालाना रिटर्न (CAGR) और सबसे बड़ी गिरावट, चार्ज के बाद। पहले जाँच के साल, फिर बाद का समय। पास = दोनों में निफ्टी से ज़्यादा रिटर्न और कम गिरावट, और दशक के हर एक-तिहाई में भी।")}</p>
+      <div class="tbl"><table class="small"><thead><tr><th>${L("Strategy", "रणनीति")}</th><th class="r">${L("Tuning", "जाँच")}</th><th class="r">${L("Hold-out", "बाद का समय")}</th><th></th></tr></thead><tbody>
+      <tr><td><b>${esc(sn("Nifty 50 buy & hold"))}</b></td><td class="r num">${nb.train.cagr_pct}% <span class="dim">(${nb.train.max_dd_pct}%)</span></td><td class="r num">${nb.holdout.cagr_pct}% <span class="dim">(${nb.holdout.max_dd_pct}%)</span></td><td class="dim">${L("baseline", "तुलना")}</td></tr>
+      ${res.map(r => `<tr><td>${esc(r.strategy)}<div class="tiny dim">${esc(r.school || "")}</div></td><td class="r num">${r.train.cagr_pct}% <span class="dim">(${r.train.max_dd_pct}%)</span></td><td class="r num">${r.holdout.cagr_pct}% <span class="dim">(${r.holdout.max_dd_pct}%)</span></td><td>${verdict(r)}</td></tr>`).join("")}</tbody></table></div>
+      <p class="small dim">${L("What regulators found: SEBI's studies show over 70% of individual intraday traders lost money (FY23) and about 9 in 10 F&O traders lost money (FY22–FY25). Our own tests agree — every same-day strategy lost after charges.", "नियामक ने क्या पाया: SEBI के अध्ययन बताते हैं कि 70% से ज़्यादा व्यक्तिगत इंट्राडे ट्रेडरों को घाटा हुआ (FY23) और F&O में लगभग 10 में से 9 को घाटा हुआ (FY22–FY25)। हमारी अपनी जाँच भी यही कहती है — हर इंट्राडे रणनीति चार्ज के बाद घाटे में रही।")}</p></div>`;
+    $("#coreBody").innerHTML = h; coreDrift();
+  }
 
   /* ---------- Monthly momentum ---------- */
   async function loadMom() {
@@ -1290,7 +1369,7 @@
   $("#langBtn").onclick = () => { I18N.set(I18N.lang === "hi" ? "en" : "hi"); $("#langSel").value = I18N.lang; };
   langBtnLabel(); I18N.onChange(langBtnLabel);
   document.querySelectorAll(".langlink").forEach(a => a.onclick = e => { e.preventDefault(); I18N.set(a.dataset.lang); $("#langSel").value = I18N.lang; });
-  I18N.onChange(() => { if (T10) renderTop10(); if (lastMom) renderMom(lastMom); });
+  I18N.onChange(() => { if (T10) renderTop10(); if (lastMom) renderMom(lastMom); if (lastCore) renderCore(lastCore); });
   $("#themeBtn").onclick = () => {
     const cur = document.documentElement.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     const next = cur === "dark" ? "light" : "dark"; document.documentElement.setAttribute("data-theme", next); store.set("theme", next); setTimeout(redrawAll, 30);

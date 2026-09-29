@@ -78,8 +78,23 @@ jobs:
       - run: php tools/open-close-study.php 260 3 | tee oc.jsonl
       - uses: actions/upload-artifact@v4
         with: { name: oc, path: oc.jsonl }
+  pro:
+    needs: [opencl]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: tools/.cache
+          key: study-data-${{ github.run_id }}-${{ github.job }}
+          restore-keys: study-data-
+      - run: php tools/pro-lab.php 10 | tee pro.jsonl
+      - uses: actions/upload-artifact@v4
+        with: { name: pro, path: pro.jsonl }
   learn:
-    needs: [intraday, swing, lab, opencl]
+    needs: [intraday, swing, lab, opencl, pro]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -94,7 +109,7 @@ jobs:
         with: { path: results }
       - name: Decide what to keep
         run: |
-          php tools/learn.php results/intraday/intraday.jsonl results/swing/swing.jsonl results/lab/lab.jsonl results/oc/oc.jsonl | tee decision.txt
+          php tools/learn.php results/intraday/intraday.jsonl results/swing/swing.jsonl results/lab/lab.jsonl results/oc/oc.jsonl results/pro/pro.jsonl | tee decision.txt
           { echo "### Learning run"; echo '```'; cat decision.txt; echo '```'; echo '```json'; cat rules.json; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Save rules.json
         run: |

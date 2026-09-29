@@ -532,6 +532,7 @@ function id_tick() {
     if ($isToday && $now >= 932 && !$sent['summary'] && !empty($R['day']['locked'])) { $send(id_tg_compose(function ($l) use ($R) { return id_summary_msg($R, $l); })); $sent['summary'] = true; }
     /* monthly momentum: announce a rebalance once (first trading day of the month) */
     if ($isToday && $tg['chat']) { try { mom_view(); $mm = mom_announce(); if ($mm) $send($mm); } catch (Exception $e) { $out['momentum_error'] = $e->getMessage(); } }
+    if ($isToday && $tg['chat']) { try { $cm = core_announce(); if ($cm) $send($cm); } catch (Exception $e) { $out['core_error'] = $e->getMessage(); } }
     md_store_set($key, json_encode($sent));
     $out['book'] = $R['book']; $out['open'] = array_values(array_map(function ($p) { return $p['symbol'] . ' ' . $p['state']['status']; }, array_filter($R['picks'], function ($p) { return !empty($p['state']['position']); })));
     return $out;

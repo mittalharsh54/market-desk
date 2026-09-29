@@ -144,7 +144,7 @@ $S['Risk parity, Nifty + gold only'] = ['who' => 'robustness check',
     $s = array_sum($iv); $w = []; foreach ($iv as $a => $x) $w[$a] = $x / $s; return $w; }];
 $S['Advisor growth without Nasdaq: 60% Nifty / 20% midcap / 10% gold / 10% debt'] = ['who' => 'robustness check',
   'fn' => function ($k) use ($live) { return $live(['NIFTY' => 0.6, 'MID' => 0.2, 'GOLD' => 0.1], $k); }];
-$S['Equal weight: Nifty, midcap, Nasdaq, gold 25% each'] = ['who' => 'robustness check (1/N, DeMiguel et al. 2009)',
+$S['Equal weight: Nifty, midcap, Nasdaq, gold 25% each'] = ['who' => 'economists (1/N diversification, DeMiguel-Garlappi-Uppal 2009) + advisors (spread and rebalance)',
   'fn' => function ($k) use ($live) { return $live(['NIFTY' => 0.25, 'MID' => 0.25, 'NASDAQ' => 0.25, 'GOLD' => 0.25], $k); }];
 /* the collective: average the target weights of several independent schools of thought */
 $blend = function (array $names) use (&$S) { return function ($k) use ($names, &$S) { $w = [];

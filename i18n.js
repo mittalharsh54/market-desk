@@ -20,6 +20,7 @@
     "Indian stock market research. Enter your password.": "भारतीय शेयर बाज़ार रिसर्च। अपना पासवर्ड डालें।",
     "Sign in": "साइन इन", "Sign out": "साइन आउट", "Password": "पासवर्ड", "Wrong password.": "गलत पासवर्ड।",
     "Capital ₹": "पूंजी ₹", "Risk / trade %": "जोखिम / ट्रेड %", "Trades": "ट्रेड", "Buy & short": "खरीद और शॉर्ट", "Buy only": "सिर्फ़ खरीद", "Leverage": "लीवरेज", "Language": "भाषा",
+    "Core portfolio ✓ tested": "कोर पोर्टफ़ोलियो ✓ परखा हुआ", "Core portfolio · ETFs · delivery (CNC) · checked once a month": "कोर पोर्टफ़ोलियो · ETF · डिलीवरी (CNC) · महीने में एक बार जाँच",
     "Monthly picks ✓ tested": "मासिक चयन ✓ परखा हुआ", "Intraday Top 10": "इंट्राडे टॉप 10", "Market pulse": "बाज़ार की नब्ज़", "Analyze a stock": "शेयर विश्लेषण",
     "Scanner": "स्कैनर", "India macro inputs": "भारत के आर्थिक आंकड़े", "How it works": "यह कैसे काम करता है",
     "NSE open": "NSE खुला", "NSE closed": "NSE बंद", "NSE Pre-market": "NSE प्री-मार्केट",

@@ -87,7 +87,7 @@ $GLOBALS['MKT_HTTP_MOCK'] = function ($url) {
   /* Upstox: instrument list + candles, built from the same synthetic series */
   if (strpos($url, 'assets.upstox.com') !== false) {
     $rows = [];
-    foreach (['RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'SBIN', 'ITC', 'M&M', 'BAJAJ-AUTO', 'TMPV', 'LT', 'ICICIBANK', 'AXISBANK', 'KOTAKBANK', 'BHARTIARTL', 'TITAN', 'NTPC'] as $i => $t)
+    foreach (['RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'SBIN', 'ITC', 'M&M', 'BAJAJ-AUTO', 'TMPV', 'LT', 'ICICIBANK', 'AXISBANK', 'KOTAKBANK', 'BHARTIARTL', 'TITAN', 'NTPC', 'NIFTYBEES', 'MID150BEES', 'MON100', 'GOLDBEES', 'LIQUIDBEES'] as $i => $t)
       $rows[] = ['segment' => 'NSE_EQ', 'name' => $t . ' LTD', 'exchange' => 'NSE', 'isin' => 'INE' . sprintf('%06d', $i) . 'A01', 'instrument_type' => 'EQ', 'instrument_key' => 'NSE_EQ|INE' . sprintf('%06d', $i) . 'A01', 'trading_symbol' => $t];
     foreach (['Nifty 50', 'Nifty Bank', 'India VIX', 'Nifty IT', 'Nifty Auto', 'Nifty Pharma', 'Nifty FMCG', 'Nifty Metal', 'Nifty Realty', 'Nifty Energy', 'Nifty PSU Bank', 'Nifty Fin Service', 'Nifty Infra', 'Nifty Media', 'Nifty PSE', 'Nifty Midcap 50'] as $n)
       $rows[] = ['segment' => 'NSE_INDEX', 'name' => $n, 'exchange' => 'NSE', 'instrument_type' => 'INDEX', 'instrument_key' => 'NSE_INDEX|' . $n, 'trading_symbol' => strtoupper($n)];

@@ -1,7 +1,7 @@
 <?php
 /* The weekly learning step. Reads the latest study results and updates rules.json,
    which the app uses for its live rules and for what it tells you about them.
-     php tools/learn.php intraday.jsonl swing.jsonl lab.jsonl oc.jsonl
+     php tools/learn.php intraday.jsonl swing.jsonl lab.jsonl oc.jsonl pro.jsonl
    A change is adopted only when it made money AFTER charges in BOTH halves of the
    test period, on enough trades, and beats the current rule by a clear margin.
    Otherwise the current rule stays and the app says there is no tested edge. */
@@ -94,6 +94,38 @@ if ($O) {
   $rules['intraday_hold'] = ['tested' => $today, 'passed' => array_column($pass, 'strategy'),
     'results' => array_map(function ($r) { return ['strategy' => $r['strategy'], 'tuning' => $r['tuning']['avg_pct_per_trade'], 'holdout' => $r['holdout']['avg_pct_per_trade'], 'holdout_pf' => $r['holdout']['pf']]; }, $O)];
   $log['intraday_hold'] = $pass ? 'PASSED after charges in both periods: ' . implode('; ', array_column($pass, 'strategy')) . ' (not built into the app yet)' : 'no open-to-close or gap strategy made money after charges in both periods (' . count($O) . ' tested)';
+}
+
+/* ---- core portfolio from the professional playbooks (tools/pro-lab.php) ----
+   A playbook passes when, over ten years, it beat Nifty buy-and-hold in the tuning period AND the hold-out,
+   fell less than the Nifty in both, earned more per unit of risk in both, and was not behind the Nifty in any
+   third of the decade. Among the ones the app can run, the one with the best return per risk IN THE TUNING
+   PERIOD is chosen (choosing on the hold-out would be peeking). */
+$Q = $read($argv[5] ?? null);
+if ($Q) {
+  $nb = null; foreach ($Q as $r) if (!empty($r['baseline'])) $nb = $r;
+  $rows = array_values(array_filter($Q, function ($r) { return empty($r['baseline']) && isset($r['train'], $r['holdout']); }));
+  $third = function ($s) { return (float) substr(strrchr((string) $s, ' '), 1); };
+  $thirdsOk = function ($r) use ($nb, $third) { if (empty($r['thirds']) || empty($nb['thirds'])) return false;
+    foreach ($r['thirds'] as $i => $s) if ($third($s) < $third($nb['thirds'][$i] ?? '0 0')) return false; return true; };
+  $okP = function ($r) use ($thirdsOk) { return !empty($r['beats_nifty_both']) && !empty($r['safer_than_nifty_both']) && $thirdsOk($r); };
+  $RUN = [ // playbooks the app can run (core.php)
+    'Equal weight: Nifty, midcap, Nasdaq, gold 25% each' => ['method' => 'fixed', 'weights' => ['NIFTY' => 0.25, 'MID' => 0.25, 'NASDAQ' => 0.25, 'GOLD' => 0.25]],
+    'Risk parity: Nifty, midcap, Nasdaq, gold weighted by 1 / volatility' => ['method' => 'inv_vol', 'assets' => ['NIFTY', 'MID', 'NASDAQ', 'GOLD']],
+    'Advisor growth: 50% Nifty / 20% midcap / 10% Nasdaq / 10% gold / 10% debt' => ['method' => 'fixed', 'weights' => ['NIFTY' => 0.5, 'MID' => 0.2, 'NASDAQ' => 0.1, 'GOLD' => 0.1]],
+    'Advisor classic: 60% Nifty / 20% gold / 20% debt' => ['method' => 'fixed', 'weights' => ['NIFTY' => 0.6, 'GOLD' => 0.2]],
+    'Risk parity without Nasdaq: Nifty, midcap, gold by 1 / volatility' => ['method' => 'inv_vol', 'assets' => ['NIFTY', 'MID', 'GOLD']],
+    'Advisor growth without Nasdaq: 60% Nifty / 20% midcap / 10% gold / 10% debt' => ['method' => 'fixed', 'weights' => ['NIFTY' => 0.6, 'MID' => 0.2, 'GOLD' => 0.1]],
+    'Risk parity, Nifty + gold only' => ['method' => 'inv_vol', 'assets' => ['NIFTY', 'GOLD']],
+  ];
+  $pass = array_values(array_filter($rows, $okP));
+  usort($pass, function ($a, $b) { return $b['train']['return_per_risk'] <=> $a['train']['return_per_risk']; });
+  $bestP = null; foreach ($pass as $r) if (isset($RUN[$r['strategy']])) { $bestP = $r; break; }
+  $rules['portfolio'] = ['tradeable' => (bool) $bestP, 'strategy' => $bestP['strategy'] ?? null, 'school' => $bestP['school'] ?? null, 'plan' => $bestP ? $RUN[$bestP['strategy']] : null,
+    'tested' => $today, 'playbooks_tested' => count($rows), 'passed' => array_column($pass, 'strategy'),
+    'evidence' => ['baseline' => $nb, 'results' => array_map(function ($r) use ($okP) { return array_intersect_key($r, array_flip(['strategy', 'school', 'train', 'holdout', 'thirds', 'beats_nifty_both', 'safer_than_nifty_both', 'trades', 'costs_rs', 'end_value'])) + ['passed' => $okP($r)]; }, $rows)]];
+  $log['portfolio'] = $bestP ? 'core portfolio: ' . $bestP['strategy'] . ' (hold-out ' . $bestP['holdout']['cagr_pct'] . '% a year, worst fall ' . $bestP['holdout']['max_dd_pct'] . '%, vs Nifty ' . $nb['holdout']['cagr_pct'] . '% / ' . $nb['holdout']['max_dd_pct'] . '%); ' . count($pass) . ' of ' . count($rows) . ' playbooks passed'
+                             : 'no professional playbook beat the Nifty with smaller falls in both periods';
 }
 
 $rules['updated'] = $today;
