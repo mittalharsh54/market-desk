@@ -21,6 +21,11 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: tools/.cache
+          key: study-data-${{ github.run_id }}-${{ github.job }}
+          restore-keys: study-data-
       - name: Intraday replay
         if: inputs.study == 'intraday-grid' || inputs.study == 'intraday-volume'
         run: |

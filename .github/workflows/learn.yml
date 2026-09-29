@@ -25,6 +25,11 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: tools/.cache
+          key: study-data-${{ github.run_id }}-${{ github.job }}
+          restore-keys: study-data-
       - run: php tools/volume-study.php 260 0 1 grid | tee intraday.jsonl
       - uses: actions/upload-artifact@v4
         with: { name: intraday, path: intraday.jsonl }
@@ -35,6 +40,11 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: tools/.cache
+          key: study-data-${{ github.run_id }}-${{ github.job }}
+          restore-keys: study-data-
       - run: php tools/swing-study.php 260 3 | tee swing.jsonl
       - uses: actions/upload-artifact@v4
         with: { name: swing, path: swing.jsonl }
@@ -45,6 +55,11 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: tools/.cache
+          key: study-data-${{ github.run_id }}-${{ github.job }}
+          restore-keys: study-data-
       - run: php tools/strategy-lab.php 260 4 | tee lab.jsonl
       - uses: actions/upload-artifact@v4
         with: { name: lab, path: lab.jsonl }
@@ -55,6 +70,11 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: tools/.cache
+          key: study-data-${{ github.run_id }}-${{ github.job }}
+          restore-keys: study-data-
       - run: php tools/open-close-study.php 260 3 | tee oc.jsonl
       - uses: actions/upload-artifact@v4
         with: { name: oc, path: oc.jsonl }
@@ -64,6 +84,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: tools/.cache
+          key: study-data-${{ github.run_id }}-${{ github.job }}
+          restore-keys: study-data-
       - uses: actions/download-artifact@v4
         continue-on-error: true
         with: { path: results }

@@ -3,3 +3,4 @@ config.php
 data/
 .DS_Store
 *.log
+tools/.cache/
