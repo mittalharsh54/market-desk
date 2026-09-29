@@ -1,7 +1,7 @@
 <?php
 /* The weekly learning step. Reads the latest study results and updates rules.json,
    which the app uses for its live rules and for what it tells you about them.
-     php tools/learn.php intraday.jsonl swing.jsonl lab.jsonl
+     php tools/learn.php intraday.jsonl swing.jsonl lab.jsonl oc.jsonl
    A change is adopted only when it made money AFTER charges in BOTH halves of the
    test period, on enough trades, and beats the current rule by a clear margin.
    Otherwise the current rule stays and the app says there is no tested edge. */
@@ -84,6 +84,16 @@ if ($L) {
     'evidence' => ['tested' => $today, 'baselines' => $base, 'results' => array_map(function ($r) { return array_intersect_key($r, array_flip(['strategy', 'slots', 'index', 'train', 'holdout', 'end_value'])); }, $rows)]];
   $log['positional'] = $best ? 'best tested: ' . $best['strategy'] . ' with ' . $best['slots'] . ' positions (hold-out ' . $best['holdout']['cagr_pct'] . '% a year vs baselines ' . $bar('holdout') . '%)'
                              : 'no strategy beat buy-and-hold in both the tuning period and the hold-out';
+}
+
+/* ---- open-to-close and gap strategies (tools/open-close-study.php): recorded as evidence; none is built into the app yet ---- */
+$O = array_values(array_filter($read($argv[4] ?? null), function ($r) { return isset($r['tuning'], $r['holdout']) && $r['tuning'] && $r['holdout']; }));
+if ($O) {
+  $okO = function ($r) { return $r['tuning']['avg_pct_per_trade'] > 0 && $r['holdout']['avg_pct_per_trade'] > 0 && ($r['holdout']['pf'] ?? 0) >= 1.05 && $r['holdout']['trades'] >= 200; };
+  $pass = array_values(array_filter($O, $okO));
+  $rules['intraday_hold'] = ['tested' => $today, 'passed' => array_column($pass, 'strategy'),
+    'results' => array_map(function ($r) { return ['strategy' => $r['strategy'], 'tuning' => $r['tuning']['avg_pct_per_trade'], 'holdout' => $r['holdout']['avg_pct_per_trade'], 'holdout_pf' => $r['holdout']['pf']]; }, $O)];
+  $log['intraday_hold'] = $pass ? 'PASSED after charges in both periods: ' . implode('; ', array_column($pass, 'strategy')) . ' (not built into the app yet)' : 'no open-to-close or gap strategy made money after charges in both periods (' . count($O) . ' tested)';
 }
 
 $rules['updated'] = $today;

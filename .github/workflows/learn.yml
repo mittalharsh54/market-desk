@@ -42,8 +42,16 @@ jobs:
       - run: php tools/strategy-lab.php 260 4 | tee lab.jsonl
       - uses: actions/upload-artifact@v4
         with: { name: lab, path: lab.jsonl }
+  opencl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - run: php tools/open-close-study.php 260 3 | tee oc.jsonl
+      - uses: actions/upload-artifact@v4
+        with: { name: oc, path: oc.jsonl }
   learn:
-    needs: [intraday, swing, lab]
+    needs: [intraday, swing, lab, opencl]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -53,7 +61,7 @@ jobs:
         with: { path: results }
       - name: Decide what to keep
         run: |
-          php tools/learn.php results/intraday/intraday.jsonl results/swing/swing.jsonl results/lab/lab.jsonl | tee decision.txt
+          php tools/learn.php results/intraday/intraday.jsonl results/swing/swing.jsonl results/lab/lab.jsonl results/oc/oc.jsonl | tee decision.txt
           { echo "### Learning run"; echo '```'; cat decision.txt; echo '```'; echo '```json'; cat rules.json; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Save rules.json
         run: |

@@ -17,12 +17,14 @@ ini_set('memory_limit', '2048M'); set_time_limit(0);
 $max = (int) ($argv[1] ?? 260); $years = max(3, (int) ($argv[2] ?? 4));
 $today = date('Y-m-d', time() + 19800);
 $d = function ($n) use ($today) { return date('Y-m-d', strtotime("$today -$n days")); };
+define('LAB_CASH_YIELD', 0.06); // idle cash earns ~6% a year (liquid-fund ETF such as LIQUIDBEES)
 function lab_cost_rs($v) { return $v * (0.002 + 0.00015 + 2 * (0.0000297 + 0.000001) * 1.18) + 15.93; } // delivery round trip
 
 /* ---------- data ---------- */
 $syms = array_slice(id_universe(), 0, $max);
 $keys = ['NIFTY' => 'NSE_INDEX|Nifty 50'];
 foreach ($syms as $s) { $k = mkt_upstox_key(mkt_norm_symbol($s) ?: $s); if ($k) $keys[$s] = $k[0]; }
+$gk = mkt_upstox_key('GOLDBEES'); if ($gk) $keys['GOLDETF'] = $gk[0]; // gold ETF, for the Nifty/gold switch
 $want = [];
 foreach ($keys as $s => $k) for ($y = 0; $y <= $years; $y++)
   $want["$s|$y"] = ['url' => 'https://api.upstox.com/v2/historical-candle/' . rawurlencode($k) . '/day/' . $d($y * 365) . '/' . $d($y * 365 + 364), 'headers' => ['Accept: application/json']];
@@ -40,6 +42,7 @@ if (getenv('LAB_SYNTH')) { // offline self-check with random walks
     $D[$s] = $C; }
 }
 $N = $D['NIFTY'] ?? null; unset($D['NIFTY']);
+$GOLD = $D['GOLDETF'] ?? null; unset($D['GOLDETF']);
 if (!$N) { fwrite(STDERR, "no Nifty data\n"); exit(1); }
 $dates = array_map('mk_ist_date', $N['t']); $di = array_flip($dates); $T = count($dates);
 /* per stock, arrays on the Nifty calendar (null where the stock has no bar) */
@@ -126,10 +129,11 @@ $STRATS['Momentum rotation + market filter'] = function () use ($P, $N, $nSma, $
 };
 
 /* ---- monthly ranked rotations: rank at each month start, hold the best N, keep while in the top 20 ---- */
-$monthly = function ($scoreFn, $marketFilter = true) use ($P, $N, $nSma, $dates, $start, $T) {
+$monthly = function ($scoreFn, $marketFilter = true, $period = 'month') use ($P, $N, $nSma, $dates, $start, $T) {
   $sig = [];
   for ($k = $start; $k < $T - 1; $k++) {
-    if (substr($dates[$k], 0, 7) === substr($dates[$k - 1], 0, 7)) continue;
+    if ($period === 'month' && substr($dates[$k], 0, 7) === substr($dates[$k - 1], 0, 7)) continue;
+    if ($period === 'week' && date('W', strtotime($dates[$k])) === date('W', strtotime($dates[$k - 1]))) continue;
     if ($marketFilter && ($nSma[$k] === null || $N['c'][$k] <= $nSma[$k])) { $sig[] = ['k' => $k, 'sym' => null, 'score' => -1, 'exit' => 'rotation', 'rank_top' => []]; continue; }
     $rank = [];
     foreach ($P as $s => $p) { if ($p['c'][$k] === null || $p['sma200'][$k] === null || $p['c'][$k] <= $p['sma200'][$k]) continue; $v = $scoreFn($p, $k); if ($v !== null) $rank[$s] = $v; }
@@ -173,6 +177,58 @@ $STRATS['Turtle 55/20 breakout + market filter'] = function () use ($P, $N, $nSm
   }
   return $sig;
 };
+/* 11. momentum among the calmer half: 12-1 momentum, only stocks with below-median 1-year volatility */
+$STRATS['Low-vol momentum + market filter'] = function () use ($P, $N, $nSma, $dates, $start, $T) {
+  $sig = [];
+  for ($k = $start; $k < $T - 1; $k++) {
+    if (substr($dates[$k], 0, 7) === substr($dates[$k - 1], 0, 7)) continue;
+    if ($nSma[$k] === null || $N['c'][$k] <= $nSma[$k]) { $sig[] = ['k' => $k, 'sym' => null, 'score' => -1, 'exit' => 'rotation', 'rank_top' => []]; continue; }
+    $vol = []; $mom = [];
+    foreach ($P as $s => $p) { $c = $p['c']; if ($c[$k] === null || $c[$k - 252] === null || $c[$k - 21] === null || $p['sma200'][$k] === null || $c[$k] <= $p['sma200'][$k]) continue;
+      $v = lab_vol($c, $k); if (!$v) continue; $vol[$s] = $v; $mom[$s] = $c[$k - 21] / $c[$k - 252] - 1; }
+    if (!$vol) continue; $vs = array_values($vol); sort($vs); $med = $vs[(int) (count($vs) / 2)];
+    $rank = []; foreach ($mom as $s => $m) if ($vol[$s] <= $med) $rank[$s] = $m;
+    arsort($rank); $top = array_slice(array_keys($rank), 0, 20);
+    foreach ($top as $r => $s) $sig[] = ['k' => $k, 'sym' => $s, 'score' => 100 - $r, 'exit' => 'rotation', 'rank_top' => $top];
+  }
+  return $sig;
+};
+/* 12. sector rotation: the 3 sectors with the best 3-month average return, then their strongest stocks by 6-month return */
+$STRATS['Sector rotation + market filter'] = function () use ($P, $N, $nSma, $dates, $start, $T) {
+  $sig = []; $sec = []; foreach ($P as $s => $p) $sec[$s] = mk_sector_of($s . '.NS');
+  for ($k = $start; $k < $T - 1; $k++) {
+    if (substr($dates[$k], 0, 7) === substr($dates[$k - 1], 0, 7)) continue;
+    if ($nSma[$k] === null || $N['c'][$k] <= $nSma[$k]) { $sig[] = ['k' => $k, 'sym' => null, 'score' => -1, 'exit' => 'rotation', 'rank_top' => []]; continue; }
+    $agg = [];
+    foreach ($P as $s => $p) { $c = $p['c']; if ($c[$k] === null || $c[$k - 63] === null) continue; $agg[$sec[$s]][] = $c[$k] / $c[$k - 63] - 1; }
+    $avg = []; foreach ($agg as $g => $v) if (count($v) >= 3) $avg[$g] = array_sum($v) / count($v);
+    arsort($avg); $best = array_slice(array_keys($avg), 0, 3);
+    $rank = []; foreach ($P as $s => $p) { $c = $p['c']; if (!in_array($sec[$s], $best, true) || $c[$k] === null || $c[$k - 126] === null || $p['sma200'][$k] === null || $c[$k] <= $p['sma200'][$k]) continue; $rank[$s] = $c[$k] / $c[$k - 126] - 1; }
+    arsort($rank); $top = array_slice(array_keys($rank), 0, 12);
+    foreach ($top as $r => $s) $sig[] = ['k' => $k, 'sym' => $s, 'score' => 100 - $r, 'exit' => 'rotation', 'rank_top' => $top];
+  }
+  return $sig;
+};
+/* 13. buy the dip in long-term winners: last month's biggest fallers that are still up over 12 months and above the 200-DMA */
+$STRATS['1-month dip in 12-month winners + market filter'] = function () use ($monthly) {
+  return $monthly(function ($p, $k) { $c = $p['c']; if ($c[$k - 252] === null || $c[$k - 21] === null || $c[$k] / $c[$k - 252] - 1 <= 0) return null; $r1 = $c[$k] / $c[$k - 21] - 1; return $r1 < 0 ? -$r1 : null; });
+};
+/* 14. weekly momentum rotation (faster version of the monthly one) */
+$STRATS['Weekly momentum rotation + market filter'] = function () use ($monthly) {
+  return $monthly(function ($p, $k) { $c = $p['c']; if ($c[$k - 252] === null || $c[$k - 21] === null) return null; return $c[$k - 21] / $c[$k - 252] - 1; }, true, 'week');
+};
+/* 15. 52-week-high breakout on double volume, market filter on; exit on a close below the 50-DMA or a 3-ATR stop */
+foreach ($P as $s => &$p) { $vv = array_fill(0, $T, null); foreach ($p['C']['t'] as $i => $t) { $kk = $di[mk_ist_date($t)] ?? null; if ($kk !== null) $vv[$kk] = $p['C']['v'][$i]; } $p['vol'] = $vv; $p['v50'] = lab_sma($vv, 50); } unset($p);
+$STRATS['52-week-high breakout on volume + market filter'] = function () use ($P, $N, $nSma, $start, $T) {
+  $sig = [];
+  foreach ($P as $s => $p) for ($k = $start; $k < $T - 1; $k++) {
+    if ($p['c'][$k] === null || !$p['atr'][$k] || $p['vol'][$k] === null || !$p['v50'][$k - 1] || $nSma[$k] === null || $N['c'][$k] <= $nSma[$k]) continue;
+    $hh = null; for ($j = $k - 251; $j < $k; $j++) if ($p['h'][$j] !== null) $hh = max($hh ?? $p['h'][$j], $p['h'][$j]);
+    if ($hh && $p['c'][$k] > $hh && $p['vol'][$k] >= 2 * $p['v50'][$k - 1]) $sig[] = ['k' => $k, 'sym' => $s, 'score' => $p['vol'][$k] / $p['v50'][$k - 1], 'stop_atr' => 3.0, 'exit' => 'below_sma50'];
+  }
+  return $sig;
+};
+
 /* ---- index timing, traded through a Nifty ETF (modelled as the Nifty / 100) ---- */
 $IX = ['o' => [], 'h' => [], 'l' => [], 'c' => []];
 foreach (['o', 'h', 'l', 'c'] as $f) foreach ($N[$f] as $i => $v) $IX[$f][$i] = $v / 100;
@@ -192,12 +248,29 @@ $STRATS['Nifty ETF turn of the month'] = function () use ($dates, $start, $T) { 
   for ($k = $start; $k < $T - 1; $k++) { $nx = $pos[$k + 1]; if ($nx['to_end'] <= 3 || $nx['from_start'] <= 2) $sig[] = ['k' => $k, 'sym' => 'NIFTYETF', 'score' => 1, 'exit' => 'while_signal']; }
   return $sig; };
 
+/* 16. Nifty ETF / gold ETF switch: each month hold the Nifty ETF if the Nifty is above its 200-DMA, else the gold ETF if gold is above its own 200-DMA, else cash */
+if ($GOLD) {
+  $GX = ['o' => array_fill(0, $T, null), 'h' => array_fill(0, $T, null), 'l' => array_fill(0, $T, null), 'c' => array_fill(0, $T, null)];
+  foreach ($GOLD['t'] as $i => $t) { $kk = $di[mk_ist_date($t)] ?? null; if ($kk === null) continue; foreach (['o', 'h', 'l', 'c'] as $f) $GX[$f][$kk] = $GOLD[$f][$i]; }
+  for ($kk = 1; $kk < $T; $kk++) if ($GX['c'][$kk] === null) $GX['c'][$kk] = $GX['c'][$kk - 1];
+  $GX['sma5'] = lab_sma($GX['c'], 5); $GX['sma50'] = lab_sma($GX['c'], 50); $GX['sma200'] = lab_sma($GX['c'], 200); $GX['atr'] = lab_atr($GX);
+  $INDEX[] = 'Nifty ETF / gold ETF switch';
+  $STRATS['Nifty ETF / gold ETF switch'] = function () use ($IX, $GX, $dates, $start, $T) { $sig = [];
+    for ($k = $start; $k < $T - 1; $k++) {
+      if (substr($dates[$k], 0, 7) === substr($dates[$k - 1], 0, 7)) continue;
+      $pick = ($IX['sma200'][$k] !== null && $IX['c'][$k] > $IX['sma200'][$k]) ? 'NIFTYETF' : (($GX['sma200'][$k] !== null && $GX['c'][$k] > $GX['sma200'][$k]) ? 'GOLDETF' : null);
+      $sig[] = ['k' => $k, 'sym' => $pick, 'score' => 1, 'exit' => 'rotation', 'rank_top' => $pick ? [$pick] : []];
+    }
+    return $sig; };
+}
+
 /* ---------- account simulation ---------- */
 function lab_run(array $sig, array $P, $T, $start, $slots, array $dates) {
   $by = []; foreach ($sig as $x) $by[$x['k']][] = $x;
   foreach ($by as &$l) usort($l, function ($a, $b) { return $b['score'] <=> $a['score']; }); unset($l);
   $cash = 10000.0; $pos = []; $eq = []; $trades = []; $monthTop = null;
   for ($k = $start; $k < $T; $k++) {
+    if ($cash > 0) $cash *= 1 + LAB_CASH_YIELD / 252; // idle cash sits in a liquid-fund ETF
     /* exits (decided on this bar) */
     foreach ($pos as $id => $q) {
       $p = $P[$q['sym']]; $x = null;
@@ -206,6 +279,7 @@ function lab_run(array $sig, array $P, $T, $start, $slots, array $dates) {
         if ($p['l'][$k] !== null && isset($q['stop']) && $p['l'][$k] <= $q['stop']) $x = min($p['o'][$k] ?? $q['stop'], $q['stop']);
         elseif ($q['exit'] === 'low10' && $p['c'][$k] !== null) { $ll = null; for ($j = $k - 10; $j < $k; $j++) if ($p['l'][$j] !== null) $ll = min($ll ?? $p['l'][$j], $p['l'][$j]); if ($ll && $p['c'][$k] < $ll) $x = $p['c'][$k]; }
         elseif ($q['exit'] === 'above_sma5' && $p['c'][$k] !== null && $p['sma5'][$k] !== null && $p['c'][$k] > $p['sma5'][$k]) $x = $p['c'][$k];
+        elseif ($q['exit'] === 'below_sma50' && $p['c'][$k] !== null && $p['sma50'][$k] !== null && $p['c'][$k] < $p['sma50'][$k]) $x = $p['c'][$k];
         elseif ($q['exit'] === 'low20' && $p['c'][$k] !== null) { $ll = null; for ($j = $k - 20; $j < $k; $j++) if ($p['l'][$j] !== null) $ll = min($ll ?? $p['l'][$j], $p['l'][$j]); if ($ll && $p['c'][$k] < $ll) $x = $p['c'][$k]; }
         /* hold while the signal is on: yesterday's close decides, sell at today's open */
         if ($x === null && $q['exit'] === 'while_signal' && $p['o'][$k] !== null) { $on = false; foreach ($by[$k - 1] ?? [] as $z) if ($z['sym'] === $q['sym']) { $on = true; break; } if (!$on) $x = $p['o'][$k]; }
@@ -245,7 +319,7 @@ $ewEq = []; for ($k = $start; $k < $T; $k++) { $v = 0.0; foreach ($live as $s) $
 $B = ['Nifty 50 buy & hold' => $nEq, 'Equal-weight buy & hold of the same stocks' => $ewEq];
 foreach ($B as $name => $e) echo json_encode(['strategy' => $name, 'baseline' => true, 'train' => lab_curve_stats($e, $start, $split, $dates), 'holdout' => lab_curve_stats($e, $split, $T - 1, $dates), 'from' => $dates[$start], 'holdout_from' => $dates[$split], 'to' => $dates[$T - 1]]), "\n";
 
-$P['NIFTYETF'] = $IX;
+$P['NIFTYETF'] = $IX; if (!empty($GX)) $P['GOLDETF'] = $GX;
 foreach ($STRATS as $name => $fn) {
   $sig = $fn();
   foreach (in_array($name, $INDEX, true) ? [1] : [2, 4, 6] as $slots) {

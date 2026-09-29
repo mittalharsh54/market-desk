@@ -47,6 +47,7 @@ $COST = $cost(2000);
 
 /* ---------- day by day: build the list from yesterday's data, trade today open→close ---------- */
 $rows = []; // one per pick-day
+$gaps = []; // gap-fade and gap-and-go trades
 $nifty_oc = [];
 for ($k = $start; $k < $T; $k++) {
   $day = $dates[$k]; $prev = $dates[$k - 1];
@@ -60,11 +61,26 @@ for ($k = $start; $k < $T; $k++) {
     if ($st['close'] < 50 || $st['turnover_cr'] < 25 || ($st['atr_pct'] ?? 0) < 0.8) continue;
     $P = mk_pick_score($st, null, null, null, null, $reg);
     $o = $C['o'][$it]; $c = $C['c'][$it]; $h = $C['h'][$it]; $l = $C['l'][$it];
-    $cands[] = ['sym' => $s, 'sector' => mk_sector_of($s . '.NS'), 'dir' => $P['dir'] === 'LONG' ? 1 : -1, 'q' => $P['quality'], 'o' => $o, 'c' => $c, 'h' => $h, 'l' => $l, 'atr' => $st['atr'], 'gap' => ($o / $st['close'] - 1) * 100];
+    $cands[] = ['sym' => $s, 'sector' => mk_sector_of($s . '.NS'), 'dir' => $P['dir'] === 'LONG' ? 1 : -1, 'q' => $P['quality'], 'o' => $o, 'c' => $c, 'h' => $h, 'l' => $l, 'atr' => $st['atr'], 'gap' => ($o / $st['close'] - 1) * 100, 'pc' => $st['close']];
   }
   usort($cands, function ($a, $b) { return $b['q'] <=> $a['q']; });
   $picked = []; $per = [];
   foreach ($cands as $c) { if (count($picked) >= 10) break; if (abs($c['gap']) > 5) continue; if (($per[$c['sector']] ?? 0) >= 3) continue; $per[$c['sector']] = ($per[$c['sector']] ?? 0) + 1; $picked[] = $c; }
+  /* gap trades: the 5 biggest opening gaps between 1.5% and 5% (daily bars: if the stop and the target
+     were both touched, assume the stop came first) */
+  $G = array_values(array_filter($cands, function ($c) { return abs($c['gap']) >= 1.5 && abs($c['gap']) <= 5; }));
+  usort($G, function ($a, $b) { return abs($b['gap']) <=> abs($a['gap']); });
+  foreach (array_slice($G, 0, 5) as $c) {
+    $up = $c['gap'] > 0;
+    /* fade: trade back toward yesterday's close; stop 0.5 ATR beyond the open */
+    $stop = $up ? $c['o'] + 0.5 * $c['atr'] : $c['o'] - 0.5 * $c['atr'];
+    $sHit = $up ? $c['h'] >= $stop : $c['l'] <= $stop; $tHit = $up ? $c['l'] <= $c['pc'] : $c['h'] >= $c['pc'];
+    $fade = $sHit ? -0.5 * $c['atr'] / $c['o'] * 100 : ($tHit ? abs($c['o'] - $c['pc']) / $c['o'] * 100 : ($up ? -1 : 1) * ($c['c'] / $c['o'] - 1) * 100);
+    /* go: trade with the gap; stop if the gap fills (price back at yesterday's close) */
+    $fill = $up ? $c['l'] <= $c['pc'] : $c['h'] >= $c['pc'];
+    $go = $fill ? -abs($c['o'] - $c['pc']) / $c['o'] * 100 : ($up ? 1 : -1) * ($c['c'] / $c['o'] - 1) * 100;
+    $gaps[] = ['k' => $k, 'day' => $day, 'up' => $up, 'fade' => $fade - $COST, 'go' => $go - $COST, 'gross_fade' => $fade, 'gross_go' => $go];
+  }
   foreach ($picked as $r => $c) {
     $raw = $c['dir'] * ($c['c'] / $c['o'] - 1) * 100;
     /* with a 1-ATR stop from the open (if the day's adverse extreme reached it, assume it was hit first) */
@@ -105,6 +121,11 @@ foreach ($sets as $name => $f) {
     echo json_encode(['strategy' => $name . ($fld === 'net_stop' ? ' + 1-ATR stop' : ''), 'direction_right_pct' => round(array_sum(array_column($R, 'right')) / max(1, count($R)) * 100, 1),
       'gross_avg_pct' => round(array_sum(array_column($R, 'gross')) / max(1, count($R)), 3), 'tuning' => oc_stats($tr, $fld), 'holdout' => oc_stats($ho, $fld)]), "\n";
   }
+}
+foreach (['fade' => 'Gap fade (5 biggest gaps 1.5–5%, target = yesterday\'s close, 0.5-ATR stop)', 'go' => 'Gap and go (5 biggest gaps 1.5–5%, stop if the gap fills)'] as $f => $name) {
+  $R = array_map(function ($g) use ($f) { return ['k' => $g['k'], 'day' => $g['day'], 'net' => $g[$f], 'gross' => $g['gross_' . $f], 'right' => $g['gross_' . $f] > 0 ? 1 : 0]; }, $gaps);
+  $tr = array_values(array_filter($R, function ($r) use ($split) { return $r['k'] < $split; })); $ho = array_values(array_filter($R, function ($r) use ($split) { return $r['k'] >= $split; }));
+  echo json_encode(['strategy' => $name, 'win_before_costs_pct' => round(array_sum(array_column($R, 'right')) / max(1, count($R)) * 100, 1), 'gross_avg_pct' => round(array_sum(array_column($R, 'gross')) / max(1, count($R)), 3), 'tuning' => oc_stats($tr), 'holdout' => oc_stats($ho)]), "\n";
 }
 /* baselines: buying every qualifying pick-day stock at the open (market drift), and the Nifty open→close */
 $nv = array_values($nifty_oc);
