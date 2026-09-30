@@ -45,6 +45,8 @@ $SPEC = [ // er = yearly fund cost deducted from an index (an ETF's own price al
   'QUAL'   => ['label' => 'Nifty200 Quality 30', 'find' => [['200', 'qual', '30'], ['tr']], 'er' => 0.003],
   'VALUE'  => ['label' => 'Nifty50 Value 20', 'find' => [['50', 'value', '20'], ['tr']], 'er' => 0.003],
   'ALPLV'  => ['label' => 'Nifty Alpha Low-Volatility 30', 'find' => [['alpha', 'lowvol', '30'], ['tr', 'quality']], 'er' => 0.004],
+  'NEXT50' => ['label' => 'Nifty Next 50', 'find' => [['next50'], ['tr', 'value', 'lowvol', 'mom']], 'er' => 0.002],
+  'SMALL'  => ['label' => 'Nifty Smallcap 250', 'find' => [['smallcap250'], ['tr', 'mom', 'qual', 'value']], 'er' => 0.003],
   'NASDAQ' => ['label' => 'Nasdaq 100 ETF (MON100)', 'eq' => 'MON100', 'er' => 0],
   'GOLD'   => ['label' => 'Gold ETF (GOLDBEES)', 'eq' => 'GOLDBEES', 'er' => 0],
 ];
@@ -146,6 +148,20 @@ $S['Advisor growth without Nasdaq: 60% Nifty / 20% midcap / 10% gold / 10% debt'
   'fn' => function ($k) use ($live) { return $live(['NIFTY' => 0.6, 'MID' => 0.2, 'GOLD' => 0.1], $k); }];
 $S['Equal weight: Nifty, midcap, Nasdaq, gold 25% each'] = ['who' => 'economists (1/N diversification, DeMiguel-Garlappi-Uppal 2009) + advisors (spread and rebalance)',
   'fn' => function ($k) use ($live) { return $live(['NIFTY' => 0.25, 'MID' => 0.25, 'NASDAQ' => 0.25, 'GOLD' => 0.25], $k); }];
+/* stress tests of the winning mix: how often to rebalance, and what goes in it */
+$ew = function (array $sl) use ($live) { return function ($k) use ($sl, $live) { $w = []; foreach ($sl as $a) $w[$a] = 1 / count($sl); return $live($w, $k); }; };
+$S['Equal mix, rebalanced every quarter'] = ['who' => 'stress test: rebalancing frequency', 'rebalance' => 'quarter', 'fn' => $ew(['NIFTY', 'MID', 'NASDAQ', 'GOLD'])];
+$S['Equal mix, rebalanced once a year'] = ['who' => 'stress test: rebalancing frequency', 'rebalance' => 'year', 'fn' => $ew(['NIFTY', 'MID', 'NASDAQ', 'GOLD'])];
+$S['Equal mix, bought once and never rebalanced'] = ['who' => 'stress test: rebalancing frequency', 'rebalance' => 'never', 'fn' => $ew(['NIFTY', 'MID', 'NASDAQ', 'GOLD'])];
+$S['Equal mix, rebalanced only on a 10-point drift'] = ['who' => 'stress test: rebalancing band', 'band' => 0.10, 'fn' => $ew(['NIFTY', 'MID', 'NASDAQ', 'GOLD'])];
+$S['Equal mix with Momentum 30 instead of Nifty'] = ['who' => 'stress test: add the momentum factor', 'fn' => $ew(['MOM', 'MID', 'NASDAQ', 'GOLD'])];
+$S['Equal mix of 5: Nifty, Next 50, midcap, Nasdaq, gold'] = ['who' => 'stress test: broader Indian equity', 'fn' => $ew(['NIFTY', 'NEXT50', 'MID', 'NASDAQ', 'GOLD'])];
+$S['Equal mix with smallcap 250 instead of midcap'] = ['who' => 'stress test: smaller companies', 'fn' => $ew(['NIFTY', 'SMALL', 'NASDAQ', 'GOLD'])];
+$S['Equal mix with Low-vol 30 instead of Nifty'] = ['who' => 'stress test: add the low-volatility factor', 'fn' => $ew(['LOWVOL', 'MID', 'NASDAQ', 'GOLD'])];
+$S['50% Nifty / 50% gold'] = ['who' => 'stress test: the simplest two-asset mix', 'fn' => $ew(['NIFTY', 'GOLD'])];
+$S['Equal mix + drawdown brake: halve a sleeve while it is 20% below its 1-year high'] = ['who' => 'bank risk rule (drawdown control)',
+  'fn' => function ($k) use ($live, $A, $has) { $w = []; foreach (['NIFTY', 'MID', 'NASDAQ', 'GOLD'] as $a) { if (!$has($a, $k)) continue; $hi = 0; for ($j = $k - 251; $j <= $k; $j++) $hi = max($hi, (float) $A[$a]['c'][$j]);
+    $w[$a] = ($hi > 0 && $A[$a]['c'][$k] < 0.8 * $hi) ? 0.125 : 0.25; } return $live($w, $k); }];
 /* the collective: average the target weights of several independent schools of thought */
 $blend = function (array $names) use (&$S) { return function ($k) use ($names, &$S) { $w = [];
   foreach ($names as $n) foreach (($S[$n]['fn'])($k) as $a => $x) $w[$a] = ($w[$a] ?? 0) + $x / count($names); return $w; }; };
@@ -161,12 +177,15 @@ $S['Council (all 12 playbooks averaged)'] = ['who' => 'every school above, equal
    exchange + SEBI fees with GST, the Rs 15.93 DP charge per sale, and 0.05% each way for the bid-ask spread / premium to NAV */
 function pl_buy_cost($v) { return $v * (0.00015 + (0.0000297 + 0.000001) * 1.18 + 0.0005); }
 function pl_sell_cost($v) { return $v * (0.00001 + (0.0000297 + 0.000001) * 1.18 + 0.0005) + 15.93; }
-function pl_run(callable $wfn, array $A, array $dates, $start, $T) {
+function pl_run(callable $wfn, array $A, array $dates, $start, $T, array $opt = []) {
+  $when = $opt['rebalance'] ?? 'month'; $band = $opt['band'] ?? PL_BAND;
   $cash = 10000.0; $u = []; $eq = []; $n = 0; $costs = 0.0; $switches = 0;
   for ($k = $start; $k < $T; $k++) {
     $cash *= 1 + PL_CASH / 252;
     foreach ($u as $a => $q) $u[$a] = $q * (1 - $A[$a]['er'] / 252);
-    if ($k === $start || substr($dates[$k], 0, 7) !== substr($dates[$k - 1], 0, 7)) {
+    $mNew = $k > $start && substr($dates[$k], 0, 7) !== substr($dates[$k - 1], 0, 7); $mon = (int) substr($dates[$k], 5, 2);
+    $due = $k === $start || ($mNew && ($when === 'month' || ($when === 'quarter' && $mon % 3 === 1) || ($when === 'year' && $mon === 1)));
+    if ($due) {
       $w = $wfn($k - 1);                       // decided on yesterday's close, traded at today's close
       $val = $cash; $hv = [];
       foreach ($u as $a => $q) { $hv[$a] = $q * $A[$a]['c'][$k]; $val += $hv[$a]; }
@@ -175,7 +194,7 @@ function pl_run(callable $wfn, array $A, array $dates, $start, $T) {
         if ($A[$a]['c'][$k] === null) continue;
         $tw = $w[$a] ?? 0.0; $cw = ($hv[$a] ?? 0.0) / $val;
         $flip = ($tw > 0.001) !== ($cw > 0.001);
-        if (!$flip && abs($tw - $cw) < PL_BAND) continue;
+        if (!$flip && abs($tw - $cw) < $band) continue;
         $ord[$a] = ['dv' => $tw * $val - ($hv[$a] ?? 0.0), 'exit' => $tw <= 0.001];
         if ($flip) $switches++;
       }
@@ -213,7 +232,7 @@ echo json_encode(['strategy' => 'Nifty 50 buy & hold', 'baseline' => true, 'trai
   'instruments' => $found, 'first_dates' => $first, 'missing' => $missing]), "\n";
 
 foreach ($S as $name => $s) {
-  $R = pl_run($s['fn'], $A, $dates, $start, $T);
+  $R = pl_run($s['fn'], $A, $dates, $start, $T, $s);
   $tr = pl_stats($R['eq'], $start, $split, $dates); $ho = pl_stats($R['eq'], $split, $T - 1, $dates);
   $beats = $tr['cagr_pct'] > $bT['cagr_pct'] && $ho['cagr_pct'] > $bH['cagr_pct'];
   $safer = $tr['max_dd_pct'] > $bT['max_dd_pct'] && $ho['max_dd_pct'] > $bH['max_dd_pct'] && $tr['return_per_risk'] > $bT['return_per_risk'] && $ho['return_per_risk'] > $bH['return_per_risk'];

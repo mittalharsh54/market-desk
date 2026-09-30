@@ -9,6 +9,9 @@ on:
       stocks:
         description: "How many stocks from the universe"
         default: "260"
+      years:
+        description: "Years of history (lab default 4, pro default 10)"
+        default: ""
       study:
         description: "Which study"
         type: choice
@@ -43,7 +46,7 @@ jobs:
       - name: Strategy lab (4 years, hold-out = last third, Rs 10,000 account)
         if: inputs.study == 'lab'
         run: |
-          php tools/strategy-lab.php "${{ inputs.stocks }}" 4 | tee study.jsonl
+          php tools/strategy-lab.php "${{ inputs.stocks }}" "${{ inputs.years || 4 }}" | tee study.jsonl
           { echo '```'; cat study.jsonl; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Open-to-close hold of the Top 10 direction (3 years, hold-out = last third)
         if: inputs.study == 'open-close'
@@ -53,7 +56,7 @@ jobs:
       - name: Professional playbooks (10 years of index funds / ETFs / factor indices, hold-out = last third)
         if: inputs.study == 'pro'
         run: |
-          php tools/pro-lab.php 10 | tee study.jsonl
+          php tools/pro-lab.php "${{ inputs.years || 10 }}" | tee study.jsonl
           {
             echo "| Strategy | Train CAGR | Train max fall | Hold-out CAGR | Hold-out max fall | Beats Nifty both | Safer both |"
             echo "|---|---|---|---|---|---|---|"

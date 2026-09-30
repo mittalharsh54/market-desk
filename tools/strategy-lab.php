@@ -136,6 +136,7 @@ $monthly = function ($scoreFn, $marketFilter = true, $period = 'month') use ($P,
   for ($k = $start; $k < $T - 1; $k++) {
     if ($period === 'month' && substr($dates[$k], 0, 7) === substr($dates[$k - 1], 0, 7)) continue;
     if ($period === 'week' && date('W', strtotime($dates[$k])) === date('W', strtotime($dates[$k - 1]))) continue;
+    if ($period === 'quarter' && (substr($dates[$k], 0, 7) === substr($dates[$k - 1], 0, 7) || (int) substr($dates[$k], 5, 2) % 3 !== 1)) continue;
     if ($marketFilter && ($nSma[$k] === null || $N['c'][$k] <= $nSma[$k])) { $sig[] = ['k' => $k, 'sym' => null, 'score' => -1, 'exit' => 'rotation', 'rank_top' => []]; continue; }
     $rank = [];
     foreach ($P as $s => $p) { if ($p['c'][$k] === null || $p['sma200'][$k] === null || $p['c'][$k] <= $p['sma200'][$k]) continue; $v = $scoreFn($p, $k); if ($v !== null) $rank[$s] = $v; }
@@ -218,6 +219,27 @@ $STRATS['1-month dip in 12-month winners + market filter'] = function () use ($m
 /* 14. weekly momentum rotation (faster version of the monthly one) */
 $STRATS['Weekly momentum rotation + market filter'] = function () use ($monthly) {
   return $monthly(function ($p, $k) { $c = $p['c']; if ($c[$k - 252] === null || $c[$k - 21] === null) return null; return $c[$k - 21] / $c[$k - 252] - 1; }, true, 'week');
+};
+/* 14b. quarterly momentum rotation: the same ranking, traded 4 times a year (fewer charges) */
+$STRATS['Quarterly momentum rotation + market filter'] = function () use ($monthly) {
+  return $monthly(function ($p, $k) { $c = $p['c']; if ($c[$k - 252] === null || $c[$k - 21] === null) return null; return $c[$k - 21] / $c[$k - 252] - 1; }, true, 'quarter');
+};
+/* 14c. momentum + low volatility combined (AQR-style): average of the two percentile ranks */
+$STRATS['Momentum + low-vol combined rank + market filter'] = function () use ($P, $N, $nSma, $dates, $start, $T) {
+  $sig = [];
+  for ($k = $start; $k < $T - 1; $k++) {
+    if (substr($dates[$k], 0, 7) === substr($dates[$k - 1], 0, 7)) continue;
+    if ($nSma[$k] === null || $N['c'][$k] <= $nSma[$k]) { $sig[] = ['k' => $k, 'sym' => null, 'score' => -1, 'exit' => 'rotation', 'rank_top' => []]; continue; }
+    $mom = []; $vol = [];
+    foreach ($P as $s => $p) { $c = $p['c']; if ($c[$k] === null || $c[$k - 252] === null || $c[$k - 21] === null || $p['sma200'][$k] === null || $c[$k] <= $p['sma200'][$k]) continue;
+      $v = lab_vol($c, $k); if (!$v) continue; $mom[$s] = $c[$k - 21] / $c[$k - 252] - 1; $vol[$s] = -$v; }
+    if (count($mom) < 10) continue;
+    $pr = function (array $x) { asort($x); $n = count($x) - 1; $o = []; $i = 0; foreach ($x as $s => $_) $o[$s] = $n ? $i++ / $n : 0; return $o; };
+    $a = $pr($mom); $b = $pr($vol); $rank = []; foreach ($a as $s => $x) $rank[$s] = ($x + $b[$s]) / 2;
+    arsort($rank); $top = array_slice(array_keys($rank), 0, 20);
+    foreach ($top as $r => $s) $sig[] = ['k' => $k, 'sym' => $s, 'score' => 100 - $r, 'exit' => 'rotation', 'rank_top' => $top];
+  }
+  return $sig;
 };
 /* 15. 52-week-high breakout on double volume, market filter on; exit on a close below the 50-DMA or a 3-ATR stop */
 foreach ($P as $s => &$p) { $vv = array_fill(0, $T, null); foreach ($p['C']['t'] as $i => $t) { $kk = $di[mk_ist_date($t)] ?? null; if ($kk !== null) $vv[$kk] = $p['C']['v'][$i]; } $p['vol'] = $vv; $p['v50'] = lab_sma($vv, 50); } unset($p);
