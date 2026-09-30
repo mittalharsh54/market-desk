@@ -73,6 +73,14 @@
             "portfolio": "core portfolio: Equal weight: Nifty, midcap, Nasdaq, gold 25% each (hold-out 23.7% a year, worst fall -13.1%, vs Nifty 6.3% / -15.8%); 12 of 29 playbooks passed"
         },
         {
+            "date": "2026-09-30",
+            "intraday": "kept current rule; no setting made money after charges in both halves",
+            "swing": "kept current rule; it did not beat the Nifty after charges in both halves",
+            "positional": "best tested: Momentum rotation + market filter with 6 positions (hold-out -3.8% a year vs baselines -4.1%)",
+            "intraday_hold": "no open-to-close or gap strategy made money after charges in both periods (11 tested)",
+            "portfolio": "core portfolio: Equal weight: Nifty, midcap, Nasdaq, gold 25% each (hold-out 23.7% a year, worst fall -13.1%, vs Nifty 6.3% / -15.8%); 12 of 29 playbooks passed"
+        },
+        {
             "date": "2026-09-29",
             "intraday": "kept current rule; no setting made money after charges in both halves",
             "swing": "kept current rule; it did not beat the Nifty after charges in both halves",
