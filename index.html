@@ -333,6 +333,7 @@
 
   <div class="tabs" role="tablist">
     <button class="tab" data-tab="core">Core portfolio ✓ tested</button>
+    <button class="tab" data-tab="track">Paper track record</button>
     <button class="tab" data-tab="mom">Monthly picks ✓ tested</button>
     <button class="tab on" data-tab="top10">Intraday Top 10</button>
     <button class="tab" data-tab="pulse">Market pulse</button>
@@ -360,6 +361,11 @@
   <section class="panel" id="p-core">
     <div class="ch" style="margin-bottom:10px"><span class="pill">Core portfolio · ETFs · delivery (CNC) · checked once a month</span><span class="spacer"></span><button class="btn btn-sm" id="coreRefresh">↻ Refresh</button></div>
     <div id="coreBody"><div class="loading"><span class="spin"></span>Loading the tested ETF mix…</div></div>
+  </section>
+
+  <section class="panel" id="p-track">
+    <div class="ch" style="margin-bottom:10px"><span class="pill">Paper track record · real prices · after charges · no money invested</span><span class="spacer"></span><button class="btn btn-sm" id="trackRefresh">↻ Refresh</button></div>
+    <div id="trackBody"><div class="loading"><span class="spin"></span>Loading the track record…</div></div>
   </section>
 
   <section class="panel" id="p-mom">
@@ -538,10 +544,56 @@
   ["#capital", "#riskPct", "#leverage", "#tradeMode", "#tgLang"].forEach(id => $(id).onchange = saveSettings);
   function showTab(t) {
     $$(".tab").forEach(b => b.classList.toggle("on", b.dataset.tab === t)); $$(".panel").forEach(p => p.classList.toggle("on", p.id === "p-" + t));
-    store.set("tab", t); if (t === "inputs") loadInputs(); if (t === "pulse" && !pulseLoaded) loadPulse(); if (t === "top10") loadTop10(); if (t === "mom") loadMom(); if (t === "core") loadCore();
+    store.set("tab", t); if (t === "inputs") loadInputs(); if (t === "pulse" && !pulseLoaded) loadPulse(); if (t === "top10") loadTop10(); if (t === "mom") loadMom(); if (t === "core") loadCore(); if (t === "track") loadTrack();
     if (t === "stock" || t === "pulse") setTimeout(redrawAll, 30);
   }
   $$(".tab").forEach(b => b.onclick = () => showTab(b.dataset.tab));
+
+  /* ---------- Paper track record (paper.php) ---------- */
+  let lastTrack = null;
+  async function loadTrack() {
+    $("#trackBody").innerHTML = `<div class="loading"><span class="spin"></span>${L("Loading the track record…", "ट्रैक रिकॉर्ड लोड हो रहा है…")}</div>`;
+    try { renderTrack(await api("mkt_track")); } catch (e) { $("#trackBody").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+  }
+  $("#trackRefresh").onclick = loadTrack;
+  function trackChart(H, cap) {
+    const d = Object.keys(H).sort(); if (d.length < 2) return "";
+    const S = [["core", L("Core portfolio", "कोर पोर्टफ़ोलियो"), "var(--s1)"], ["mom", L("Monthly picks", "मासिक चयन"), "var(--s3)"], ["intraday", L("Intraday Top 10", "इंट्राडे टॉप 10"), "var(--s2)"], ["nifty", L("Nifty 50", "निफ्टी 50"), "var(--text-faint)"]];
+    let lo = cap, hi = cap; d.forEach(k => S.forEach(([f]) => { const v = H[k][f]; if (v != null) { lo = Math.min(lo, v); hi = Math.max(hi, v); } }));
+    const pad = (hi - lo) * 0.08 || cap * 0.01; lo -= pad; hi += pad;
+    const W = 640, Ht = 200, X = i => 8 + i * (W - 70) / (d.length - 1), Y = v => 8 + (hi - v) / (hi - lo) * (Ht - 16);
+    const lines = S.map(([f, , col]) => `<polyline fill="none" stroke="${col}" stroke-width="${f === "nifty" ? 1.5 : 2.2}" ${f === "nifty" ? 'stroke-dasharray="4 3"' : ""} points="${d.map((k, i) => X(i).toFixed(1) + "," + Y(H[k][f]).toFixed(1)).join(" ")}"/>`).join("");
+    const base = `<line x1="8" x2="${W - 62}" y1="${Y(cap)}" y2="${Y(cap)}" stroke="var(--grid)" stroke-width="1"/><text x="${W - 58}" y="${Y(cap) + 4}" font-size="11" fill="var(--text-faint)">₹${fmt(cap, 0)}</text>`;
+    const legend = S.map(([, n, col]) => `<span style="display:inline-flex;align-items:center;gap:5px;margin-right:12px"><i style="width:14px;height:3px;background:${col};display:inline-block"></i>${esc(n)}</span>`).join("");
+    return `<div class="card mt"><h2>${L("Value of ₹" + fmt(cap, 0) + " over time", "₹" + fmt(cap, 0) + " का मूल्य समय के साथ")}</h2><svg viewBox="0 0 ${W} ${Ht}" style="width:100%;height:auto" role="img" aria-label="Track record chart">${base}${lines}</svg><div class="small dim">${legend}</div></div>`;
+  }
+  function renderTrack(V) {
+    lastTrack = V; const cap = V.capital;
+    const dstr = d => new Date(d + "T12:00:00+05:30").toLocaleDateString(I18N.lang === "hi" ? "hi-IN" : "en-IN", { timeZone: "Asia/Kolkata", weekday: "short", day: "numeric", month: "short" });
+    let h = `<div class="okbox" style="margin:0 0 10px">${L(
+      `<b>What this is:</b> a live, forward test that started on <b>${dstr(V.start)}</b>. Each part of the app is followed exactly as it tells you to act, with real closing prices and real charges, and no hindsight. No money is invested. This is the honest way to see whether the backtests hold up.`,
+      `<b>यह क्या है:</b> एक असली, आगे की जाँच जो <b>${dstr(V.start)}</b> से शुरू हुई। ऐप का हर हिस्सा ठीक वैसे ही अपनाया जाता है जैसा वह आपको कहता है — असली बंद भाव, असली चार्ज, कोई पिछली जानकारी नहीं। कोई पैसा नहीं लगाया गया। बैकटेस्ट सच में टिकते हैं या नहीं, यह देखने का यही ईमानदार तरीका है।`)}</div>`;
+    if (!V.started || !V.as_of) {
+      h += `<div class="card"><p>${!V.started ? L(`Starts on <b>${dstr(V.start)}</b>. The first numbers appear the next morning, once that day's closing prices are in.`, `<b>${dstr(V.start)}</b> से शुरू होगा। पहले आँकड़े अगली सुबह दिखेंगे, जब उस दिन के बंद भाव आ जाएँगे।`)
+        : L("Started — the first closing prices arrive the morning after the first session.", "शुरू हो गया — पहले सत्र के बंद भाव अगली सुबह आएँगे।")}</p></div>`;
+      $("#trackBody").innerHTML = h; return;
+    }
+    const pn = r => r.pnl == null ? "—" : `<b class="${r.pnl > 0 ? "good" : r.pnl < 0 ? "bad" : ""}">${r.pnl >= 0 ? "+" : "−"}₹${fmt(Math.abs(r.pnl), 0)}</b> <span class="dim">(${r.pct >= 0 ? "+" : ""}${r.pct}%)</span>`;
+    h += `<div class="summary">
+      <div><span>${L("Core portfolio", "कोर पोर्टफ़ोलियो")}</span>${pn(V.core)}<em>${L("value", "मूल्य")} ₹${fmt(V.core.value, 0)} · ${L("charges", "चार्ज")} ₹${fmt(V.core.charges, 0)}</em></div>
+      <div><span>${L("Monthly picks", "मासिक चयन")}</span>${pn(V.mom)}<em>${Object.keys(V.mom.pos || {}).length ? Object.keys(V.mom.pos).join(", ") : L("holding cash", "नकद में")}</em></div>
+      <div><span>${L("Intraday Top 10", "इंट्राडे टॉप 10")}</span>${pn(V.intraday)}<em>${L(`${V.intraday.traded_days} days traded, ${V.intraday.green_days} in profit`, `${V.intraday.traded_days} दिन ट्रेड, ${V.intraday.green_days} में मुनाफ़ा`)}</em></div>
+      <div><span>${L("Yardstick: Nifty 50", "तुलना: निफ्टी 50")}</span>${pn(V.nifty)}<em>${L("as of close", "बंद भाव")} ${dstr(V.as_of)}</em></div></div>`;
+    h += trackChart(V.hist || {}, cap);
+    const T = [...(V.core.trades || []).map(t => ({ ...t, part: L("Core", "कोर") })), ...(V.mom.trades || []).map(t => ({ ...t, part: L("Monthly", "मासिक") }))].sort((a, b) => b.date.localeCompare(a.date));
+    if (T.length) h += `<div class="card mt"><h2>${L("Paper trades", "पेपर ट्रेड")}</h2><div class="tbl"><table class="small"><thead><tr><th>${L("Date", "तारीख")}</th><th>${L("Part", "हिस्सा")}</th><th>${L("Trade", "ट्रेड")}</th><th class="r">${L("Qty", "संख्या")}</th><th class="r">${L("Price", "भाव")}</th></tr></thead><tbody>
+      ${T.map(t => `<tr><td>${esc(t.date)}</td><td>${esc(t.part)}</td><td><span class="dopill ${t.side === "BUY" ? "buy" : "short"}">${t.side === "BUY" ? L("BUY", "खरीदा") : L("SELL", "बेचा")}</span> ${esc(t.symbol)}${t.ret_pct != null ? ` <span class="dim">(${t.ret_pct}%)</span>` : ""}</td><td class="r num">${t.qty}</td><td class="r num">₹${fmt(t.price)}</td></tr>`).join("")}</tbody></table></div></div>`;
+    const days = Object.keys(V.hist || {}).sort().reverse();
+    h += `<div class="card mt"><h2>${L("Day by day", "रोज़ का हिसाब")}</h2><div class="tbl"><table class="small"><thead><tr><th>${L("Close of", "बंद भाव")}</th><th class="r">${L("Core", "कोर")}</th><th class="r">${L("Monthly", "मासिक")}</th><th class="r">${L("Intraday", "इंट्राडे")}</th><th class="r">${L("Nifty", "निफ्टी")}</th></tr></thead><tbody>
+      ${days.map(k => { const r = V.hist[k], di = (V.intraday.days || {})[k]; return `<tr><td>${esc(k)}</td><td class="r num">₹${fmt(r.core, 0)}</td><td class="r num">₹${fmt(r.mom, 0)}</td><td class="r num">₹${fmt(r.intraday, 0)}${di && di.trades ? ` <span class="dim">(${di.pnl >= 0 ? "+" : ""}${di.pnl})</span>` : ""}</td><td class="r num">₹${fmt(r.nifty, 0)}</td></tr>`; }).join("")}</tbody></table></div>
+      <p class="small dim">${L("Values at each day's close. Daily closing prices arrive the next morning, so this runs one session behind. Intraday counts the locked list's trades after charges; Monthly picks follows the monthly list; the Core portfolio was bought in whole ETF units on the first day and is rebalanced only on a 5-point drift.", "हर दिन के बंद भाव पर मूल्य। रोज़ के बंद भाव अगली सुबह आते हैं, इसलिए यह एक सत्र पीछे चलता है। इंट्राडे में लॉक की गई सूची के ट्रेड चार्ज के बाद गिने जाते हैं; मासिक चयन मासिक सूची को अपनाता है; कोर पोर्टफ़ोलियो पहले दिन पूरी ETF यूनिट में ख़रीदा गया और सिर्फ़ 5 अंक के खिसकाव पर संतुलित होता है।")}</p></div>`;
+    $("#trackBody").innerHTML = h;
+  }
 
   /* ---------- Core portfolio (professional playbooks, tools/pro-lab.php) ---------- */
   let lastCore = null;
@@ -1374,7 +1426,7 @@
   $("#langBtn").onclick = () => { I18N.set(I18N.lang === "hi" ? "en" : "hi"); $("#langSel").value = I18N.lang; };
   langBtnLabel(); I18N.onChange(langBtnLabel);
   document.querySelectorAll(".langlink").forEach(a => a.onclick = e => { e.preventDefault(); I18N.set(a.dataset.lang); $("#langSel").value = I18N.lang; });
-  I18N.onChange(() => { if (T10) renderTop10(); if (lastMom) renderMom(lastMom); if (lastCore) renderCore(lastCore); });
+  I18N.onChange(() => { if (T10) renderTop10(); if (lastMom) renderMom(lastMom); if (lastCore) renderCore(lastCore); if (lastTrack) renderTrack(lastTrack); });
   $("#themeBtn").onclick = () => {
     const cur = document.documentElement.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     const next = cur === "dark" ? "light" : "dark"; document.documentElement.setAttribute("data-theme", next); store.set("theme", next); setTimeout(redrawAll, 30);

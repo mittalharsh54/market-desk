@@ -533,6 +533,10 @@ function id_tick() {
     /* monthly momentum: announce a rebalance once (first trading day of the month) */
     if ($isToday && $tg['chat']) { try { mom_view(); $mm = mom_announce(); if ($mm) $send($mm); } catch (Exception $e) { $out['momentum_error'] = $e->getMessage(); } }
     if ($isToday && $tg['chat']) { try { $cm = core_announce(); if ($cm) $send($cm); } catch (Exception $e) { $out['core_error'] = $e->getMessage(); } }
+    /* paper track record: keep it current; on Friday after the close, send the weekly report once */
+    if ($isToday && $now >= 935) { try { pt_update();
+      if ((int) date('N', strtotime($date)) === 5 && $tg['chat'] && md_store_get('pt_week_sent') !== $date && $date >= PT_START) { $V = pt_view(); $send(id_tg_compose(function ($l) use ($V) { return pt_week_msg($V, $l); })); md_store_set('pt_week_sent', $date); }
+    } catch (Exception $e) { $out['paper_error'] = $e->getMessage(); } }
     md_store_set($key, json_encode($sent));
     $out['book'] = $R['book']; $out['open'] = array_values(array_map(function ($p) { return $p['symbol'] . ' ' . $p['state']['status']; }, array_filter($R['picks'], function ($p) { return !empty($p['state']['position']); })));
     return $out;

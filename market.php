@@ -39,6 +39,7 @@ require_once __DIR__ . '/sources.php';
 require_once __DIR__ . '/intraday.php';
 require_once __DIR__ . '/momentum.php';
 require_once __DIR__ . '/core.php';
+require_once __DIR__ . '/paper.php';
 /* the volume gate the daily learning run settled on (rules.json) */
 if (function_exists('md_rules')) $GLOBALS['MK_VOL_MULT'] = (float) md_rules()['intraday']['vol_mult'];
 
@@ -629,6 +630,7 @@ function mkt_dispatch($action) {
       case 'mkt_top10': $out = id_top10($force, $capital, $risk); break;
       case 'mkt_momentum': $out = mom_view(); break;
       case 'mkt_core': $out = core_view(); break;
+      case 'mkt_track': $out = pt_view(); break;
       case 'mkt_now': $out = id_now(); break;
       /* read-only paper check: replay today's stored list over today's bars, without rebuilding or locking it */
       case 'mkt_paper':
