@@ -94,6 +94,57 @@ $start = 260; if ($T - $start < 500) { fwrite(STDERR, "not enough history\n"); e
 $split = $start + (int) (2 * ($T - $start) / 3);
 fwrite(STDERR, count($A) . " assets, " . $dates[$start] . " → " . $dates[$T - 1] . ", hold-out from " . $dates[$split] . "\n");
 
+/* ---------- SIP timing study: php tools/pro-lab.php 15 sip ----------
+   Rs 10,000 to start plus Rs 2,000 every month into the Core mix (25% each of Nifty, Midcap 150, Nasdaq 100, gold),
+   each new rupee going to whichever ETF is furthest below 25%. Waiting money sits in a liquid fund (6%).
+     fixed    : invest on the first trading day of each month
+     dip-1m   : wait for a 3% five-day fall in the Nifty; invest by the month's last session if none comes
+     dip-3m   : the same, but wait up to 3 months
+     dip-only : invest only after a 3% fall (money can wait indefinitely)
+   Run over every 5-year (and 3-year) period that starts on a month's first session. */
+if (($argv[2] ?? '') === 'sip') {
+  $W = ['NIFTY', 'MID', 'NASDAQ', 'GOLD'];
+  $sip = function ($a, $b, $mode) use ($A, $dates, $W) {
+    $u = array_fill_keys($W, 0.0); $cash = 0.0; $wait = 0; $paid = 0.0; $n = $A['NIFTY']['c'];
+    for ($k = $a; $k <= $b; $k++) {
+      $cash *= 1 + PL_CASH / 252;
+      $newM = $k === $a || substr($dates[$k], 0, 7) !== substr($dates[$k - 1], 0, 7);
+      if ($newM) { $add = $k === $a ? 10000 : 2000; $cash += $add; $paid += $add; $wait++; }
+      $lastM = $k === $b || substr($dates[$k + 1], 0, 7) !== substr($dates[$k], 0, 7);
+      $dip = $k >= 5 && $n[$k] / $n[$k - 5] - 1 <= -0.03;
+      $go = $mode === 'fixed' ? $newM : ($dip || ($mode === 'dip-1m' && $lastM) || ($mode === 'dip-3m' && $lastM && $wait >= 3));
+      if ($k === $a) $go = true; // the opening Rs 10,000 goes in on day one in every version
+      if ($go && $cash > 100) {
+        $val = $cash; foreach ($W as $x) $val += $u[$x] * $A[$x]['c'][$k];
+        $need = []; foreach ($W as $x) $need[$x] = max(0, 0.25 * $val - $u[$x] * $A[$x]['c'][$k]); $tn = array_sum($need) ?: 1;
+        $spend = $cash; foreach ($W as $x) { $v = $spend * $need[$x] / $tn; $u[$x] += $v * (1 - 0.0007) / $A[$x]['c'][$k]; } $cash = 0; $wait = 0;
+      }
+    }
+    $val = $cash; foreach ($W as $x) $val += $u[$x] * $A[$x]['c'][$b];
+    return [$val, $paid];
+  };
+  $ok = function ($k) use ($A, $W) { foreach ($W as $x) if (!isset($A[$x]) || $A[$x]['c'][$k] === null) return false; return true; };
+  foreach ([3, 5] as $yrs) {
+    $res = ['fixed' => [], 'dip-1m' => [], 'dip-3m' => [], 'dip-only' => []];
+    for ($a = 260; $a + 252 * $yrs < $T; $a++) {
+      if (substr($dates[$a], 0, 7) === substr($dates[$a - 1], 0, 7) || !$ok($a)) continue;
+      $b = $a + 252 * $yrs;
+      foreach ($res as $m => $_) { list($v, $p) = $sip($a, $b, $m); $res[$m][] = $v / $p; }
+    }
+    $n = count($res['fixed']); if (!$n) continue;
+    $out = ['period_years' => $yrs, 'windows' => $n, 'from' => null];
+    foreach ($res as $m => $r) {
+      $row = ['avg_value_per_rupee_paid' => round(array_sum($r) / $n, 3), 'worst' => round(min($r), 3), 'best' => round(max($r), 3)];
+      if ($m !== 'fixed') { $d = []; foreach ($r as $i => $x) $d[] = $x / $res['fixed'][$i] - 1;
+        $row['beat_fixed_pct'] = round(count(array_filter($d, function ($x) { return $x > 0; })) / $n * 100); $row['avg_diff_vs_fixed_pct'] = round(array_sum($d) / $n * 100, 2);
+        $row['worst_diff_pct'] = round(min($d) * 100, 2); $row['best_diff_pct'] = round(max($d) * 100, 2); }
+      $out[$m] = $row;
+    }
+    echo json_encode($out), "\n";
+  }
+  exit(0);
+}
+
 /* ---------- helpers (all look at closes up to day k only) ---------- */
 $has = function ($a, $k, $back = 252) use ($A) { return isset($A[$a]) && $k - $back >= 0 && $A[$a]['c'][$k] !== null && $A[$a]['c'][$k - $back] !== null; };
 $ret = function ($a, $k, $n) use ($A) { return $A[$a]['c'][$k] / $A[$a]['c'][$k - $n] - 1; };
