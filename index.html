@@ -586,6 +586,19 @@
         <td class="r num">${x.train.cagr}% <span class="dim">(${x.train.dd}%)</span></td><td class="r num">${x.gate.cagr}% <span class="dim">(${x.gate.dd}%)</span></td>
         <td class="r num">${x.forward && x.forward.days ? `${x.forward.ret}% <span class="dim">${L("vs Core", "बनाम कोर")} ${x.forward.core_ret}% · ${x.forward.days}d</span>` : "—"}</td><td>${st(x.status)}</td></tr>`).join("")}</tbody></table></div>`;
     else h += `<p class="small dim">${L("No setting has beaten the Core portfolio in both periods yet.", "अभी तक किसी सेटिंग ने दोनों समय में कोर पोर्टफ़ोलियो को नहीं हराया।")}</p>`;
+    const I = R.intraday;
+    if (I) {
+      const ic = I.candidates || [];
+      h += `<h2 class="mt">${L("Intraday rules (5-minute bars, real intraday charges)", "इंट्राडे नियम (5-मिनट बार, असली इंट्राडे चार्ज)")}</h2>
+        <p class="small">${L(`<b>${fmt(I.tried_total, 0)}</b> intraday settings tried on ${I.data ? I.data.stocks : "?"} liquid stocks over ${I.data ? I.data.days : "?"} days. A setting must make money after charges in the first 60% of days and in the later 40%, then keep doing so for ${I.fwd_days} days after it is found.`,
+          `${I.data ? I.data.stocks : "?"} लिक्विड शेयरों पर ${I.data ? I.data.days : "?"} दिनों में <b>${fmt(I.tried_total, 0)}</b> इंट्राडे सेटिंग परखी गईं। किसी सेटिंग को पहले 60% दिनों में और बाद के 40% में चार्ज के बाद मुनाफ़ा देना होगा, और मिलने के बाद ${I.fwd_days} दिन तक देते रहना होगा।`)}</p>`;
+      if (ic.length) h += `<div class="tbl"><table class="small"><thead><tr><th>${L("Rule", "नियम")}</th><th class="r">${L("Tuning", "जाँच")}</th><th class="r">${L("Gate", "बाद का समय")}</th><th class="r">${L("Since found", "मिलने के बाद")}</th><th></th></tr></thead><tbody>
+        ${ic.slice(0, 10).map(x => `<tr><td>${esc(x.label)}</td><td class="r num">${x.train.avg}% <span class="dim">(${x.train.n})</span></td><td class="r num">${x.gate.avg}% <span class="dim">(${x.gate.n})</span></td>
+          <td class="r num">${x.forward && x.forward.trades ? `${x.forward.avg}% <span class="dim">(${x.forward.trades})</span>` : "—"}</td><td>${st(x.status)}</td></tr>`).join("")}</tbody></table></div>
+        <p class="tiny dim">${L("Average net result per trade after charges (number of trades).", "चार्ज के बाद हर ट्रेड का औसत शुद्ध नतीजा (ट्रेडों की संख्या)।")}</p>`;
+      else h += `<p class="small"><b>${L("No intraday rule has made money after charges in both periods yet.", "अभी तक किसी इंट्राडे नियम ने दोनों समय में चार्ज के बाद मुनाफ़ा नहीं दिया।")}</b> ${L("The best ones found so far, by the tuning period:", "अब तक के सबसे अच्छे (जाँच के समय के हिसाब से):")}</p>
+        <ul class="small">${(I.best_by_tuning || []).slice(0, 4).map(b => `<li>${esc(b.label)}: <b>${b.train_avg_net_pct}%</b> ${L("a trade after charges", "प्रति ट्रेड, चार्ज के बाद")}</li>`).join("")}</ul>`;
+    }
     $("#researchBody").innerHTML = h + `</div>`;
   }
   function renderTrack(V) {

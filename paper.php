@@ -147,7 +147,15 @@ function research_view() {
   if (!$S) return ['started' => false];
   $c = array_map(function ($x) { return array_intersect_key($x, array_flip(['id', 'f', 'label', 'found_on', 'train', 'gate', 'trades', 'status', 'forward', 'tried_before'])); }, $S['candidates'] ?? []);
   return ['started' => true, 'tried_total' => $S['tried_total'], 'runs' => $S['runs'], 'since' => $S['started'], 'last_run' => $S['last_run'] ?? null, 'per_family' => $S['per_family'] ?? [],
-          'data' => $S['data'] ?? null, 'core' => $S['core'] ?? null, 'nifty' => $S['nifty'] ?? null, 'summary' => $S['summary'] ?? null, 'candidates' => $c, 'recent_runs' => array_slice($S['recent_runs'] ?? [], 0, 12), 'fwd_days' => 120];
+          'data' => $S['data'] ?? null, 'core' => $S['core'] ?? null, 'nifty' => $S['nifty'] ?? null, 'summary' => $S['summary'] ?? null, 'candidates' => $c, 'recent_runs' => array_slice($S['recent_runs'] ?? [], 0, 12), 'fwd_days' => 120,
+          'intraday' => research_intraday_view()];
+}
+
+function research_intraday_view() {
+  $S = json_decode((string) @file_get_contents(__DIR__ . '/research/explorer_intraday.json'), true);
+  if (!$S) return null;
+  return ['tried_total' => $S['tried_total'], 'runs' => $S['runs'], 'last_run' => $S['last_run'] ?? null, 'data' => $S['data'] ?? null, 'summary' => $S['summary'] ?? null, 'fwd_days' => 60,
+    'candidates' => array_map(function ($x) { return array_intersect_key($x, array_flip(['f', 'label', 'found_on', 'train', 'gate', 'status', 'forward'])); }, $S['candidates'] ?? []), 'best_by_tuning' => $S['best_by_tuning'] ?? []];
 }
 
 /* a short Friday-evening report on Telegram */
