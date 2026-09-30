@@ -141,6 +141,15 @@ function pt_view() {
     'nifty' => $row($last['nifty'] ?? null), 'hist' => $h];
 }
 
+/* the strategy explorer's findings (tools/explorer.php, committed to research/explorer.json) */
+function research_view() {
+  $S = json_decode((string) @file_get_contents(__DIR__ . '/research/explorer.json'), true);
+  if (!$S) return ['started' => false];
+  $c = array_map(function ($x) { return array_intersect_key($x, array_flip(['id', 'f', 'label', 'found_on', 'train', 'gate', 'trades', 'status', 'forward', 'tried_before'])); }, $S['candidates'] ?? []);
+  return ['started' => true, 'tried_total' => $S['tried_total'], 'runs' => $S['runs'], 'since' => $S['started'], 'last_run' => $S['last_run'] ?? null, 'per_family' => $S['per_family'] ?? [],
+          'data' => $S['data'] ?? null, 'core' => $S['core'] ?? null, 'nifty' => $S['nifty'] ?? null, 'summary' => $S['summary'] ?? null, 'candidates' => $c, 'recent_runs' => array_slice($S['recent_runs'] ?? [], 0, 12), 'fwd_days' => 120];
+}
+
 /* a short Friday-evening report on Telegram */
 function pt_week_msg(array $V, $lang = 'en') {
   $hi = $lang === 'hi'; $f = function ($r) { return $r['pnl'] === null ? '—' : ($r['pnl'] >= 0 ? '+' : '−') . id_money(abs($r['pnl'])) . ' (' . ($r['pct'] >= 0 ? '+' : '') . $r['pct'] . '%)'; };
@@ -149,6 +158,9 @@ function pt_week_msg(array $V, $lang = 'en') {
   $L[] = ($hi ? 'मासिक चयन: ' : 'Monthly picks: ') . $f($V['mom']);
   $L[] = ($hi ? 'इंट्राडे टॉप 10: ' : 'Intraday Top 10: ') . $f($V['intraday']);
   $L[] = ($hi ? 'तुलना — निफ्टी 50: ' : 'Yardstick — Nifty 50: ') . $f($V['nifty']);
+  $R = research_view();
+  if (!empty($R['started'])) $L[] = $hi ? '🔬 रणनीति खोज: अब तक ' . number_format($R['tried_total']) . ' सेटिंग परखीं; ' . ($R['summary']['testing'] ?? 0) . ' आगे की जाँच में, ' . ($R['summary']['confirmed'] ?? 0) . ' पक्की।'
+                                    : '🔬 Strategy explorer: ' . number_format($R['tried_total']) . ' settings tried so far; ' . ($R['summary']['testing'] ?? 0) . ' in forward test, ' . ($R['summary']['confirmed'] ?? 0) . ' confirmed.';
   $L[] = $hi ? 'असली भाव, चार्ज घटाकर, कोई पिछली जानकारी नहीं। पैसा नहीं लगाया गया — यह सिर्फ़ जाँच है।' : 'Real prices, after charges, no hindsight. No money was invested — this is only a test.';
   return implode("\n", $L);
 }

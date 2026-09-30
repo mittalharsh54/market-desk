@@ -631,6 +631,7 @@ function mkt_dispatch($action) {
       case 'mkt_momentum': $out = mom_view(); break;
       case 'mkt_core': $out = core_view(); break;
       case 'mkt_track': $out = pt_view(); break;
+      case 'mkt_research': $out = research_view(); break;
       case 'mkt_now': $out = id_now(); break;
       /* read-only paper check: replay today's stored list over today's bars, without rebuilding or locking it */
       case 'mkt_paper':

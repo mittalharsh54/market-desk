@@ -366,6 +366,7 @@
   <section class="panel" id="p-track">
     <div class="ch" style="margin-bottom:10px"><span class="pill">Paper track record · real prices · after charges · no money invested</span><span class="spacer"></span><button class="btn btn-sm" id="trackRefresh">↻ Refresh</button></div>
     <div id="trackBody"><div class="loading"><span class="spin"></span>Loading the track record…</div></div>
+    <div id="researchBody"></div>
   </section>
 
   <section class="panel" id="p-mom">
@@ -554,6 +555,7 @@
   async function loadTrack() {
     $("#trackBody").innerHTML = `<div class="loading"><span class="spin"></span>${L("Loading the track record…", "ट्रैक रिकॉर्ड लोड हो रहा है…")}</div>`;
     try { renderTrack(await api("mkt_track")); } catch (e) { $("#trackBody").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+    try { renderResearch(await api("mkt_research")); } catch (e) {}
   }
   $("#trackRefresh").onclick = loadTrack;
   function trackChart(H, cap) {
@@ -566,6 +568,25 @@
     const base = `<line x1="8" x2="${W - 62}" y1="${Y(cap)}" y2="${Y(cap)}" stroke="var(--grid)" stroke-width="1"/><text x="${W - 58}" y="${Y(cap) + 4}" font-size="11" fill="var(--text-faint)">₹${fmt(cap, 0)}</text>`;
     const legend = S.map(([, n, col]) => `<span style="display:inline-flex;align-items:center;gap:5px;margin-right:12px"><i style="width:14px;height:3px;background:${col};display:inline-block"></i>${esc(n)}</span>`).join("");
     return `<div class="card mt"><h2>${L("Value of ₹" + fmt(cap, 0) + " over time", "₹" + fmt(cap, 0) + " का मूल्य समय के साथ")}</h2><svg viewBox="0 0 ${W} ${Ht}" style="width:100%;height:auto" role="img" aria-label="Track record chart">${base}${lines}</svg><div class="small dim">${legend}</div></div>`;
+  }
+  function renderResearch(R) {
+    if (!R || !R.started) { $("#researchBody").innerHTML = ""; return; }
+    const fam = { dip: L("Dip buying", "गिरावट पर ख़रीद"), rot: L("Rotation", "रोटेशन"), trend: L("Trend", "ट्रेंड"), mix: L("Fixed mix", "तय मिश्रण"), mixdip: L("Mix + dips", "मिश्रण + गिरावट") };
+    const st = s => s === "confirmed" ? `<span class="good">✓ ${L("confirmed", "पक्की")}</span>` : s === "failed forward test" ? `<span class="bad">✗ ${L("failed later", "बाद में फ़ेल")}</span>` : `<span class="dim">${L("forward testing", "आगे की जाँच")}</span>`;
+    const c = R.core || {}, cs = R.candidates || [];
+    let h = `<div class="card mt"><h2>🔬 ${L("Strategy explorer — searching around the clock", "रणनीति खोज — चौबीसों घंटे")}</h2>
+      <p class="small">${L(`Every 2 hours a job tries new strategy settings on 15 years of index and ETF prices. <b>${fmt(R.tried_total, 0)}</b> settings tried in ${R.runs} runs since ${esc(R.since)} (last: ${esc(R.last_run || "")}).
+        A setting is kept only if it beats the Core portfolio in the tuning years <i>and</i> in a later gate period it never learned from. Because so many are tried, some will pass by luck — so every candidate is then followed on the market days after it was found; after ${R.fwd_days} such days it is marked confirmed or failed. Only a confirmed one would ever be considered for the app.`,
+        `हर 2 घंटे एक जॉब 15 साल के इंडेक्स और ETF भावों पर नई रणनीति सेटिंग परखता है। ${esc(R.since)} से ${R.runs} बार में <b>${fmt(R.tried_total, 0)}</b> सेटिंग परखी गईं (आख़िरी: ${esc(R.last_run || "")})।
+        कोई सेटिंग तभी रखी जाती है जब वह कोर पोर्टफ़ोलियो को जाँच के सालों में <i>और</i> बाद के उस समय में भी हराए जिससे उसने कुछ नहीं सीखा। इतनी सारी परखने पर कुछ किस्मत से भी पास होंगी — इसलिए हर उम्मीदवार को मिलने के बाद के असली बाज़ार दिनों पर परखा जाता है; ${R.fwd_days} दिन बाद वह पक्की या फ़ेल मानी जाती है। सिर्फ़ पक्की रणनीति ही ऐप में लाने पर विचार होगा।`)}</p>
+      <div class="summary"><div><span>${L("Candidates", "उम्मीदवार")}</span><b>${cs.length}</b><em>${L(`${R.summary.testing} forward testing · ${R.summary.confirmed} confirmed · ${R.summary.failed} failed`, `${R.summary.testing} जाँच में · ${R.summary.confirmed} पक्की · ${R.summary.failed} फ़ेल`)}</em></div>
+      <div><span>${L("Bar to beat (Core portfolio)", "हराने की रेखा (कोर पोर्टफ़ोलियो)")}</span><b>${c.train ? c.train.cagr + "% / " + c.gate.cagr + "%" : "—"}</b><em>${L("a year, tuning / gate period", "सालाना, जाँच / बाद का समय")}</em></div></div>`;
+    if (cs.length) h += `<div class="tbl mt"><table class="small"><thead><tr><th>${L("Setting", "सेटिंग")}</th><th class="r">${L("Tuning", "जाँच")}</th><th class="r">${L("Gate", "बाद का समय")}</th><th class="r">${L("Since found", "मिलने के बाद")}</th><th></th></tr></thead><tbody>
+      ${cs.slice(0, 15).map(x => `<tr><td><span class="pill">${esc(fam[x.f] || x.f)}</span> ${esc(x.label)}<div class="tiny dim">${L("found", "मिली")} ${esc(x.found_on)} · ${L("after", "")} ${fmt(x.tried_before, 0)} ${L("tries", "कोशिशों के बाद")}</div></td>
+        <td class="r num">${x.train.cagr}% <span class="dim">(${x.train.dd}%)</span></td><td class="r num">${x.gate.cagr}% <span class="dim">(${x.gate.dd}%)</span></td>
+        <td class="r num">${x.forward && x.forward.days ? `${x.forward.ret}% <span class="dim">${L("vs Core", "बनाम कोर")} ${x.forward.core_ret}% · ${x.forward.days}d</span>` : "—"}</td><td>${st(x.status)}</td></tr>`).join("")}</tbody></table></div>`;
+    else h += `<p class="small dim">${L("No setting has beaten the Core portfolio in both periods yet.", "अभी तक किसी सेटिंग ने दोनों समय में कोर पोर्टफ़ोलियो को नहीं हराया।")}</p>`;
+    $("#researchBody").innerHTML = h + `</div>`;
   }
   function renderTrack(V) {
     lastTrack = V; const cap = V.capital;

@@ -1,0 +1,54 @@
+name: Strategy explorer
+
+# Around the clock, every 2 hours: tries new strategy settings for ~15 minutes on
+# 15 years of NSE index / ETF prices, keeps the ones that beat the Core portfolio
+# in both the tuning years and a gate period it never learns from, and re-scores
+# every earlier candidate on the market days since it was found (the forward test).
+# Results: research/explorer.json (shown in the app's Paper track record tab).
+
+on:
+  schedule:
+    - cron: '23 */2 * * *'
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: "Search time budget in seconds"
+        default: "900"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: explorer
+  cancel-in-progress: false
+
+jobs:
+  explore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: tools/.cache
+          key: study-data-${{ github.run_id }}-${{ github.job }}
+          restore-keys: study-data-
+      - name: Search and forward-test
+        run: |
+          php tools/explorer.php "${{ inputs.seconds || 900 }}" | tee explorer-run.json
+          { echo '### Strategy explorer'; echo '```json'; cat explorer-run.json; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Save research/explorer.json
+        run: |
+          git config user.name "market-desk-explorer"
+          git config user.email "actions@users.noreply.github.com"
+          cp research/explorer.json /tmp/explorer.json
+          for i in 1 2 3 4; do
+            git fetch -q origin main && git reset -q --hard origin/main
+            cp /tmp/explorer.json research/explorer.json
+            git add research/explorer.json
+            git diff --cached --quiet && { echo "No change."; exit 0; }
+            git commit -q -m "Explorer: $(jq -r '"\(.tried_this_run) settings tried, \(.new_candidates) new candidates, \(.summary.confirmed) confirmed"' explorer-run.json)"
+            git push -q origin HEAD:main && exit 0
+            sleep $((i * 5))
+          done
+          exit 1
