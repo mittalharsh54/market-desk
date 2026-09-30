@@ -84,6 +84,16 @@ function es_tr(array $T, $a, $b) { $t = array_values(array_filter($T, function (
   return ['trades' => $n, 'win_pct' => $n ? round(count(array_filter($t, function ($x) { return $x['ret'] > 0; })) / $n * 100, 1) : null,
     'avg_net_pct' => $n ? round(array_sum(array_column($t, 'ret')) / $n * 100, 2) : null, 'pf' => $l > 0 ? round($g / $l, 2) : null]; }
 
+$GRID = ($argv[2] ?? '') === 'grid';
+if ($GRID) { /* robustness grid for the dip rule: fall size x look-back x holding days x trend filter */
+  $RULES = [];
+  foreach ([0.02, 0.03, 0.04, 0.05] as $f) foreach ([3, 5, 10] as $lb) foreach ([3, 5, 10] as $hd) foreach ([true, false] as $flt)
+    $RULES[sprintf('dip %d%% in %d days, hold %d days%s', $f * 100, $lb, $hd, $flt ? ', above 200-DMA' : '')] = [
+      'in' => function ($X, $i) use ($f, $lb, $flt) { return (!$flt || $X['up'][$i]) && $i >= $lb && $X['c'][$i] / $X['c'][$i - $lb] - 1 <= -$f; },
+      'out' => function ($X, $i, $e) use ($hd) { return $i - $e >= $hd; }, 'grid' => [$f, $lb, $hd, $flt]];
+  unset($ASSETS['Gold (GOLDBEES)'], $ASSETS['Nasdaq 100 (MON100)']); // the rule is about Indian equity indices
+}
+$POOL = [];
 foreach ($ASSETS as $a => $s) {
   $C = null;
   for ($y = 0; $y <= $years; $y++) { $x = $res["$a|$y"] ?? null; if ($x && $x['code'] === 200) { $Q = mkt_upstox_parse($x['body']); if ($Q && count($Q['c'])) { $Q = mk_clean($Q); $C = $C ? mkt_candles_merge($Q, $C) : $Q; } } }
@@ -102,6 +112,20 @@ foreach ($ASSETS as $a => $s) {
     /* pass: profitable after charges in both periods on enough trades, and better return per unit of risk than holding the ETF in both */
     $pass = $tr['trades'] >= 20 && $ho['trades'] >= 10 && $tr['avg_net_pct'] > 0 && $ho['avg_net_pct'] > 0 && ($tr['pf'] ?? 0) >= 1.2 && ($ho['pf'] ?? 0) >= 1.1
       && $tr['return_per_risk'] > $B['train']['return_per_risk'] && $ho['return_per_risk'] > $B['holdout']['return_per_risk'];
+    if ($GRID) { foreach ($run['trades'] as $t) $POOL[$name][$t['k'] < $split ? 'train' : 'holdout'][] = $t; continue; }
     echo json_encode(['asset' => $a, 'rule' => $name, 'train' => $tr, 'holdout' => $ho, 'passed' => $pass]), "\n";
   }
+}
+
+if ($GRID) { /* pooled over the four index ETFs: every setting's trades, tuning years vs hold-out */
+  $ok = 0; $rows = [];
+  foreach ($POOL as $name => $P) {
+    $st = function ($T) { $n = count($T); $r = array_column($T, 'ret'); $g = array_sum(array_filter($r, function ($x) { return $x > 0; })); $l = -array_sum(array_filter($r, function ($x) { return $x < 0; }));
+      return ['trades' => $n, 'avg_net_pct' => $n ? round(array_sum($r) / $n * 100, 2) : null, 'win_pct' => $n ? round(count(array_filter($r, function ($x) { return $x > 0; })) / $n * 100, 1) : null, 'pf' => $l > 0 ? round($g / $l, 2) : null]; };
+    $a = $st($P['train'] ?? []); $b = $st($P['holdout'] ?? []);
+    $good = $a['trades'] >= 30 && $b['trades'] >= 15 && $a['avg_net_pct'] > 0 && $b['avg_net_pct'] > 0; if ($good) $ok++;
+    $rows[] = ['setting' => $name, 'tuning' => $a, 'holdout' => $b, 'profitable_both' => $good];
+  }
+  foreach ($rows as $r) echo json_encode($r), "\n";
+  echo json_encode(['summary' => "$ok of " . count($rows) . ' settings made money after charges in both periods (pooled over Nifty, Bank, Midcap 150, Next 50)']), "\n";
 }

@@ -15,7 +15,7 @@ on:
       study:
         description: "Which study"
         type: choice
-        options: [open-close, lab, pro, etf-swing, swing, intraday-grid, intraday-volume]
+        options: [open-close, lab, pro, etf-swing, etf-swing-grid, swing, intraday-grid, intraday-volume]
         default: open-close
 
 jobs:
@@ -72,3 +72,8 @@ jobs:
             echo "|---|---|---|---|---|---|---|"
             jq -r '"| \(.asset) | \(.rule // "") | \(.train.cagr_pct // "") | \(.train.trades // "-") / \(.train.avg_net_pct // "-") / \(.train.pf // "-") | \(.holdout.cagr_pct // "") | \(.holdout.trades // "-") / \(.holdout.avg_net_pct // "-") / \(.holdout.pf // "-") | \(.passed // "-") |"' study.jsonl
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: ETF dip rule robustness grid (pooled over 4 index ETFs)
+        if: inputs.study == 'etf-swing-grid'
+        run: |
+          php tools/etf-swing.php "${{ inputs.years || 15 }}" grid | tee study.jsonl
+          { echo '```'; cat study.jsonl; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
