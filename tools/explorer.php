@@ -177,7 +177,14 @@ function ex_mutate($f, array $p, array $ASSETS) { // change one setting of a goo
   $r = ex_random($f, $ASSETS); $ks = array_keys($p); $k = ex_one($ks); $p[$k] = $r[$k];
   if (isset($p['w'])) { $p['w'] = array_filter($p['w'], function ($x) { return $x >= 0.03; }); $s = array_sum($p['w']) ?: 1; foreach ($p['w'] as $a => $x) $p['w'][$a] = round($x / $s, 2); }
   return $p; }
-function ex_id(array $cfg) { return substr(md5(json_encode($cfg)), 0, 10); }
+/* one form per setting: asset lists sorted, K no larger than the list, mix weights sorted by asset */
+function ex_canon(array $cfg) { $p = &$cfg['p'];
+  if (isset($p['assets'])) { $p['assets'] = array_values(array_unique($p['assets'])); sort($p['assets']); }
+  if (isset($p['K'], $p['assets'])) $p['K'] = min($p['K'], count($p['assets']));
+  if (isset($p['slots'], $p['assets'])) $p['slots'] = min($p['slots'], count($p['assets']));
+  if (isset($p['w'])) ksort($p['w']);
+  ksort($p); return $cfg; }
+function ex_id(array $cfg) { return substr(md5(json_encode(ex_canon($cfg))), 0, 10); }
 function ex_label(array $cfg) {
   $p = $cfg['p']; $as = function ($l) { return implode('+', $l); };
   switch ($cfg['f']) {
@@ -212,6 +219,8 @@ $gate = function ($r) use ($CE) {
 /* the search score uses the tuning years only */
 $score = function ($r) { return $r['train']['dd'] < -40 ? -9 : $r['train']['rpr'] + min(0, ($r['train']['dd'] + 30) / 100); };
 
+$u = []; $S['candidates'] = array_values(array_filter($S['candidates'], function ($c) use (&$u) { $id = ex_id(['f' => $c['f'], 'p' => $c['p']]); if (isset($u[$id])) return false; $u[$id] = 1; return true; }));
+foreach ($S['candidates'] as &$c) { $c['id'] = ex_id(['f' => $c['f'], 'p' => $c['p']]); $c['p'] = ex_canon(['f' => $c['f'], 'p' => $c['p']])['p']; $c['label'] = ex_label(['f' => $c['f'], 'p' => $c['p']]); } unset($c);
 /* ---------- 1. forward test: re-score every candidate on the days since it was found ---------- */
 foreach ($S['candidates'] as &$c) {
   $since = $c['found_data_end']; $a = null; foreach ($dates as $k => $dd) if ($dd > $since) { $a = $k - 1; break; }
@@ -230,7 +239,7 @@ while (microtime(true) - $T0 < $BUDGET) {
   $f = $FAM[$tried % count($FAM)];
   $seeds = $S['seeds'][$f] ?? [];
   $p = ($seeds && mt_rand(1, 100) <= 40) ? ex_mutate($f, ex_one($seeds)['p'], $ASSETS) : ex_random($f, $ASSETS);
-  $cfg = ['f' => $f, 'p' => $p]; $id = ex_id($cfg);
+  $cfg = ex_canon(['f' => $f, 'p' => $p]); $p = $cfg['p']; $id = ex_id($cfg);
   $r = $eval($cfg); $tried++; $S['per_family'][$f] = ($S['per_family'][$f] ?? 0) + 1;
   $sc = $score($r);
   $seeds[] = ['p' => $p, 'score' => round($sc, 3)]; usort($seeds, function ($x, $y) { return $y['score'] <=> $x['score']; });
