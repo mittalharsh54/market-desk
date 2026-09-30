@@ -15,7 +15,7 @@ on:
       study:
         description: "Which study"
         type: choice
-        options: [open-close, lab, pro, etf-swing, etf-swing-grid, swing, intraday-grid, intraday-volume]
+        options: [open-close, lab, pro, etf-swing, etf-swing-grid, etf-swing-portfolio, swing, intraday-grid, intraday-volume]
         default: open-close
 
 jobs:
@@ -76,4 +76,9 @@ jobs:
         if: inputs.study == 'etf-swing-grid'
         run: |
           php tools/etf-swing.php "${{ inputs.years || 15 }}" grid | tee study.jsonl
+          { echo '```'; cat study.jsonl; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: ETF dip rule as one account (4 index ETFs)
+        if: inputs.study == 'etf-swing-portfolio'
+        run: |
+          php tools/etf-swing.php "${{ inputs.years || 15 }}" portfolio | tee study.jsonl
           { echo '```'; cat study.jsonl; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

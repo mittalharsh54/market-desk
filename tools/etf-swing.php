@@ -93,12 +93,15 @@ if ($GRID) { /* robustness grid for the dip rule: fall size x look-back x holdin
       'out' => function ($X, $i, $e) use ($hd) { return $i - $e >= $hd; }, 'grid' => [$f, $lb, $hd, $flt]];
   unset($ASSETS['Gold (GOLDBEES)'], $ASSETS['Nasdaq 100 (MON100)']); // the rule is about Indian equity indices
 }
-$POOL = [];
+$PORT = ($argv[2] ?? '') === 'portfolio';
+if ($PORT) unset($ASSETS['Gold (GOLDBEES)'], $ASSETS['Nasdaq 100 (MON100)']);
+$POOL = []; $SER = [];
 foreach ($ASSETS as $a => $s) {
   $C = null;
   for ($y = 0; $y <= $years; $y++) { $x = $res["$a|$y"] ?? null; if ($x && $x['code'] === 200) { $Q = mkt_upstox_parse($x['body']); if ($Q && count($Q['c'])) { $Q = mk_clean($Q); $C = $C ? mkt_candles_merge($Q, $C) : $Q; } } }
   if (!$C || count($C['c']) < 700) { echo json_encode(['asset' => $a, 'error' => 'not enough data', 'bars' => $C ? count($C['c']) : 0]), "\n"; continue; }
   $n = count($C['c']); $dates = array_map('mk_ist_date', $C['t']);
+  if ($PORT) { $SER[$a] = ['C' => $C, 'dates' => $dates, 'er' => $s['er']]; continue; }
   $X = ['o' => $C['o'], 'h' => $C['h'], 'l' => $C['l'], 'c' => $C['c'], 'rsi' => es_rsi2($C['c']), 'up' => []];
   for ($i = 0; $i < $n; $i++) { $m = es_sma($C['c'], $i, 200); $X['up'][$i] = $m !== null && $C['c'][$i] > $m; }
   $start = 210; $split = $start + (int) (2 * ($n - $start) / 3);
@@ -128,4 +131,37 @@ if ($GRID) { /* pooled over the four index ETFs: every setting's trades, tuning 
   }
   foreach ($rows as $r) echo json_encode($r), "\n";
   echo json_encode(['summary' => "$ok of " . count($rows) . ' settings made money after charges in both periods (pooled over Nifty, Bank, Midcap 150, Next 50)']), "\n";
+}
+
+if ($PORT) { /* one Rs 10,000 account trading the dip rule on all four index ETFs */
+  $cal = []; foreach ($SER as $a => $x) foreach ($x['dates'] as $d) $cal[$d] = 1; ksort($cal); $cal = array_keys($cal); $T = count($cal); $ci = array_flip($cal);
+  $A = [];
+  foreach ($SER as $a => $x) { $o = array_fill(0, $T, null); $c = $o; foreach ($x['dates'] as $i => $d) { $k = $ci[$d]; $o[$k] = $x['C']['o'][$i]; $c[$k] = $x['C']['c'][$i]; }
+    for ($k = 1; $k < $T; $k++) if ($c[$k] === null) $c[$k] = $c[$k - 1];
+    $up = array_fill(0, $T, false); for ($k = 199; $k < $T; $k++) { $w = array_slice($c, $k - 199, 200); if (!in_array(null, $w, true)) $up[$k] = $c[$k] > array_sum($w) / 200; }
+    $A[$a] = ['o' => $o, 'c' => $c, 'up' => $up, 'er' => $x['er']]; }
+  $start = 210; $split = $start + (int) (2 * ($T - $start) / 3);
+  $nifty = []; for ($k = $start; $k < $T; $k++) $nifty[$k] = 10000 * $A['Nifty 50']['c'][$k] / $A['Nifty 50']['c'][$start];
+  $cashEq = []; for ($k = $start; $k < $T; $k++) $cashEq[$k] = 10000 * pow(1 + ES_CASH / 252, $k - $start);
+  echo json_encode(['setting' => 'Nifty 50 buy & hold', 'baseline' => true, 'train' => es_stats($nifty, $start, $split, $cal), 'holdout' => es_stats($nifty, $split, $T - 1, $cal), 'from' => $cal[$start], 'holdout_from' => $cal[$split], 'to' => $cal[$T - 1]]), "\n";
+  echo json_encode(['setting' => 'Cash in a liquid fund (6%)', 'baseline' => true, 'train' => es_stats($cashEq, $start, $split, $cal), 'holdout' => es_stats($cashEq, $split, $T - 1, $cal)]), "\n";
+  foreach ([[0.03, 5, 5], [0.03, 5, 10], [0.02, 5, 5], [0.04, 5, 5]] as $cfg) foreach ([1, 2, 4] as $slots) {
+    list($f, $lb, $hd) = $cfg; $cash = 10000.0; $pos = []; $eq = []; $tr = []; $pend = [];
+    for ($k = $start; $k < $T; $k++) {
+      $cash *= 1 + ES_CASH / 252;
+      foreach ($pos as $a => &$p) $p['u'] *= 1 - $A[$a]['er'] / 252; unset($p);
+      foreach ($pend as $a => $act) { $px = $A[$a]['o'][$k] ?? null; if (!$px) continue;
+        if ($act === 'sell' && isset($pos[$a])) { $v = $pos[$a]['u'] * $px; $c = es_sell_cost($v); $cash += $v - $c; $tr[] = ['k' => $pos[$a]['k'], 'ret' => ($v - $c) / $pos[$a]['cost'] - 1]; unset($pos[$a]); } }
+      $val = $cash; foreach ($pos as $a => $p) $val += $p['u'] * $A[$a]['c'][$k - 1];
+      foreach ($pend as $a => $act) { $px = $A[$a]['o'][$k] ?? null; if (!$px || $act === 'sell' || isset($pos[$a]) || count($pos) >= $slots) continue;
+        $v = min($cash, $val / $slots) / 1.0007; if ($v < 1000) continue; $c = es_buy_cost($v); $cash -= $v + $c; $pos[$a] = ['u' => $v / $px, 'k' => $k, 'cost' => $v + $c]; }
+      $pend = [];
+      foreach ($pos as $a => $p) if ($k - $p['k'] >= $hd - 1) $pend[$a] = 'sell';
+      $sig = []; foreach ($A as $a => $x) { if (isset($pos[$a]) || !$x['up'][$k] || $k < $lb || !$x['c'][$k - $lb]) continue; $r = $x['c'][$k] / $x['c'][$k - $lb] - 1; if ($r <= -$f) $sig[$a] = $r; }
+      asort($sig); foreach ($sig as $a => $_) $pend[$a] = 'buy';
+      $v = $cash; foreach ($pos as $a => $p) $v += $p['u'] * $A[$a]['c'][$k]; $eq[$k] = $v;
+    }
+    echo json_encode(['setting' => sprintf('dip %d%% in %d days, hold %d days, above 200-DMA, %d position%s', $f * 100, $lb, $hd, $slots, $slots > 1 ? 's' : ''),
+      'train' => es_stats($eq, $start, $split, $cal) + es_tr($tr, $start, $split), 'holdout' => es_stats($eq, $split, $T - 1, $cal) + es_tr($tr, $split, $T), 'end_value' => round(end($eq))]), "\n";
+  }
 }
