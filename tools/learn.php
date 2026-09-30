@@ -1,7 +1,7 @@
 <?php
 /* The weekly learning step. Reads the latest study results and updates rules.json,
    which the app uses for its live rules and for what it tells you about them.
-     php tools/learn.php intraday.jsonl swing.jsonl lab.jsonl oc.jsonl pro.jsonl
+     php tools/learn.php intraday.jsonl swing.jsonl lab.jsonl oc.jsonl pro.jsonl lab8.jsonl
    A change is adopted only when it made money AFTER charges in BOTH halves of the
    test period, on enough trades, and beats the current rule by a clear margin.
    Otherwise the current rule stays and the app says there is no tested edge. */
@@ -72,6 +72,18 @@ if ($L) {
   $robust = function ($r) use ($avg, $bar) { $a = $avg[$r['strategy']]; if (count($a['train']) < 2) return true;
     return array_sum($a['train']) / count($a['train']) > $bar('train') && array_sum($a['holdout']) / count($a['holdout']) > $bar('holdout'); };
   $valid = array_values(array_filter($rows, function ($r) use ($ok, $robust) { return $ok($r) && $robust($r); }));
+  /* the same set-up must also pass over 8 years (tools/strategy-lab.php 260 8): a longer test with its own later hold-out */
+  $L8 = $read($argv[6] ?? null); $check8 = null;
+  if ($L8) {
+    $base8 = array_values(array_filter($L8, function ($r) { return !empty($r['baseline']); }));
+    $bar8 = function ($part) use ($base8) { return max(array_map(function ($b) use ($part) { return $b[$part]['cagr_pct']; }, $base8)); };
+    $by8 = []; foreach ($L8 as $r) if (empty($r['baseline'])) $by8[$r['strategy'] . '|' . $r['slots']] = $r;
+    $ok8 = function ($r) use ($by8, $bar8) { $x = $by8[$r['strategy'] . '|' . $r['slots']] ?? null;
+      return $x && $x['train']['cagr_pct'] > $bar8('train') && $x['holdout']['cagr_pct'] > $bar8('holdout') && $x['holdout']['max_dd_pct'] > -30 && $x['train']['max_dd_pct'] > -35; };
+    $before = count($valid); $valid = array_values(array_filter($valid, $ok8));
+    $check8 = ['from' => $base8[0]['from'] ?? null, 'holdout_from' => $base8[0]['holdout_from'] ?? null, 'passed_4y' => $before, 'passed_both' => count($valid),
+               'baselines' => $base8, 'results' => array_map(function ($r) { return array_intersect_key($r, array_flip(['strategy', 'slots', 'train', 'holdout'])); }, array_values($by8))];
+  } else $log['positional_8y'] = '8-year check unavailable this run (kept the 4-year result)';
   usort($valid, function ($a, $b) { return $b['holdout']['cagr_pct'] <=> $a['holdout']['cagr_pct']; });
   $best = $valid[0] ?? null;
   /* the app can only run strategies it has code for (momentum.php); others are reported but not switched on */
@@ -81,7 +93,7 @@ if ($L) {
   $best = $validRun[0] ?? null;
   $rules['positional'] = ['tradeable' => (bool) $best, 'strategy' => $best['strategy'] ?? null, 'slots' => $best['slots'] ?? null,
     'configs_tested' => count($rows), 'strategies_tested' => count($avg), 'passed' => array_map(function ($r) { return $r['strategy'] . ' / ' . $r['slots']; }, $valid),
-    'evidence' => ['tested' => $today, 'baselines' => $base, 'results' => array_map(function ($r) { return array_intersect_key($r, array_flip(['strategy', 'slots', 'index', 'train', 'holdout', 'end_value'])); }, $rows)]];
+    'evidence' => ['tested' => $today, 'baselines' => $base, 'results' => array_map(function ($r) { return array_intersect_key($r, array_flip(['strategy', 'slots', 'index', 'train', 'holdout', 'end_value'])); }, $rows), 'check_8y' => $check8]];
   $log['positional'] = $best ? 'best tested: ' . $best['strategy'] . ' with ' . $best['slots'] . ' positions (hold-out ' . $best['holdout']['cagr_pct'] . '% a year vs baselines ' . $bar('holdout') . '%)'
                              : 'no strategy beat buy-and-hold in both the tuning period and the hold-out';
 }

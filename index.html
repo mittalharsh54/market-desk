@@ -631,14 +631,19 @@
     const bl = part => base.map(b => `${esc(bn(b.strategy))} ${b[part].cagr_pct}%`).join(" · ");
     const dstr = d => new Date(d + "T12:00:00+05:30").toLocaleDateString(I18N.lang === "hi" ? "hi-IN" : "en-IN", { timeZone: "Asia/Kolkata", weekday: "short", day: "numeric", month: "short" });
     const b0 = base[0] || {}, tested = E.strategies_tested || 5, cfg = E.configs_tested || 15;
+    const c8 = ev.check_8y, r8 = c8 && (c8.results || []).find(r => r.strategy === E.strategy && r.slots === E.slots), b8 = c8 && (c8.baselines || []).map(b => b.holdout.cagr_pct);
+    const long8 = r8 ? L(` It also passed a longer 8-year test (${esc(c8.from || "")} →, hold-out from ${esc(c8.holdout_from || "")}): hold-out <b>${r8.holdout.cagr_pct}% a year</b> vs ${b8.join("% / ")}% for the two baselines.`,
+      ` इसने 8 साल की लंबी जाँच भी पास की (${esc(c8.from || "")} →, बाद का समय ${esc(c8.holdout_from || "")} से): बाद के समय में <b>सालाना ${r8.holdout.cagr_pct}%</b>, जबकि दोनों तुलनाएँ ${b8.join("% / ")}%।`) : "";
     let h = `<div class="${E.tradeable ? "okbox" : "warnbox"}" style="margin:0 0 10px">${res ? L(
       `<b>Why this strategy:</b> it is the only one of ${tested} strategies (${cfg} account set-ups) that beat both Nifty buy-and-hold and equal-weight buy-and-hold of the same stocks, in the tuning years <i>and</i> in a hold-out it was never tuned on, with a worst fall under 30%.
       Tuning years (${esc(b0.from || "")} → ${esc(b0.holdout_from || "")}): <b>${res.train.cagr_pct}% a year</b>, worst fall ${res.train.max_dd_pct}% (baselines: ${bl("train")}).
       Hold-out (→ ${esc(b0.to || "")}): <b>${res.holdout.cagr_pct}% a year</b>, worst fall ${res.holdout.max_dd_pct}% (baselines: ${bl("holdout")}).
+      ${long8}
       <br><b>Be realistic:</b> the hold-out edge is small and rests on few trades; the test uses today's stock list, which flatters momentum; a single stock can fall 20–30%. Expect losing months, and judge it over a year, not a week.`,
       `<b>यह रणनीति क्यों:</b> ${tested} रणनीतियों (${cfg} खाता सेटअप) में से सिर्फ़ यही है जिसने निफ्टी को खरीदकर रखने और इन्हीं शेयरों को बराबर रकम से रखने — दोनों को हराया, जाँच के सालों में <i>और</i> उस बाद के समय में भी जिस पर इसे ट्यून नहीं किया गया था, और सबसे बड़ी गिरावट 30% से कम रही।
       जाँच के साल (${esc(b0.from || "")} → ${esc(b0.holdout_from || "")}): <b>सालाना ${res.train.cagr_pct}%</b>, सबसे बड़ी गिरावट ${res.train.max_dd_pct}% (तुलना: ${bl("train")})।
       बाद का समय (→ ${esc(b0.to || "")}): <b>सालाना ${res.holdout.cagr_pct}%</b>, सबसे बड़ी गिरावट ${res.holdout.max_dd_pct}% (तुलना: ${bl("holdout")})।
+      ${long8}
       <br><b>यथार्थ रहें:</b> बाद के समय में फ़ायदा छोटा है और कम ट्रेडों पर टिका है; जाँच में आज के शेयरों की सूची इस्तेमाल हुई, जो मोमेंटम को बेहतर दिखाती है; एक शेयर 20–30% गिर सकता है। घाटे वाले महीने आएँगे — इसे एक साल में परखें, एक हफ़्ते में नहीं।`)
       : L("<b>Not tested yet.</b> The daily learning run has not approved a positional strategy.", "<b>अभी परखा नहीं गया।</b> रोज़ के लर्निंग रन ने अभी कोई रणनीति मंज़ूर नहीं की है।")}</div>`;
     h += `<div class="summary">

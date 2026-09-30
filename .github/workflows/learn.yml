@@ -61,8 +61,9 @@ jobs:
           key: study-data-${{ github.run_id }}-${{ github.job }}
           restore-keys: study-data-
       - run: php tools/strategy-lab.php 260 4 | tee lab.jsonl
+      - run: php tools/strategy-lab.php 260 8 | tee lab8.jsonl
       - uses: actions/upload-artifact@v4
-        with: { name: lab, path: lab.jsonl }
+        with: { name: lab, path: "lab*.jsonl" }
   opencl:
     needs: [lab]
     if: always()
@@ -109,7 +110,7 @@ jobs:
         with: { path: results }
       - name: Decide what to keep
         run: |
-          php tools/learn.php results/intraday/intraday.jsonl results/swing/swing.jsonl results/lab/lab.jsonl results/oc/oc.jsonl results/pro/pro.jsonl | tee decision.txt
+          php tools/learn.php results/intraday/intraday.jsonl results/swing/swing.jsonl results/lab/lab.jsonl results/oc/oc.jsonl results/pro/pro.jsonl results/lab/lab8.jsonl | tee decision.txt
           { echo "### Learning run"; echo '```'; cat decision.txt; echo '```'; echo '```json'; cat rules.json; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Save rules.json
         run: |
