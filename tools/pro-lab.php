@@ -44,9 +44,9 @@ $SPEC = [ // er = yearly fund cost deducted from an index (an ETF's own price al
   'LOWVOL' => ['label' => 'Nifty100 Low Volatility 30', 'find' => [['100', 'lowvol', '30'], ['tr']], 'er' => 0.003],
   'QUAL'   => ['label' => 'Nifty200 Quality 30', 'find' => [['200', 'qual', '30'], ['tr']], 'er' => 0.003],
   'VALUE'  => ['label' => 'Nifty50 Value 20', 'find' => [['50', 'value', '20'], ['tr']], 'er' => 0.003],
-  'ALPLV'  => ['label' => 'Nifty Alpha Low-Volatility 30', 'find' => [['alpha', 'lowvol', '30'], ['tr', 'quality']], 'er' => 0.004],
+  'ALPLV'  => ['label' => 'Nifty Alpha Low-Volatility 30', 'find' => [['alpha', 'lowvol', '30'], ['tr', 'quality'], ['alpha', 'lv', '30']], 'er' => 0.004],
   'NEXT50' => ['label' => 'Nifty Next 50', 'find' => [['next50'], ['tr', 'value', 'lowvol', 'mom']], 'er' => 0.002],
-  'SMALL'  => ['label' => 'Nifty Smallcap 250', 'find' => [['smallcap250'], ['tr', 'mom', 'qual', 'value']], 'er' => 0.003],
+  'SMALL'  => ['label' => 'Nifty Smallcap 250', 'find' => [['smallcap250'], ['tr', 'mom', 'qual', 'value'], ['sml', '250']], 'er' => 0.003],
   'NASDAQ' => ['label' => 'Nasdaq 100 ETF (MON100)', 'eq' => 'MON100', 'er' => 0],
   'GOLD'   => ['label' => 'Gold ETF (GOLDBEES)', 'eq' => 'GOLDBEES', 'er' => 0],
 ];
@@ -55,10 +55,11 @@ foreach ($SPEC as $a => $s) {
   $k = null; $nm = null;
   if (isset($s['key'])) { $k = $s['key']; $nm = $s['label']; }
   elseif (isset($s['eq'])) { $e = $M['eq'][$s['eq']] ?? null; if ($e) { $k = $e[0]; $nm = $s['eq']; } }
-  else { $f = pl_find_index($IDX, $s['find'][0], $s['find'][1]); if ($f) { $k = $f[0]; $nm = $f[1]; } }
+  else { $f = pl_find_index($IDX, $s['find'][0], $s['find'][1]); if (!$f && isset($s['find'][2])) $f = pl_find_index($IDX, $s['find'][2], $s['find'][1]); if ($f) { $k = $f[0]; $nm = $f[1]; } }
   if ($k) { $keys[$a] = $k; $found[$a] = $nm; }
 }
 fwrite(STDERR, 'instruments: ' . json_encode($found) . "\n");
+if (count($found) < count($SPEC)) fwrite(STDERR, 'index names with alpha / small / sml: ' . json_encode(array_values(array_filter(array_keys($IDX), function ($n) { return preg_match('/alpha|small|sml/', $n); }))) . "\n");
 $want = [];
 foreach ($keys as $a => $k) for ($y = 0; $y <= $years; $y++)
   $want["$a|$y"] = ['url' => 'https://api.upstox.com/v2/historical-candle/' . rawurlencode($k) . '/day/' . $d($y * 365) . '/' . $d($y * 365 + 364), 'headers' => ['Accept: application/json']];
