@@ -44,9 +44,9 @@ $SPEC = [ // er = yearly fund cost deducted from an index (an ETF's own price al
   'LOWVOL' => ['label' => 'Nifty100 Low Volatility 30', 'find' => [['100', 'lowvol', '30'], ['tr']], 'er' => 0.003],
   'QUAL'   => ['label' => 'Nifty200 Quality 30', 'find' => [['200', 'qual', '30'], ['tr']], 'er' => 0.003],
   'VALUE'  => ['label' => 'Nifty50 Value 20', 'find' => [['50', 'value', '20'], ['tr']], 'er' => 0.003],
-  'ALPLV'  => ['label' => 'Nifty Alpha Low-Volatility 30', 'find' => [['alpha', 'lowvol', '30'], ['tr', 'quality'], ['alpha', 'lv', '30']], 'er' => 0.004],
+  'ALPLV'  => ['label' => 'Nifty Alpha Low-Volatility 30', 'find' => [['alpha', 'lowvol', '30'], ['tr', 'quality'], ['alpha', 'lowvol']], 'er' => 0.004],
   'NEXT50' => ['label' => 'Nifty Next 50', 'find' => [['next50'], ['tr', 'value', 'lowvol', 'mom']], 'er' => 0.002],
-  'SMALL'  => ['label' => 'Nifty Smallcap 250', 'find' => [['smallcap250'], ['tr', 'mom', 'qual', 'value'], ['sml', '250']], 'er' => 0.003],
+  'SMALL'  => ['label' => 'Nifty Smallcap 250', 'find' => [['smallcap250'], ['tr', 'mom', 'qual', 'value'], ['smlcap250']], 'er' => 0.003],
   'NASDAQ' => ['label' => 'Nasdaq 100 ETF (MON100)', 'eq' => 'MON100', 'er' => 0],
   'GOLD'   => ['label' => 'Gold ETF (GOLDBEES)', 'eq' => 'GOLDBEES', 'er' => 0],
 ];
