@@ -226,10 +226,18 @@ function pl_stats(array $eq, $a, $b, array $dates) {
 function pl_thirds(array $eq, $start, $T, array $dates) { $o = []; $n = $T - $start;
   for ($i = 0; $i < 3; $i++) { $a = $start + (int) ($i * $n / 3); $b = $start + (int) (($i + 1) * $n / 3) - 1; $o[] = substr($dates[$a], 0, 7) . '..' . substr($dates[$b], 0, 7) . ' ' . pl_stats($eq, $a, $b, $dates)['cagr_pct']; }
   return $o; }
+/* holding-period odds: over every 1-, 3- and 5-year window, how often money grew, and the worst / median yearly return */
+function pl_windows(array $eq, $start, $T) { $o = [];
+  foreach ([1, 3, 5] as $y) { $n = 252 * $y; $r = [];
+    for ($a = $start; $a + $n < $T; $a += 5) $r[] = pow($eq[$a + $n] / $eq[$a], 1 / $y) - 1;
+    if (!$r) continue; sort($r); $pos = count(array_filter($r, function ($x) { return $x > 0; }));
+    $o[$y . 'y'] = ['windows' => count($r), 'positive_pct' => round($pos / count($r) * 100), 'beat_6pct_pct' => round(count(array_filter($r, function ($x) { return $x > 0.06; })) / count($r) * 100),
+      'worst_pct' => round($r[0] * 100, 1), 'median_pct' => round($r[(int) (count($r) / 2)] * 100, 1), 'best_pct' => round(end($r) * 100, 1)]; }
+  return $o; }
 /* ---------- baseline: Nifty 50 bought and held (no costs at all) ---------- */
 $nEq = []; for ($k = $start; $k < $T; $k++) $nEq[$k] = 10000 * $A['NIFTY']['c'][$k] / $A['NIFTY']['c'][$start];
 $bT = pl_stats($nEq, $start, $split, $dates); $bH = pl_stats($nEq, $split, $T - 1, $dates);
-echo json_encode(['strategy' => 'Nifty 50 buy & hold', 'baseline' => true, 'train' => $bT, 'holdout' => $bH, 'thirds' => pl_thirds($nEq, $start, $T, $dates), 'from' => $dates[$start], 'holdout_from' => $dates[$split], 'to' => $dates[$T - 1],
+echo json_encode(['strategy' => 'Nifty 50 buy & hold', 'baseline' => true, 'train' => $bT, 'holdout' => $bH, 'thirds' => pl_thirds($nEq, $start, $T, $dates), 'windows' => pl_windows($nEq, $start, $T), 'from' => $dates[$start], 'holdout_from' => $dates[$split], 'to' => $dates[$T - 1],
   'instruments' => $found, 'first_dates' => $first, 'missing' => $missing]), "\n";
 
 foreach ($S as $name => $s) {
@@ -238,7 +246,7 @@ foreach ($S as $name => $s) {
   $beats = $tr['cagr_pct'] > $bT['cagr_pct'] && $ho['cagr_pct'] > $bH['cagr_pct'];
   $safer = $tr['max_dd_pct'] > $bT['max_dd_pct'] && $ho['max_dd_pct'] > $bH['max_dd_pct'] && $tr['return_per_risk'] > $bT['return_per_risk'] && $ho['return_per_risk'] > $bH['return_per_risk'];
   echo json_encode(['strategy' => $name, 'school' => $s['who'], 'train' => $tr, 'holdout' => $ho,
-    'beats_nifty_both' => $beats, 'safer_than_nifty_both' => $safer, 'thirds' => pl_thirds($R['eq'], $start, $T, $dates),
+    'beats_nifty_both' => $beats, 'safer_than_nifty_both' => $safer, 'thirds' => pl_thirds($R['eq'], $start, $T, $dates), 'windows' => pl_windows($R['eq'], $start, $T),
     'trades' => $R['trades'], 'signal_switches' => $R['switches'], 'costs_rs' => round($R['costs']), 'end_value' => round(end($R['eq'])),
     'weights_now' => array_map(function ($x) { return round($x, 2); }, $R['weights_now'])]), "\n";
 }
