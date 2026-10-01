@@ -1,13 +1,13 @@
 {
     "version": 1,
-    "tried_total": 174369,
-    "runs": 4,
+    "tried_total": 226124,
+    "runs": 5,
     "per_family": {
-        "dip": 34875,
-        "rot": 34874,
-        "trend": 34874,
-        "mix": 34873,
-        "mixdip": 34873
+        "dip": 45226,
+        "rot": 45225,
+        "trend": 45225,
+        "mix": 45224,
+        "mixdip": 45224
     },
     "seeds": {
         "dip": [
@@ -208,6 +208,86 @@
             {
                 "p": {
                     "K": 1,
+                    "R": 63,
+                    "S": 5,
+                    "abs": "none",
+                    "assets": [
+                        "MOM",
+                        "NASDAQ",
+                        "NEXT50",
+                        "NIFTY",
+                        "QUAL",
+                        "SMALL",
+                        "VALUE"
+                    ],
+                    "every": 63,
+                    "wt": "iv"
+                },
+                "score": 1.001
+            },
+            {
+                "p": {
+                    "K": 1,
+                    "R": 63,
+                    "S": 5,
+                    "abs": "none",
+                    "assets": [
+                        "MOM",
+                        "NASDAQ",
+                        "NEXT50",
+                        "NIFTY",
+                        "QUAL",
+                        "SMALL",
+                        "VALUE"
+                    ],
+                    "every": 63,
+                    "wt": "eq"
+                },
+                "score": 1.001
+            },
+            {
+                "p": {
+                    "K": 1,
+                    "R": 63,
+                    "S": 0,
+                    "abs": "none",
+                    "assets": [
+                        "MOM",
+                        "NASDAQ",
+                        "NEXT50",
+                        "NIFTY",
+                        "QUAL",
+                        "SMALL",
+                        "VALUE"
+                    ],
+                    "every": 63,
+                    "wt": "iv"
+                },
+                "score": 0.996
+            },
+            {
+                "p": {
+                    "K": 1,
+                    "R": 63,
+                    "S": 0,
+                    "abs": "none",
+                    "assets": [
+                        "MOM",
+                        "NASDAQ",
+                        "NEXT50",
+                        "NIFTY",
+                        "QUAL",
+                        "SMALL",
+                        "VALUE"
+                    ],
+                    "every": 63,
+                    "wt": "eq"
+                },
+                "score": 0.996
+            },
+            {
+                "p": {
+                    "K": 1,
                     "R": 42,
                     "S": 21,
                     "abs": "cash",
@@ -262,92 +342,6 @@
                     "wt": "eq"
                 },
                 "score": 0.985
-            },
-            {
-                "p": {
-                    "K": 1,
-                    "R": 63,
-                    "S": 0,
-                    "abs": "none",
-                    "assets": [
-                        "LOWVOL",
-                        "MID",
-                        "MOM",
-                        "NASDAQ",
-                        "NEXT50",
-                        "NIFTY",
-                        "QUAL",
-                        "SMALL",
-                        "VALUE"
-                    ],
-                    "every": 63,
-                    "wt": "iv"
-                },
-                "score": 0.985
-            },
-            {
-                "p": {
-                    "K": 2,
-                    "R": 126,
-                    "S": 21,
-                    "abs": "pos",
-                    "assets": [
-                        "BANK",
-                        "GOLD",
-                        "LOWVOL",
-                        "MOM",
-                        "NASDAQ",
-                        "NIFTY",
-                        "QUAL"
-                    ],
-                    "every": 63,
-                    "wt": "eq"
-                },
-                "score": 0.98
-            },
-            {
-                "p": {
-                    "K": 1,
-                    "R": 63,
-                    "S": 5,
-                    "abs": "none",
-                    "assets": [
-                        "LOWVOL",
-                        "MID",
-                        "MOM",
-                        "NASDAQ",
-                        "NEXT50",
-                        "NIFTY",
-                        "QUAL",
-                        "SMALL",
-                        "VALUE"
-                    ],
-                    "every": 63,
-                    "wt": "eq"
-                },
-                "score": 0.979
-            },
-            {
-                "p": {
-                    "K": 1,
-                    "R": 63,
-                    "S": 5,
-                    "abs": "none",
-                    "assets": [
-                        "LOWVOL",
-                        "MID",
-                        "MOM",
-                        "NASDAQ",
-                        "NEXT50",
-                        "NIFTY",
-                        "QUAL",
-                        "SMALL",
-                        "VALUE"
-                    ],
-                    "every": 63,
-                    "wt": "iv"
-                },
-                "score": 0.979
             }
         ],
         "trend": [
@@ -1284,6 +1278,45 @@
             }
         },
         {
+            "id": "484324778f",
+            "f": "rot",
+            "p": {
+                "K": 3,
+                "R": 252,
+                "S": 5,
+                "abs": "none",
+                "assets": [
+                    "GOLD",
+                    "MID",
+                    "NASDAQ"
+                ],
+                "every": 10,
+                "wt": "iv"
+            },
+            "label": "Every 10 days hold the 3 strongest of GOLD+MID+NASDAQ by 252-day return (skipping the last 5), calmer ones bigger",
+            "found_on": "2026-10-01",
+            "found_data_end": "2026-09-30",
+            "tried_before": 182966,
+            "train": {
+                "cagr": 13.36,
+                "dd": -24,
+                "rpr": 0.709,
+                "ret": 213.17
+            },
+            "gate": {
+                "cagr": 22.68,
+                "dd": -11.9,
+                "rpr": 1.441,
+                "ret": 244.39
+            },
+            "trades": 580,
+            "costs": 4986,
+            "status": "forward testing",
+            "forward": {
+                "days": 0
+            }
+        },
+        {
             "id": "9585b78b43",
             "f": "mix",
             "p": {
@@ -1813,6 +1846,51 @@
             }
         },
         {
+            "id": "809a74f97e",
+            "f": "rot",
+            "p": {
+                "K": 2,
+                "R": 126,
+                "S": 21,
+                "abs": "cash",
+                "assets": [
+                    "BANK",
+                    "GOLD",
+                    "LOWVOL",
+                    "MOM",
+                    "NASDAQ",
+                    "NEXT50",
+                    "QUAL",
+                    "SMALL",
+                    "VALUE"
+                ],
+                "every": 63,
+                "wt": "iv"
+            },
+            "label": "Every 63 days hold the 2 strongest of BANK+GOLD+LOWVOL+MOM+NASDAQ+NEXT50+QUAL+SMALL+VALUE by 126-day return (skipping the last 21), only if beating cash, calmer ones bigger",
+            "found_on": "2026-10-01",
+            "found_data_end": "2026-09-30",
+            "tried_before": 187201,
+            "train": {
+                "cagr": 17.8,
+                "dd": -23,
+                "rpr": 0.818,
+                "ret": 344.35
+            },
+            "gate": {
+                "cagr": 29.21,
+                "dd": -16.5,
+                "rpr": 1.354,
+                "ret": 371.4
+            },
+            "trades": 157,
+            "costs": 3134,
+            "status": "forward testing",
+            "forward": {
+                "days": 0
+            }
+        },
+        {
             "id": "4673ca0a21",
             "f": "rot",
             "p": {
@@ -2212,87 +2290,15 @@
             "forward": {
                 "days": 0
             }
-        },
-        {
-            "id": "345bbdec6c",
-            "f": "trend",
-            "p": {
-                "assets": [
-                    "MID",
-                    "MOM",
-                    "NASDAQ"
-                ],
-                "every": 5,
-                "sma": 100
-            },
-            "label": "Equal slices of MID+MOM+NASDAQ, each only above its 100-day average (checked every 5 days)",
-            "found_on": "2026-10-01",
-            "found_data_end": "2026-09-30",
-            "tried_before": 76427,
-            "train": {
-                "cagr": 12.23,
-                "dd": -11.3,
-                "rpr": 0.645,
-                "ret": 185.83
-            },
-            "gate": {
-                "cagr": 21.57,
-                "dd": -9.3,
-                "rpr": 1.339,
-                "ret": 226.06
-            },
-            "trades": 409,
-            "costs": 4976,
-            "status": "forward testing",
-            "forward": {
-                "days": 0
-            }
-        },
-        {
-            "id": "50e05f8f62",
-            "f": "rot",
-            "p": {
-                "K": 2,
-                "R": 126,
-                "S": 21,
-                "abs": "pos",
-                "assets": [
-                    "GOLD",
-                    "LOWVOL",
-                    "MOM",
-                    "NASDAQ",
-                    "NEXT50",
-                    "SMALL",
-                    "VALUE"
-                ],
-                "every": 63,
-                "wt": "iv"
-            },
-            "label": "Every 63 days hold the 2 strongest of GOLD+LOWVOL+MOM+NASDAQ+NEXT50+SMALL+VALUE by 126-day return (skipping the last 21), only if rising, calmer ones bigger",
-            "found_on": "2026-10-01",
-            "found_data_end": "2026-09-30",
-            "tried_before": 16547,
-            "train": {
-                "cagr": 15.73,
-                "dd": -19.7,
-                "rpr": 0.666,
-                "ret": 278.18
-            },
-            "gate": {
-                "cagr": 28.59,
-                "dd": -17.6,
-                "rpr": 1.337,
-                "ret": 357.97
-            },
-            "trades": 160,
-            "costs": 2897,
-            "status": "forward testing",
-            "forward": {
-                "days": 0
-            }
         }
     ],
     "recent_runs": [
+        {
+            "at": "2026-10-01 22:48 IST",
+            "tried": 51755,
+            "new_candidates": 53,
+            "seconds": 900
+        },
         {
             "at": "2026-10-01 14:49 IST",
             "tried": 60995,
@@ -2365,7 +2371,7 @@
             "GOLD"
         ]
     },
-    "last_run": "2026-10-01 14:49 IST",
+    "last_run": "2026-10-01 22:48 IST",
     "summary": {
         "confirmed": 0,
         "failed": 0,
