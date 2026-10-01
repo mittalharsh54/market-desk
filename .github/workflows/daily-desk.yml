@@ -43,7 +43,10 @@ jobs:
           curl -s -m 30 -c "$J" -b "$J" -X POST -H "Content-Type: application/json" \
             -d "$(jq -n --arg p "$APP_PASSWORD" '{password:$p}')" "${U}api.php?action=login" | jq -c . || { echo "::error::login failed"; exit 1; }
           if [ "${{ inputs.paper && '1' || '' }}" = "1" ]; then
-            curl -s -m 200 -b "$J" "${U}api.php?action=mkt_paper" | jq .; exit 0
+            curl -s -m 200 -b "$J" "${U}api.php?action=mkt_paper" | jq -c '{date, locked, book, picks: [.picks[]? | {symbol, dir, status, day_r, chg_pct, trades: [.trades[]? | select(.skipped | not) | "\(.side) \(.entry)->\(.exit) \(.reason) Rs\(.pnl)"]}]}'
+            echo "== Monthly picks"; curl -s -m 200 -b "$J" "${U}api.php?action=mkt_momentum" | jq -c '{mode, month, rebalanced_on, slots, market_on: .rank.market_on, nifty: .rank.nifty, nifty_200dma: .rank.nifty_200dma, holdings: [.holdings[]? | "\(.symbol) x\(.qty) @\(.buy_ref)"], sell: [.sell[]?.symbol]}'
+            echo "== Track record"; curl -s -m 200 -b "$J" "${U}api.php?action=mkt_track" | jq -c '{start, as_of, core: {value: .core.value, pnl: .core.pnl, pct: .core.pct}, mom: {value: .mom.value, pnl: .mom.pnl}, intraday: {value: .intraday.value, pnl: .intraday.pnl, days: .intraday.days}, nifty: {pnl: .nifty.pnl, pct: .nifty.pct}, trades: .core.trades}'
+            exit 0
           fi
           for try in 1 2 3; do
             r=$(curl -s -m 280 -b "$J" "${U}api.php?action=mkt_top10${REPICK:+&refresh=1}")
