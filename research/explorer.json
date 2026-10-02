@@ -1,13 +1,13 @@
 {
     "version": 1,
-    "tried_total": 393335,
-    "runs": 8,
+    "tried_total": 443808,
+    "runs": 9,
     "per_family": {
-        "dip": 78669,
-        "rot": 78668,
-        "trend": 78668,
-        "mix": 78665,
-        "mixdip": 78665
+        "dip": 88764,
+        "rot": 88763,
+        "trend": 88763,
+        "mix": 88759,
+        "mixdip": 88759
     },
     "seeds": {
         "dip": [
@@ -441,14 +441,13 @@
             {
                 "p": {
                     "assets": [
-                        "GOLD",
-                        "NASDAQ",
-                        "MOM"
+                        "MOM",
+                        "NASDAQ"
                     ],
-                    "sma": 50,
-                    "every": 5
+                    "every": 5,
+                    "sma": 50
                 },
-                "score": 0.876
+                "score": 0.881
             }
         ],
         "mix": [
@@ -562,15 +561,15 @@
             },
             {
                 "p": {
-                    "band": 0.1,
-                    "every": 63,
+                    "band": 0.03,
+                    "every": 252,
                     "w": {
-                        "GOLD": 0.32,
-                        "MOM": 0.37,
-                        "NASDAQ": 0.31
+                        "GOLD": 0.25,
+                        "MOM": 0.43,
+                        "NASDAQ": 0.32
                     }
                 },
-                "score": 0.859
+                "score": 0.861
             }
         ],
         "mixdip": [
@@ -776,6 +775,44 @@
             }
         },
         {
+            "id": "a9ead60a78",
+            "f": "dip",
+            "p": {
+                "H": 15,
+                "L": 4,
+                "assets": [
+                    "BANK",
+                    "NEXT50",
+                    "SMALL"
+                ],
+                "f": 0.06,
+                "slots": 1,
+                "sma": 200
+            },
+            "label": "Buy BANK+NEXT50+SMALL after a 6% fall in 4 days, above the 200-day average, sell after 15 days, up to 1 at once",
+            "found_on": "2026-10-03",
+            "found_data_end": "2026-10-01",
+            "tried_before": 403381,
+            "train": {
+                "cagr": 9.97,
+                "dd": -6.4,
+                "rpr": 0.675,
+                "ret": 137.46
+            },
+            "gate": {
+                "cagr": 18.73,
+                "dd": -8.6,
+                "rpr": 1.73,
+                "ret": 182.38
+            },
+            "trades": 42,
+            "costs": 995,
+            "status": "forward testing",
+            "forward": {
+                "days": 0
+            }
+        },
+        {
             "id": "c1ba83480b",
             "f": "rot",
             "p": {
@@ -926,6 +963,86 @@
             },
             "trades": 452,
             "costs": 5094,
+            "status": "forward testing",
+            "forward": {
+                "days": 0
+            }
+        },
+        {
+            "id": "b673603bd0",
+            "f": "rot",
+            "p": {
+                "K": 2,
+                "R": 63,
+                "S": 0,
+                "abs": "none",
+                "assets": [
+                    "GOLD",
+                    "LOWVOL",
+                    "MID",
+                    "MOM",
+                    "NASDAQ"
+                ],
+                "every": 21,
+                "wt": "iv"
+            },
+            "label": "Every 21 days hold the 2 strongest of GOLD+LOWVOL+MID+MOM+NASDAQ by 63-day return, calmer ones bigger",
+            "found_on": "2026-10-03",
+            "found_data_end": "2026-10-01",
+            "tried_before": 403742,
+            "train": {
+                "cagr": 17.96,
+                "dd": -20.9,
+                "rpr": 0.711,
+                "ret": 349.57
+            },
+            "gate": {
+                "cagr": 28.26,
+                "dd": -15.5,
+                "rpr": 1.522,
+                "ret": 350.31
+            },
+            "trades": 385,
+            "costs": 7588,
+            "status": "forward testing",
+            "forward": {
+                "days": 0
+            }
+        },
+        {
+            "id": "8b4343edb1",
+            "f": "rot",
+            "p": {
+                "K": 3,
+                "R": 189,
+                "S": 21,
+                "abs": "pos",
+                "assets": [
+                    "GOLD",
+                    "MOM",
+                    "NASDAQ"
+                ],
+                "every": 63,
+                "wt": "iv"
+            },
+            "label": "Every 63 days hold the 3 strongest of GOLD+MOM+NASDAQ by 189-day return (skipping the last 21), only if rising, calmer ones bigger",
+            "found_on": "2026-10-03",
+            "found_data_end": "2026-10-01",
+            "tried_before": 428122,
+            "train": {
+                "cagr": 11.84,
+                "dd": -22.8,
+                "rpr": 0.641,
+                "ret": 176.82
+            },
+            "gate": {
+                "cagr": 23.39,
+                "dd": -13.2,
+                "rpr": 1.517,
+                "ret": 256.22
+            },
+            "trades": 123,
+            "costs": 1440,
             "status": "forward testing",
             "forward": {
                 "days": 0
@@ -1936,6 +2053,41 @@
             }
         },
         {
+            "id": "ab862763f2",
+            "f": "mix",
+            "p": {
+                "band": 0.1,
+                "every": 63,
+                "w": {
+                    "GOLD": 0.29,
+                    "MID": 0.37,
+                    "NASDAQ": 0.33
+                }
+            },
+            "label": "Fixed mix 29% GOLD / 37% MID / 33% NASDAQ, 10-point band, checked every 63 days",
+            "found_on": "2026-10-03",
+            "found_data_end": "2026-10-01",
+            "tried_before": 404174,
+            "train": {
+                "cagr": 13.12,
+                "dd": -21.8,
+                "rpr": 0.697,
+                "ret": 207.1
+            },
+            "gate": {
+                "cagr": 23.31,
+                "dd": -14.2,
+                "rpr": 1.356,
+                "ret": 254.85
+            },
+            "trades": 11,
+            "costs": 96,
+            "status": "forward testing",
+            "forward": {
+                "days": 0
+            }
+        },
+        {
             "id": "2051b25772",
             "f": "trend",
             "p": {
@@ -2142,157 +2294,15 @@
             "forward": {
                 "days": 0
             }
-        },
-        {
-            "id": "ecbf257633",
-            "f": "mix",
-            "p": {
-                "band": 0.05,
-                "every": 21,
-                "w": {
-                    "GOLD": 0.28,
-                    "MID": 0.24,
-                    "NASDAQ": 0.32,
-                    "NEXT50": 0.1,
-                    "VALUE": 0.07
-                }
-            },
-            "label": "Fixed mix 28% GOLD / 24% MID / 32% NASDAQ / 10% NEXT50 / 7% VALUE, 5-point band, checked every 21 days",
-            "found_on": "2026-10-01",
-            "found_data_end": "2026-09-30",
-            "tried_before": 101973,
-            "train": {
-                "cagr": 13.04,
-                "dd": -23.4,
-                "rpr": 0.669,
-                "ret": 205.11
-            },
-            "gate": {
-                "cagr": 22.63,
-                "dd": -13.3,
-                "rpr": 1.346,
-                "ret": 243.67
-            },
-            "trades": 25,
-            "costs": 218,
-            "status": "forward testing",
-            "forward": {
-                "days": 0
-            }
-        },
-        {
-            "id": "c43b9f2778",
-            "f": "rot",
-            "p": {
-                "K": 1,
-                "R": 63,
-                "S": 0,
-                "abs": "none",
-                "assets": [
-                    "GOLD",
-                    "LOWVOL",
-                    "MOM",
-                    "QUAL",
-                    "SMALL"
-                ],
-                "every": 63,
-                "wt": "iv"
-            },
-            "label": "Every 63 days hold the 1 strongest of GOLD+LOWVOL+MOM+QUAL+SMALL by 63-day return, calmer ones bigger",
-            "found_on": "2026-10-01",
-            "found_data_end": "2026-09-30",
-            "tried_before": 165656,
-            "train": {
-                "cagr": 20.06,
-                "dd": -26.3,
-                "rpr": 0.898,
-                "ret": 428.26
-            },
-            "gate": {
-                "cagr": 32.75,
-                "dd": -24.4,
-                "rpr": 1.346,
-                "ret": 455.1
-            },
-            "trades": 71,
-            "costs": 3642,
-            "status": "forward testing",
-            "forward": {
-                "days": 0
-            }
-        },
-        {
-            "id": "37d9011289",
-            "f": "mix",
-            "p": {
-                "band": 0.03,
-                "every": 63,
-                "w": {
-                    "GOLD": 0.45,
-                    "NASDAQ": 0.29,
-                    "SMALL": 0.25
-                }
-            },
-            "label": "Fixed mix 45% GOLD / 29% NASDAQ / 25% SMALL, 3-point band, checked every 63 days",
-            "found_on": "2026-10-01",
-            "found_data_end": "2026-09-30",
-            "tried_before": 149828,
-            "train": {
-                "cagr": 12.03,
-                "dd": -21,
-                "rpr": 0.634,
-                "ret": 181.36
-            },
-            "gate": {
-                "cagr": 23.02,
-                "dd": -16.5,
-                "rpr": 1.345,
-                "ret": 250.3
-            },
-            "trades": 55,
-            "costs": 462,
-            "status": "forward testing",
-            "forward": {
-                "days": 0
-            }
-        },
-        {
-            "id": "86b60c334a",
-            "f": "trend",
-            "p": {
-                "assets": [
-                    "GOLD",
-                    "MID",
-                    "NASDAQ"
-                ],
-                "every": 1,
-                "sma": 100
-            },
-            "label": "Equal slices of GOLD+MID+NASDAQ, each only above its 100-day average (checked every 1 days)",
-            "found_on": "2026-10-01",
-            "found_data_end": "2026-09-30",
-            "tried_before": 8183,
-            "train": {
-                "cagr": 10.8,
-                "dd": -11.8,
-                "rpr": 0.64,
-                "ret": 154.32
-            },
-            "gate": {
-                "cagr": 19.38,
-                "dd": -11.6,
-                "rpr": 1.344,
-                "ret": 192.01
-            },
-            "trades": 969,
-            "costs": 10721,
-            "status": "forward testing",
-            "forward": {
-                "days": 0
-            }
         }
     ],
     "recent_runs": [
+        {
+            "at": "2026-10-03 01:09 IST",
+            "tried": 50473,
+            "new_candidates": 45,
+            "seconds": 900
+        },
         {
             "at": "2026-10-02 18:35 IST",
             "tried": 51928,
@@ -2345,24 +2355,24 @@
     "started": "2026-10-01",
     "core": {
         "train": {
-            "cagr": 12.4,
-            "dd": -25.3,
-            "rpr": 0.601,
-            "ret": 189.76
+            "cagr": 12.15,
+            "dd": -25.4,
+            "rpr": 0.578,
+            "ret": 183.85
         },
         "gate": {
-            "cagr": 19.78,
-            "dd": -15.4,
-            "rpr": 1.137,
-            "ret": 197.73
+            "cagr": 19.6,
+            "dd": -14.3,
+            "rpr": 1.144,
+            "ret": 195.12
         }
     },
     "nifty": {
         "train": {
-            "cagr": 9.24,
+            "cagr": 9.35,
             "dd": -38.4,
-            "rpr": 0.184,
-            "ret": 123.5
+            "rpr": 0.19,
+            "ret": 125.52
         },
         "gate": {
             "cagr": 11.77,
@@ -2372,7 +2382,7 @@
         }
     },
     "data": {
-        "from": "2011-08-08",
+        "from": "2011-08-09",
         "gate_from": "2020-09-14",
         "to": "2026-10-01",
         "assets": [
@@ -2389,7 +2399,7 @@
             "GOLD"
         ]
     },
-    "last_run": "2026-10-02 18:35 IST",
+    "last_run": "2026-10-03 01:09 IST",
     "summary": {
         "confirmed": 0,
         "failed": 0,
