@@ -7,14 +7,14 @@
         "evidence": {
             "variant": "gate 1.5x, th 0.40, 2/day (live)",
             "stock_days": 9108,
-            "trades": 9371,
-            "win_pct": 40.2,
-            "gross_r_per_trade": 0.042,
-            "net_r_per_trade": -0.071,
-            "net_pf": 0.75,
-            "half1_net_r": -342.1,
-            "half2_net_r": -322.6,
-            "tested": "2026-10-01"
+            "trades": 9431,
+            "win_pct": 40.4,
+            "gross_r_per_trade": 0.051,
+            "net_r_per_trade": -0.066,
+            "net_pf": 0.77,
+            "half1_net_r": -350.2,
+            "half2_net_r": -274.4,
+            "tested": "2026-10-02"
         },
         "variants_tested": 8
     },
@@ -33,8 +33,8 @@
             "first_half": {
                 "trades": 1807,
                 "win_pct": 38.5,
-                "avg_ret_pct": 0.21,
-                "avg_vs_nifty_pct": -0.44,
+                "avg_ret_pct": 0.22,
+                "avg_vs_nifty_pct": -0.45,
                 "pf": 1.06,
                 "avg_days": 12.3
             },
@@ -51,19 +51,27 @@
                 "th": 0.3,
                 "slots": 2,
                 "account": "Rs 10,000, up to 2 positions",
-                "from": "2023-08-08",
-                "to": "2026-09-30",
-                "trades": 108,
-                "end_value": 14981,
-                "cagr_pct": 13.7,
-                "max_drawdown_closed_trades_pct": -31.2,
-                "nifty_buy_hold_end_value": 11558,
-                "nifty_cagr_pct": 4.7
+                "from": "2023-08-09",
+                "to": "2026-10-01",
+                "trades": 121,
+                "end_value": 7317,
+                "cagr_pct": -9.5,
+                "max_drawdown_closed_trades_pct": -40.5,
+                "nifty_buy_hold_end_value": 11421,
+                "nifty_cagr_pct": 4.3
             },
-            "tested": "2026-10-01"
+            "tested": "2026-10-02"
         }
     },
     "log": [
+        {
+            "date": "2026-10-02",
+            "intraday": "kept current rule; no setting made money after charges in both halves",
+            "swing": "kept current rule; it did not beat the Nifty after charges in both halves",
+            "positional": "best tested: Momentum rotation + market filter with 6 positions (hold-out -3.9% a year vs baselines -5.1%)",
+            "intraday_hold": "no open-to-close or gap strategy made money after charges in both periods (11 tested)",
+            "portfolio": "core portfolio: Equal weight: Nifty, midcap, Nasdaq, gold 25% each (hold-out 23.2% a year, worst fall -13.1%, vs Nifty 5.6% / -15.8%); 12 of 29 playbooks passed"
+        },
         {
             "date": "2026-10-01",
             "intraday": "kept current rule; no setting made money after charges in both halves",
@@ -120,7 +128,7 @@
             "intraday": "kept current rule; no setting made money after charges in both halves"
         }
     ],
-    "updated": "2026-10-01",
+    "updated": "2026-10-02",
     "positional": {
         "tradeable": true,
         "strategy": "Momentum rotation + market filter",
@@ -131,7 +139,7 @@
             "Momentum rotation + market filter / 6"
         ],
         "evidence": {
-            "tested": "2026-10-01",
+            "tested": "2026-10-02",
             "baselines": [
                 {
                     "strategy": "Nifty 50 buy & hold",
@@ -142,13 +150,13 @@
                         "growth_pct": 42.9
                     },
                     "holdout": {
-                        "cagr_pct": -7.6,
+                        "cagr_pct": -8.3,
                         "max_dd_pct": -15.2,
-                        "growth_pct": -9.9
+                        "growth_pct": -10.7
                     },
                     "from": "2022-10-20",
-                    "holdout_from": "2025-06-09",
-                    "to": "2026-09-30"
+                    "holdout_from": "2025-06-10",
+                    "to": "2026-10-01"
                 },
                 {
                     "strategy": "Equal-weight buy & hold of the same stocks",
@@ -156,16 +164,16 @@
                     "train": {
                         "cagr_pct": 40.6,
                         "max_dd_pct": -26.3,
-                        "growth_pct": 145.8
+                        "growth_pct": 145.9
                     },
                     "holdout": {
-                        "cagr_pct": -4.1,
+                        "cagr_pct": -5.1,
                         "max_dd_pct": -15.7,
-                        "growth_pct": -5.4
+                        "growth_pct": -6.7
                     },
                     "from": "2022-10-20",
-                    "holdout_from": "2025-06-09",
-                    "to": "2026-09-30"
+                    "holdout_from": "2025-06-10",
+                    "to": "2026-10-01"
                 }
             ],
             "results": [
@@ -174,44 +182,44 @@
                     "slots": 2,
                     "index": false,
                     "train": {
-                        "cagr_pct": -6,
+                        "cagr_pct": -6.1,
                         "max_dd_pct": -45.1,
-                        "growth_pct": -15,
+                        "growth_pct": -15.4,
                         "trades": 112,
                         "win_pct": 34.8,
                         "avg_net_ret_pct": -0.23
                     },
                     "holdout": {
-                        "cagr_pct": -17.3,
+                        "cagr_pct": -17,
                         "max_dd_pct": -29.4,
-                        "growth_pct": -22.1,
+                        "growth_pct": -21.7,
                         "trades": 50,
                         "win_pct": 22,
                         "avg_net_ret_pct": -1.08
                     },
-                    "end_value": 6626
+                    "end_value": 6628
                 },
                 {
                     "strategy": "App swing score (live rule)",
                     "slots": 4,
                     "index": false,
                     "train": {
-                        "cagr_pct": -3.3,
+                        "cagr_pct": -3.4,
                         "max_dd_pct": -33.5,
-                        "growth_pct": -8.5,
+                        "growth_pct": -8.7,
                         "trades": 196,
                         "win_pct": 37.8,
                         "avg_net_ret_pct": -0.25
                     },
                     "holdout": {
-                        "cagr_pct": -35.6,
-                        "max_dd_pct": -43.8,
-                        "growth_pct": -43.8,
+                        "cagr_pct": -35.5,
+                        "max_dd_pct": -43.7,
+                        "growth_pct": -43.6,
                         "trades": 115,
                         "win_pct": 25.2,
                         "avg_net_ret_pct": -2.29
                     },
-                    "end_value": 5147
+                    "end_value": 5148
                 },
                 {
                     "strategy": "App swing score (live rule)",
@@ -220,42 +228,42 @@
                     "train": {
                         "cagr_pct": -0.6,
                         "max_dd_pct": -21.8,
-                        "growth_pct": -1.5,
+                        "growth_pct": -1.7,
                         "trades": 300,
                         "win_pct": 41.3,
                         "avg_net_ret_pct": -0.1
                     },
                     "holdout": {
-                        "cagr_pct": -27.5,
-                        "max_dd_pct": -34.3,
-                        "growth_pct": -34.3,
+                        "cagr_pct": -27.3,
+                        "max_dd_pct": -34.2,
+                        "growth_pct": -34.2,
                         "trades": 152,
                         "win_pct": 27.6,
                         "avg_net_ret_pct": -1.65
                     },
-                    "end_value": 6473
+                    "end_value": 6474
                 },
                 {
                     "strategy": "20-day breakout in uptrend",
                     "slots": 2,
                     "index": false,
                     "train": {
-                        "cagr_pct": -19.9,
+                        "cagr_pct": -19.7,
                         "max_dd_pct": -63.1,
-                        "growth_pct": -44.2,
+                        "growth_pct": -44,
                         "trades": 87,
                         "win_pct": 25.3,
                         "avg_net_ret_pct": -1.66
                     },
                     "holdout": {
-                        "cagr_pct": -18.8,
+                        "cagr_pct": -19.8,
                         "max_dd_pct": -33.8,
-                        "growth_pct": -23.8,
+                        "growth_pct": -25.1,
                         "trades": 34,
                         "win_pct": 35.3,
                         "avg_net_ret_pct": -0.78
                     },
-                    "end_value": 4251
+                    "end_value": 4195
                 },
                 {
                     "strategy": "20-day breakout in uptrend",
@@ -270,58 +278,58 @@
                         "avg_net_ret_pct": -1.7
                     },
                     "holdout": {
-                        "cagr_pct": -13.4,
+                        "cagr_pct": -13.3,
                         "max_dd_pct": -30.1,
-                        "growth_pct": -17.2,
+                        "growth_pct": -17,
                         "trades": 62,
                         "win_pct": 21,
                         "avg_net_ret_pct": -1.71
                     },
-                    "end_value": 4140
+                    "end_value": 4153
                 },
                 {
                     "strategy": "20-day breakout in uptrend",
                     "slots": 6,
                     "index": false,
                     "train": {
-                        "cagr_pct": 3.3,
+                        "cagr_pct": 3.2,
                         "max_dd_pct": -42.3,
-                        "growth_pct": 9,
+                        "growth_pct": 8.7,
                         "trades": 232,
                         "win_pct": 28.4,
                         "avg_net_ret_pct": 0.4
                     },
                     "holdout": {
-                        "cagr_pct": -10.7,
+                        "cagr_pct": -10.2,
                         "max_dd_pct": -25.4,
-                        "growth_pct": -13.8,
+                        "growth_pct": -13.1,
                         "trades": 111,
                         "win_pct": 30.6,
                         "avg_net_ret_pct": -1.14
                     },
-                    "end_value": 9403
+                    "end_value": 9448
                 },
                 {
                     "strategy": "RSI(2) pullback in uptrend",
                     "slots": 2,
                     "index": false,
                     "train": {
-                        "cagr_pct": 9.7,
+                        "cagr_pct": 9.3,
                         "max_dd_pct": -48.1,
-                        "growth_pct": 27.7,
-                        "trades": 437,
-                        "win_pct": 58.6,
+                        "growth_pct": 26.5,
+                        "trades": 438,
+                        "win_pct": 58.4,
                         "avg_net_ret_pct": 0.11
                     },
                     "holdout": {
-                        "cagr_pct": -3.3,
+                        "cagr_pct": -0.5,
                         "max_dd_pct": -32.5,
-                        "growth_pct": -4.2,
+                        "growth_pct": -0.6,
                         "trades": 208,
-                        "win_pct": 55.3,
-                        "avg_net_ret_pct": 0.01
+                        "win_pct": 55.8,
+                        "avg_net_ret_pct": 0.03
                     },
-                    "end_value": 12231
+                    "end_value": 12574
                 },
                 {
                     "strategy": "RSI(2) pullback in uptrend",
@@ -330,27 +338,27 @@
                     "train": {
                         "cagr_pct": 0.2,
                         "max_dd_pct": -43.3,
-                        "growth_pct": 0.6,
-                        "trades": 872,
+                        "growth_pct": 0.5,
+                        "trades": 873,
                         "win_pct": 56.5,
-                        "avg_net_ret_pct": -0.04
+                        "avg_net_ret_pct": -0.05
                     },
                     "holdout": {
-                        "cagr_pct": -48.5,
-                        "max_dd_pct": -58.8,
-                        "growth_pct": -58.1,
-                        "trades": 372,
-                        "win_pct": 43,
+                        "cagr_pct": -48.7,
+                        "max_dd_pct": -58.7,
+                        "growth_pct": -58.3,
+                        "trades": 371,
+                        "win_pct": 43.1,
                         "avg_net_ret_pct": -1.06
                     },
-                    "end_value": 4221
+                    "end_value": 4192
                 },
                 {
                     "strategy": "RSI(2) pullback in uptrend",
                     "slots": 6,
                     "index": false,
                     "train": {
-                        "cagr_pct": -17.3,
+                        "cagr_pct": -17.2,
                         "max_dd_pct": -42.6,
                         "growth_pct": -39.3,
                         "trades": 814,
@@ -358,80 +366,80 @@
                         "avg_net_ret_pct": -0.45
                     },
                     "holdout": {
-                        "cagr_pct": -0.1,
+                        "cagr_pct": -0.4,
                         "max_dd_pct": -8.3,
-                        "growth_pct": -0.1,
+                        "growth_pct": -0.5,
                         "trades": 63,
                         "win_pct": 41.3,
                         "avg_net_ret_pct": -0.69
                     },
-                    "end_value": 6061
+                    "end_value": 6038
                 },
                 {
                     "strategy": "Monthly momentum rotation",
                     "slots": 2,
                     "index": false,
                     "train": {
-                        "cagr_pct": 41.4,
+                        "cagr_pct": 41.3,
                         "max_dd_pct": -60,
-                        "growth_pct": 149.3,
+                        "growth_pct": 149.1,
                         "trades": 15,
                         "win_pct": 53.3,
                         "avg_net_ret_pct": 23.3
                     },
                     "holdout": {
-                        "cagr_pct": 25.4,
+                        "cagr_pct": 25,
                         "max_dd_pct": -17.9,
-                        "growth_pct": 34.4,
+                        "growth_pct": 33.9,
                         "trades": 1,
                         "win_pct": 0,
                         "avg_net_ret_pct": -25.2
                     },
-                    "end_value": 33532
+                    "end_value": 33370
                 },
                 {
                     "strategy": "Monthly momentum rotation",
                     "slots": 4,
                     "index": false,
                     "train": {
-                        "cagr_pct": 50.6,
+                        "cagr_pct": 50.8,
                         "max_dd_pct": -57.7,
-                        "growth_pct": 194.2,
+                        "growth_pct": 195.5,
                         "trades": 26,
                         "win_pct": 50,
                         "avg_net_ret_pct": 43.68
                     },
                     "holdout": {
-                        "cagr_pct": 22.7,
+                        "cagr_pct": 21.5,
                         "max_dd_pct": -22.2,
-                        "growth_pct": 30.7,
+                        "growth_pct": 29,
                         "trades": 4,
                         "win_pct": 25,
                         "avg_net_ret_pct": -5.35
                     },
-                    "end_value": 38458
+                    "end_value": 38127
                 },
                 {
                     "strategy": "Monthly momentum rotation",
                     "slots": 6,
                     "index": false,
                     "train": {
-                        "cagr_pct": 47.3,
+                        "cagr_pct": 47.2,
                         "max_dd_pct": -49.8,
-                        "growth_pct": 177.6,
+                        "growth_pct": 177.4,
                         "trades": 36,
                         "win_pct": 55.6,
                         "avg_net_ret_pct": 36
                     },
                     "holdout": {
-                        "cagr_pct": 19.2,
+                        "cagr_pct": 18.2,
                         "max_dd_pct": -19.3,
-                        "growth_pct": 25.9,
+                        "growth_pct": 24.4,
                         "trades": 7,
                         "win_pct": 28.6,
                         "avg_net_ret_pct": -2.67
                     },
-                    "end_value": 34951
+                    "end_value": 34522
                 },
                 {
                     "strategy": "Momentum rotation + market filter",
@@ -448,232 +456,232 @@
                     "holdout": {
                         "cagr_pct": 0.1,
                         "max_dd_pct": -13.9,
-                        "growth_pct": 0.1,
+                        "growth_pct": 0.2,
                         "trades": 3,
                         "win_pct": 33.3,
                         "avg_net_ret_pct": -7.49
                     },
-                    "end_value": 23658
+                    "end_value": 23663
                 },
                 {
                     "strategy": "Momentum rotation + market filter",
                     "slots": 4,
                     "index": false,
                     "train": {
-                        "cagr_pct": 50.6,
+                        "cagr_pct": 50.3,
                         "max_dd_pct": -26.9,
-                        "growth_pct": 194.2,
+                        "growth_pct": 193.1,
                         "trades": 24,
                         "win_pct": 66.7,
                         "avg_net_ret_pct": 30.04
                     },
                     "holdout": {
-                        "cagr_pct": 4.8,
+                        "cagr_pct": 5.1,
                         "max_dd_pct": -14.4,
-                        "growth_pct": 6.3,
+                        "growth_pct": 6.7,
                         "trades": 6,
                         "win_pct": 16.7,
                         "avg_net_ret_pct": -5.96
                     },
-                    "end_value": 31279
+                    "end_value": 31287
                 },
                 {
                     "strategy": "Momentum rotation + market filter",
                     "slots": 6,
                     "index": false,
                     "train": {
-                        "cagr_pct": 48.3,
+                        "cagr_pct": 48.4,
                         "max_dd_pct": -23.5,
-                        "growth_pct": 182.5,
+                        "growth_pct": 183.3,
                         "trades": 38,
                         "win_pct": 52.6,
                         "avg_net_ret_pct": 22.5
                     },
                     "holdout": {
-                        "cagr_pct": -3.8,
+                        "cagr_pct": -3.9,
                         "max_dd_pct": -13.4,
-                        "growth_pct": -4.9,
+                        "growth_pct": -5.1,
                         "trades": 10,
                         "win_pct": 30,
                         "avg_net_ret_pct": -2.99
                     },
-                    "end_value": 26876
+                    "end_value": 26882
                 },
                 {
                     "strategy": "Low-volatility rotation + market filter",
                     "slots": 2,
                     "index": false,
                     "train": {
-                        "cagr_pct": 34.2,
+                        "cagr_pct": 34.1,
                         "max_dd_pct": -13.5,
-                        "growth_pct": 117.2,
+                        "growth_pct": 117.1,
                         "trades": 11,
                         "win_pct": 54.5,
                         "avg_net_ret_pct": 16.27
                     },
                     "holdout": {
-                        "cagr_pct": -6.2,
+                        "cagr_pct": -6.1,
                         "max_dd_pct": -13.7,
-                        "growth_pct": -8,
+                        "growth_pct": -7.9,
                         "trades": 3,
                         "win_pct": 33.3,
                         "avg_net_ret_pct": -3.99
                     },
-                    "end_value": 19982
+                    "end_value": 19986
                 },
                 {
                     "strategy": "Low-volatility rotation + market filter",
                     "slots": 4,
                     "index": false,
                     "train": {
-                        "cagr_pct": 22.7,
+                        "cagr_pct": 22.5,
                         "max_dd_pct": -11.2,
-                        "growth_pct": 71.6,
+                        "growth_pct": 70.9,
                         "trades": 24,
                         "win_pct": 45.8,
                         "avg_net_ret_pct": 9.52
                     },
                     "holdout": {
-                        "cagr_pct": -4.7,
+                        "cagr_pct": -4.3,
                         "max_dd_pct": -11.8,
-                        "growth_pct": -6.1,
+                        "growth_pct": -5.6,
                         "trades": 5,
                         "win_pct": 20,
                         "avg_net_ret_pct": -3.28
                     },
-                    "end_value": 16127
+                    "end_value": 16131
                 },
                 {
                     "strategy": "Low-volatility rotation + market filter",
                     "slots": 6,
                     "index": false,
                     "train": {
-                        "cagr_pct": 23.4,
+                        "cagr_pct": 23.3,
                         "max_dd_pct": -11.2,
-                        "growth_pct": 74,
+                        "growth_pct": 73.7,
                         "trades": 38,
                         "win_pct": 44.7,
                         "avg_net_ret_pct": 8.96
                     },
                     "holdout": {
-                        "cagr_pct": -1,
+                        "cagr_pct": -0.8,
                         "max_dd_pct": -7.8,
-                        "growth_pct": -1.3,
+                        "growth_pct": -1,
                         "trades": 8,
                         "win_pct": 37.5,
                         "avg_net_ret_pct": -1.09
                     },
-                    "end_value": 17187
+                    "end_value": 17191
                 },
                 {
                     "strategy": "Risk-adjusted momentum + market filter",
                     "slots": 2,
                     "index": false,
                     "train": {
-                        "cagr_pct": 37.3,
+                        "cagr_pct": 36.7,
                         "max_dd_pct": -33.8,
-                        "growth_pct": 130.7,
+                        "growth_pct": 128.4,
                         "trades": 12,
                         "win_pct": 58.3,
                         "avg_net_ret_pct": 19.02
                     },
                     "holdout": {
-                        "cagr_pct": -17.1,
+                        "cagr_pct": -16.4,
                         "max_dd_pct": -24.7,
-                        "growth_pct": -21.7,
+                        "growth_pct": -20.9,
                         "trades": 4,
                         "win_pct": 25,
                         "avg_net_ret_pct": -12.75
                     },
-                    "end_value": 18068
+                    "end_value": 18072
                 },
                 {
                     "strategy": "Risk-adjusted momentum + market filter",
                     "slots": 4,
                     "index": false,
                     "train": {
-                        "cagr_pct": 28,
+                        "cagr_pct": 27.9,
                         "max_dd_pct": -29.6,
-                        "growth_pct": 91.9,
+                        "growth_pct": 91.3,
                         "trades": 29,
                         "win_pct": 51.7,
                         "avg_net_ret_pct": 11.69
                     },
                     "holdout": {
-                        "cagr_pct": -1.7,
+                        "cagr_pct": -1.4,
                         "max_dd_pct": -12.7,
-                        "growth_pct": -2.2,
+                        "growth_pct": -1.8,
                         "trades": 6,
                         "win_pct": 50,
                         "avg_net_ret_pct": -1.64
                     },
-                    "end_value": 18778
+                    "end_value": 18782
                 },
                 {
                     "strategy": "Risk-adjusted momentum + market filter",
                     "slots": 6,
                     "index": false,
                     "train": {
-                        "cagr_pct": 19.9,
+                        "cagr_pct": 19.6,
                         "max_dd_pct": -26,
-                        "growth_pct": 61.5,
+                        "growth_pct": 60.2,
                         "trades": 49,
                         "win_pct": 36.7,
                         "avg_net_ret_pct": 6.34
                     },
                     "holdout": {
-                        "cagr_pct": 3,
-                        "max_dd_pct": -9.2,
-                        "growth_pct": 3.9,
+                        "cagr_pct": 3.6,
+                        "max_dd_pct": -8.5,
+                        "growth_pct": 4.7,
                         "trades": 9,
                         "win_pct": 88.9,
                         "avg_net_ret_pct": 4.33
                     },
-                    "end_value": 16781
+                    "end_value": 16785
                 },
                 {
                     "strategy": "Near 52-week high + market filter",
                     "slots": 2,
                     "index": false,
                     "train": {
-                        "cagr_pct": 9.6,
+                        "cagr_pct": 9.9,
                         "max_dd_pct": -23.5,
-                        "growth_pct": 27.3,
+                        "growth_pct": 28.2,
                         "trades": 45,
                         "win_pct": 42.2,
                         "avg_net_ret_pct": 1.15
                     },
                     "holdout": {
-                        "cagr_pct": -12.2,
+                        "cagr_pct": -12.6,
                         "max_dd_pct": -21,
-                        "growth_pct": -15.7,
+                        "growth_pct": -16.2,
                         "trades": 13,
                         "win_pct": 46.2,
                         "avg_net_ret_pct": -3.2
                     },
-                    "end_value": 10741
+                    "end_value": 10744
                 },
                 {
                     "strategy": "Near 52-week high + market filter",
                     "slots": 4,
                     "index": false,
                     "train": {
-                        "cagr_pct": 13.8,
+                        "cagr_pct": 13.7,
                         "max_dd_pct": -12,
-                        "growth_pct": 40.6,
+                        "growth_pct": 40.2,
                         "trades": 95,
                         "win_pct": 41.1,
                         "avg_net_ret_pct": 1.48
                     },
                     "holdout": {
-                        "cagr_pct": -0.9,
+                        "cagr_pct": -0.7,
                         "max_dd_pct": -11.3,
-                        "growth_pct": -1.2,
+                        "growth_pct": -1,
                         "trades": 19,
                         "win_pct": 47.4,
                         "avg_net_ret_pct": -0.78
                     },
-                    "end_value": 13887
+                    "end_value": 13890
                 },
                 {
                     "strategy": "Near 52-week high + market filter",
@@ -695,73 +703,73 @@
                         "win_pct": 46.2,
                         "avg_net_ret_pct": 1.17
                     },
-                    "end_value": 15345
+                    "end_value": 15348
                 },
                 {
                     "strategy": "Weekly reversal in uptrend",
                     "slots": 2,
                     "index": false,
                     "train": {
-                        "cagr_pct": -6.2,
+                        "cagr_pct": -5.9,
                         "max_dd_pct": -59.3,
-                        "growth_pct": -15.5,
-                        "trades": 200,
-                        "win_pct": 45,
-                        "avg_net_ret_pct": -0.15
+                        "growth_pct": -14.8,
+                        "trades": 201,
+                        "win_pct": 44.8,
+                        "avg_net_ret_pct": -0.16
                     },
                     "holdout": {
-                        "cagr_pct": -26.5,
+                        "cagr_pct": -26.9,
                         "max_dd_pct": -41.5,
-                        "growth_pct": -33.1,
-                        "trades": 101,
-                        "win_pct": 46.5,
-                        "avg_net_ret_pct": -0.77
+                        "growth_pct": -33.7,
+                        "trades": 100,
+                        "win_pct": 47,
+                        "avg_net_ret_pct": -0.74
                     },
-                    "end_value": 5652
+                    "end_value": 5654
                 },
                 {
                     "strategy": "Weekly reversal in uptrend",
                     "slots": 4,
                     "index": false,
                     "train": {
-                        "cagr_pct": -10.3,
+                        "cagr_pct": -10.1,
                         "max_dd_pct": -52.2,
-                        "growth_pct": -24.9,
-                        "trades": 349,
-                        "win_pct": 44.1,
-                        "avg_net_ret_pct": -0.48
+                        "growth_pct": -24.6,
+                        "trades": 350,
+                        "win_pct": 44,
+                        "avg_net_ret_pct": -0.49
                     },
                     "holdout": {
-                        "cagr_pct": -28.9,
+                        "cagr_pct": -29.9,
                         "max_dd_pct": -40.3,
-                        "growth_pct": -36,
+                        "growth_pct": -37.2,
                         "trades": 140,
                         "win_pct": 37.9,
-                        "avg_net_ret_pct": -1.39
+                        "avg_net_ret_pct": -1.43
                     },
-                    "end_value": 4810
+                    "end_value": 4740
                 },
                 {
                     "strategy": "Weekly reversal in uptrend",
                     "slots": 6,
                     "index": false,
                     "train": {
-                        "cagr_pct": -16.8,
+                        "cagr_pct": -16.7,
                         "max_dd_pct": -47.3,
-                        "growth_pct": -38.4,
-                        "trades": 378,
-                        "win_pct": 38.9,
-                        "avg_net_ret_pct": -0.94
+                        "growth_pct": -38.2,
+                        "trades": 379,
+                        "win_pct": 38.8,
+                        "avg_net_ret_pct": -0.95
                     },
                     "holdout": {
-                        "cagr_pct": -1.6,
+                        "cagr_pct": -1.8,
                         "max_dd_pct": -6.2,
-                        "growth_pct": -2.1,
-                        "trades": 19,
-                        "win_pct": 21.1,
-                        "avg_net_ret_pct": -3.02
+                        "growth_pct": -2.4,
+                        "trades": 18,
+                        "win_pct": 22.2,
+                        "avg_net_ret_pct": -2.9
                     },
-                    "end_value": 6032
+                    "end_value": 6034
                 },
                 {
                     "strategy": "Turtle 55/20 breakout + market filter",
@@ -770,108 +778,108 @@
                     "train": {
                         "cagr_pct": 33.1,
                         "max_dd_pct": -26.6,
-                        "growth_pct": 112.4,
+                        "growth_pct": 112.8,
                         "trades": 26,
                         "win_pct": 42.3,
                         "avg_net_ret_pct": 7.72
                     },
                     "holdout": {
-                        "cagr_pct": -17,
+                        "cagr_pct": -17.1,
                         "max_dd_pct": -30.2,
-                        "growth_pct": -21.7,
+                        "growth_pct": -21.8,
                         "trades": 13,
                         "win_pct": 15.4,
                         "avg_net_ret_pct": -3.78
                     },
-                    "end_value": 16638
+                    "end_value": 16642
                 },
                 {
                     "strategy": "Turtle 55/20 breakout + market filter",
                     "slots": 4,
                     "index": false,
                     "train": {
-                        "cagr_pct": 34.4,
+                        "cagr_pct": 34.2,
                         "max_dd_pct": -29.5,
-                        "growth_pct": 118.1,
+                        "growth_pct": 117.2,
                         "trades": 60,
                         "win_pct": 35,
                         "avg_net_ret_pct": 7.81
                     },
                     "holdout": {
-                        "cagr_pct": -4.7,
+                        "cagr_pct": -4.4,
                         "max_dd_pct": -15.1,
-                        "growth_pct": -6.1,
+                        "growth_pct": -5.7,
                         "trades": 22,
                         "win_pct": 13.6,
                         "avg_net_ret_pct": -2.3
                     },
-                    "end_value": 20477
+                    "end_value": 20482
                 },
                 {
                     "strategy": "Turtle 55/20 breakout + market filter",
                     "slots": 6,
                     "index": false,
                     "train": {
-                        "cagr_pct": 27.3,
+                        "cagr_pct": 26.8,
                         "max_dd_pct": -25.2,
-                        "growth_pct": 88.8,
+                        "growth_pct": 87.1,
                         "trades": 88,
                         "win_pct": 35.2,
                         "avg_net_ret_pct": 6.06
                     },
                     "holdout": {
-                        "cagr_pct": 1.8,
+                        "cagr_pct": 2.6,
                         "max_dd_pct": -13.7,
-                        "growth_pct": 2.4,
+                        "growth_pct": 3.4,
                         "trades": 29,
                         "win_pct": 13.8,
                         "avg_net_ret_pct": -0.1
                     },
-                    "end_value": 19335
+                    "end_value": 19340
                 },
                 {
                     "strategy": "Low-vol momentum + market filter",
                     "slots": 2,
                     "index": false,
                     "train": {
-                        "cagr_pct": 24.5,
+                        "cagr_pct": 24,
                         "max_dd_pct": -17.6,
-                        "growth_pct": 78.3,
+                        "growth_pct": 76.3,
                         "trades": 17,
                         "win_pct": 52.9,
                         "avg_net_ret_pct": 11.44
                     },
                     "holdout": {
-                        "cagr_pct": 13.8,
+                        "cagr_pct": 14.8,
                         "max_dd_pct": -11,
-                        "growth_pct": 18.5,
+                        "growth_pct": 19.8,
                         "trades": 3,
                         "win_pct": 33.3,
                         "avg_net_ret_pct": 11.82
                     },
-                    "end_value": 21126
+                    "end_value": 21131
                 },
                 {
                     "strategy": "Low-vol momentum + market filter",
                     "slots": 4,
                     "index": false,
                     "train": {
-                        "cagr_pct": 25.6,
+                        "cagr_pct": 25.5,
                         "max_dd_pct": -14.6,
-                        "growth_pct": 82.3,
+                        "growth_pct": 82.1,
                         "trades": 29,
                         "win_pct": 62.1,
                         "avg_net_ret_pct": 14.79
                     },
                     "holdout": {
-                        "cagr_pct": 12.9,
+                        "cagr_pct": 13,
                         "max_dd_pct": -6,
-                        "growth_pct": 17.1,
+                        "growth_pct": 17.3,
                         "trades": 8,
                         "win_pct": 25,
                         "avg_net_ret_pct": -2.56
                     },
-                    "end_value": 21361
+                    "end_value": 21367
                 },
                 {
                     "strategy": "Low-vol momentum + market filter",
@@ -880,7 +888,7 @@
                     "train": {
                         "cagr_pct": 11.6,
                         "max_dd_pct": -12.6,
-                        "growth_pct": 33.5,
+                        "growth_pct": 33.6,
                         "trades": 51,
                         "win_pct": 52.9,
                         "avg_net_ret_pct": 4.34
@@ -888,34 +896,34 @@
                     "holdout": {
                         "cagr_pct": 1.2,
                         "max_dd_pct": -7.7,
-                        "growth_pct": 1.6,
+                        "growth_pct": 1.5,
                         "trades": 13,
                         "win_pct": 23.1,
                         "avg_net_ret_pct": -1.85
                     },
-                    "end_value": 13561
+                    "end_value": 13565
                 },
                 {
                     "strategy": "Sector rotation + market filter",
                     "slots": 2,
                     "index": false,
                     "train": {
-                        "cagr_pct": 34.8,
+                        "cagr_pct": 35.2,
                         "max_dd_pct": -35.1,
-                        "growth_pct": 119.7,
+                        "growth_pct": 121.6,
                         "trades": 33,
                         "win_pct": 45.5,
                         "avg_net_ret_pct": 4.1
                     },
                     "holdout": {
-                        "cagr_pct": -7.6,
+                        "cagr_pct": -8.2,
                         "max_dd_pct": -25.6,
-                        "growth_pct": -9.8,
+                        "growth_pct": -10.6,
                         "trades": 8,
                         "win_pct": 75,
                         "avg_net_ret_pct": 2.03
                     },
-                    "end_value": 19813
+                    "end_value": 19818
                 },
                 {
                     "strategy": "Sector rotation + market filter",
@@ -924,117 +932,117 @@
                     "train": {
                         "cagr_pct": 27.1,
                         "max_dd_pct": -33.3,
-                        "growth_pct": 88,
+                        "growth_pct": 88.4,
                         "trades": 65,
                         "win_pct": 47.7,
                         "avg_net_ret_pct": 3.31
                     },
                     "holdout": {
-                        "cagr_pct": -2.4,
+                        "cagr_pct": -2.5,
                         "max_dd_pct": -17.7,
-                        "growth_pct": -3.1,
+                        "growth_pct": -3.3,
                         "trades": 14,
                         "win_pct": 71.4,
                         "avg_net_ret_pct": 1.27
                     },
-                    "end_value": 18230
+                    "end_value": 18234
                 },
                 {
                     "strategy": "Sector rotation + market filter",
                     "slots": 6,
                     "index": false,
                     "train": {
-                        "cagr_pct": 16.5,
+                        "cagr_pct": 16.4,
                         "max_dd_pct": -27.6,
-                        "growth_pct": 49.5,
+                        "growth_pct": 49.4,
                         "trades": 101,
                         "win_pct": 44.6,
                         "avg_net_ret_pct": 2.71
                     },
                     "holdout": {
-                        "cagr_pct": -3.2,
+                        "cagr_pct": -3.1,
                         "max_dd_pct": -14.4,
                         "growth_pct": -4.1,
                         "trades": 23,
                         "win_pct": 43.5,
                         "avg_net_ret_pct": -1.2
                     },
-                    "end_value": 14331
+                    "end_value": 14335
                 },
                 {
                     "strategy": "1-month dip in 12-month winners + market filter",
                     "slots": 2,
                     "index": false,
                     "train": {
-                        "cagr_pct": 23.1,
+                        "cagr_pct": 23.6,
                         "max_dd_pct": -33.7,
-                        "growth_pct": 72.9,
+                        "growth_pct": 74.9,
                         "trades": 50,
                         "win_pct": 56,
                         "avg_net_ret_pct": 2.58
                     },
                     "holdout": {
-                        "cagr_pct": -17.8,
+                        "cagr_pct": -18.5,
                         "max_dd_pct": -30.3,
-                        "growth_pct": -22.6,
+                        "growth_pct": -23.5,
                         "trades": 10,
                         "win_pct": 20,
                         "avg_net_ret_pct": -6.67
                     },
-                    "end_value": 13390
+                    "end_value": 13393
                 },
                 {
                     "strategy": "1-month dip in 12-month winners + market filter",
                     "slots": 4,
                     "index": false,
                     "train": {
-                        "cagr_pct": 26.3,
+                        "cagr_pct": 26.5,
                         "max_dd_pct": -19.4,
-                        "growth_pct": 84.9,
+                        "growth_pct": 86.1,
                         "trades": 102,
                         "win_pct": 59.8,
                         "avg_net_ret_pct": 2.58
                     },
                     "holdout": {
-                        "cagr_pct": -6.9,
+                        "cagr_pct": -7.3,
                         "max_dd_pct": -18.8,
-                        "growth_pct": -8.9,
+                        "growth_pct": -9.5,
                         "trades": 19,
                         "win_pct": 26.3,
                         "avg_net_ret_pct": -4.06
                     },
-                    "end_value": 16845
+                    "end_value": 16849
                 },
                 {
                     "strategy": "1-month dip in 12-month winners + market filter",
                     "slots": 6,
                     "index": false,
                     "train": {
-                        "cagr_pct": 22,
+                        "cagr_pct": 22.2,
                         "max_dd_pct": -23.3,
-                        "growth_pct": 69.1,
+                        "growth_pct": 69.6,
                         "trades": 149,
                         "win_pct": 57.7,
                         "avg_net_ret_pct": 2.21
                     },
                     "holdout": {
-                        "cagr_pct": -6.9,
+                        "cagr_pct": -7.1,
                         "max_dd_pct": -16.4,
-                        "growth_pct": -8.9,
+                        "growth_pct": -9.2,
                         "trades": 31,
                         "win_pct": 32.3,
                         "avg_net_ret_pct": -3.61
                     },
-                    "end_value": 15408
+                    "end_value": 15411
                 },
                 {
                     "strategy": "Weekly momentum rotation + market filter",
                     "slots": 2,
                     "index": false,
                     "train": {
-                        "cagr_pct": 51.7,
+                        "cagr_pct": 51.6,
                         "max_dd_pct": -27.8,
-                        "growth_pct": 200,
+                        "growth_pct": 200.1,
                         "trades": 13,
                         "win_pct": 46.2,
                         "avg_net_ret_pct": 36.72
@@ -1047,51 +1055,51 @@
                         "win_pct": 20,
                         "avg_net_ret_pct": -3.43
                     },
-                    "end_value": 31967
+                    "end_value": 31975
                 },
                 {
                     "strategy": "Weekly momentum rotation + market filter",
                     "slots": 4,
                     "index": false,
                     "train": {
-                        "cagr_pct": 39.3,
+                        "cagr_pct": 39.1,
                         "max_dd_pct": -31.5,
-                        "growth_pct": 139.4,
+                        "growth_pct": 138.9,
                         "trades": 29,
                         "win_pct": 55.2,
                         "avg_net_ret_pct": 22.38
                     },
                     "holdout": {
-                        "cagr_pct": -0.2,
+                        "cagr_pct": -0.1,
                         "max_dd_pct": -13.4,
-                        "growth_pct": -0.3,
+                        "growth_pct": -0.1,
                         "trades": 12,
                         "win_pct": 33.3,
                         "avg_net_ret_pct": -3.92
                     },
-                    "end_value": 23872
+                    "end_value": 23877
                 },
                 {
                     "strategy": "Weekly momentum rotation + market filter",
                     "slots": 6,
                     "index": false,
                     "train": {
-                        "cagr_pct": 50.7,
+                        "cagr_pct": 50.6,
                         "max_dd_pct": -31.6,
-                        "growth_pct": 195,
+                        "growth_pct": 194.7,
                         "trades": 47,
                         "win_pct": 53.2,
                         "avg_net_ret_pct": 25.6
                     },
                     "holdout": {
-                        "cagr_pct": 4,
+                        "cagr_pct": 4.1,
                         "max_dd_pct": -11.8,
-                        "growth_pct": 5.3,
+                        "growth_pct": 5.4,
                         "trades": 16,
                         "win_pct": 43.8,
                         "avg_net_ret_pct": -0.54
                     },
-                    "end_value": 31062
+                    "end_value": 31070
                 },
                 {
                     "strategy": "Quarterly momentum rotation + market filter",
@@ -1113,7 +1121,7 @@
                         "win_pct": 50,
                         "avg_net_ret_pct": 1.36
                     },
-                    "end_value": 17764
+                    "end_value": 17768
                 },
                 {
                     "strategy": "Quarterly momentum rotation + market filter",
@@ -1122,7 +1130,7 @@
                     "train": {
                         "cagr_pct": 25.9,
                         "max_dd_pct": -25.2,
-                        "growth_pct": 83.6,
+                        "growth_pct": 83.7,
                         "trades": 13,
                         "win_pct": 53.8,
                         "avg_net_ret_pct": 28.01
@@ -1135,7 +1143,7 @@
                         "win_pct": 37.5,
                         "avg_net_ret_pct": -1.34
                     },
-                    "end_value": 18346
+                    "end_value": 18350
                 },
                 {
                     "strategy": "Quarterly momentum rotation + market filter",
@@ -1157,7 +1165,7 @@
                         "win_pct": 23.1,
                         "avg_net_ret_pct": -6.73
                     },
-                    "end_value": 17739
+                    "end_value": 17743
                 },
                 {
                     "strategy": "Momentum + low-vol combined rank + market filter",
@@ -1166,130 +1174,130 @@
                     "train": {
                         "cagr_pct": 31.2,
                         "max_dd_pct": -16.8,
-                        "growth_pct": 104.7,
+                        "growth_pct": 105,
                         "trades": 11,
                         "win_pct": 81.8,
                         "avg_net_ret_pct": 15.44
                     },
                     "holdout": {
-                        "cagr_pct": 1,
+                        "cagr_pct": 0.9,
                         "max_dd_pct": -10,
-                        "growth_pct": 1.3,
+                        "growth_pct": 1.2,
                         "trades": 2,
                         "win_pct": 50,
                         "avg_net_ret_pct": 0.06
                     },
-                    "end_value": 20739
+                    "end_value": 20744
                 },
                 {
                     "strategy": "Momentum + low-vol combined rank + market filter",
                     "slots": 4,
                     "index": false,
                     "train": {
-                        "cagr_pct": 25.9,
+                        "cagr_pct": 25.8,
                         "max_dd_pct": -13.4,
-                        "growth_pct": 83.7,
+                        "growth_pct": 83.2,
                         "trades": 22,
                         "win_pct": 72.7,
                         "avg_net_ret_pct": 13.18
                     },
                     "holdout": {
-                        "cagr_pct": 0.4,
+                        "cagr_pct": 0.6,
                         "max_dd_pct": -7.1,
-                        "growth_pct": 0.5,
+                        "growth_pct": 0.8,
                         "trades": 3,
                         "win_pct": 33.3,
                         "avg_net_ret_pct": -1.11
                     },
-                    "end_value": 18462
+                    "end_value": 18467
                 },
                 {
                     "strategy": "Momentum + low-vol combined rank + market filter",
                     "slots": 6,
                     "index": false,
                     "train": {
-                        "cagr_pct": 26.1,
+                        "cagr_pct": 25.8,
                         "max_dd_pct": -8,
-                        "growth_pct": 84.3,
+                        "growth_pct": 83.2,
                         "trades": 44,
                         "win_pct": 65.9,
                         "avg_net_ret_pct": 9.62
                     },
                     "holdout": {
-                        "cagr_pct": -4.9,
+                        "cagr_pct": -4.4,
                         "max_dd_pct": -12.7,
-                        "growth_pct": -6.3,
+                        "growth_pct": -5.8,
                         "trades": 8,
                         "win_pct": 37.5,
                         "avg_net_ret_pct": -7.26
                     },
-                    "end_value": 17267
+                    "end_value": 17271
                 },
                 {
                     "strategy": "52-week-high breakout on volume + market filter",
                     "slots": 2,
                     "index": false,
                     "train": {
-                        "cagr_pct": 20.5,
+                        "cagr_pct": 21,
                         "max_dd_pct": -24.4,
-                        "growth_pct": 63.5,
+                        "growth_pct": 65.2,
                         "trades": 27,
                         "win_pct": 48.1,
                         "avg_net_ret_pct": 4.52
                     },
                     "holdout": {
-                        "cagr_pct": 2.4,
+                        "cagr_pct": 1.6,
                         "max_dd_pct": -14.7,
-                        "growth_pct": 3.1,
+                        "growth_pct": 2.1,
                         "trades": 9,
                         "win_pct": 33.3,
                         "avg_net_ret_pct": 0.03
                     },
-                    "end_value": 16864
+                    "end_value": 16868
                 },
                 {
                     "strategy": "52-week-high breakout on volume + market filter",
                     "slots": 4,
                     "index": false,
                     "train": {
-                        "cagr_pct": 22.1,
+                        "cagr_pct": 22.3,
                         "max_dd_pct": -21,
-                        "growth_pct": 69.2,
+                        "growth_pct": 70.2,
                         "trades": 56,
                         "win_pct": 48.2,
                         "avg_net_ret_pct": 4.62
                     },
                     "holdout": {
-                        "cagr_pct": -3.6,
+                        "cagr_pct": -4,
                         "max_dd_pct": -13.3,
-                        "growth_pct": -4.6,
+                        "growth_pct": -5.2,
                         "trades": 19,
                         "win_pct": 31.6,
                         "avg_net_ret_pct": -1.85
                     },
-                    "end_value": 16137
+                    "end_value": 16141
                 },
                 {
                     "strategy": "52-week-high breakout on volume + market filter",
                     "slots": 6,
                     "index": false,
                     "train": {
-                        "cagr_pct": 18.5,
+                        "cagr_pct": 18.9,
                         "max_dd_pct": -18.5,
-                        "growth_pct": 56.4,
+                        "growth_pct": 57.9,
                         "trades": 81,
                         "win_pct": 42,
                         "avg_net_ret_pct": 4.22
                     },
                     "holdout": {
-                        "cagr_pct": 4.3,
+                        "cagr_pct": 3.5,
                         "max_dd_pct": -8.9,
-                        "growth_pct": 5.6,
+                        "growth_pct": 4.7,
                         "trades": 25,
                         "win_pct": 32,
                         "avg_net_ret_pct": 0.63
                     },
-                    "end_value": 16521
+                    "end_value": 16524
                 },
                 {
                     "strategy": "Nifty ETF above its 200-DMA",
@@ -1304,21 +1312,21 @@
                         "avg_net_ret_pct": 2.76
                     },
                     "holdout": {
-                        "cagr_pct": -2.7,
+                        "cagr_pct": -2.6,
                         "max_dd_pct": -11,
-                        "growth_pct": -3.5,
+                        "growth_pct": -3.4,
                         "trades": 2,
                         "win_pct": 0,
                         "avg_net_ret_pct": -3.25
                     },
-                    "end_value": 12150
+                    "end_value": 12153
                 },
                 {
                     "strategy": "Nifty ETF 50/200-DMA cross",
                     "slots": 1,
                     "index": true,
                     "train": {
-                        "cagr_pct": 10.9,
+                        "cagr_pct": 10.8,
                         "max_dd_pct": -11.9,
                         "growth_pct": 31.2,
                         "trades": 3,
@@ -1333,7 +1341,7 @@
                         "win_pct": null,
                         "avg_net_ret_pct": null
                     },
-                    "end_value": 12642
+                    "end_value": 12645
                 },
                 {
                     "strategy": "Nifty ETF turn of the month",
@@ -1342,27 +1350,27 @@
                     "train": {
                         "cagr_pct": 10.2,
                         "max_dd_pct": -6.9,
-                        "growth_pct": 29.1,
+                        "growth_pct": 29.2,
                         "trades": 32,
                         "win_pct": 62.5,
                         "avg_net_ret_pct": 0.5
                     },
                     "holdout": {
-                        "cagr_pct": -1.6,
+                        "cagr_pct": -2.3,
                         "max_dd_pct": -6.6,
-                        "growth_pct": -2.1,
+                        "growth_pct": -3,
                         "trades": 15,
                         "win_pct": 33.3,
                         "avg_net_ret_pct": -0.36
                     },
-                    "end_value": 12645
+                    "end_value": 12536
                 },
                 {
                     "strategy": "Nifty ETF / gold ETF switch",
                     "slots": 1,
                     "index": true,
                     "train": {
-                        "cagr_pct": 18.1,
+                        "cagr_pct": 18,
                         "max_dd_pct": -11.8,
                         "growth_pct": 54.9,
                         "trades": 5,
@@ -1370,19 +1378,19 @@
                         "avg_net_ret_pct": 9.59
                     },
                     "holdout": {
-                        "cagr_pct": -4,
+                        "cagr_pct": -4.1,
                         "max_dd_pct": -19.9,
-                        "growth_pct": -5.2,
+                        "growth_pct": -5.3,
                         "trades": 1,
                         "win_pct": 0,
                         "avg_net_ret_pct": -3.32
                     },
-                    "end_value": 14692
+                    "end_value": 14673
                 }
             ],
             "check_8y": {
-                "from": "2018-10-23",
-                "holdout_from": "2024-02-07",
+                "from": "2018-10-24",
+                "holdout_from": "2024-02-08",
                 "passed_4y": 4,
                 "passed_both": 1,
                 "baselines": [
@@ -1390,35 +1398,35 @@
                         "strategy": "Nifty 50 buy & hold",
                         "baseline": true,
                         "train": {
-                            "cagr_pct": 15.7,
+                            "cagr_pct": 15.3,
                             "max_dd_pct": -38.4,
-                            "growth_pct": 116.1
+                            "growth_pct": 112.4
                         },
                         "holdout": {
                             "cagr_pct": 1.2,
                             "max_dd_pct": -15.8,
-                            "growth_pct": 3.1
+                            "growth_pct": 3.2
                         },
-                        "from": "2018-10-23",
-                        "holdout_from": "2024-02-07",
-                        "to": "2026-09-30"
+                        "from": "2018-10-24",
+                        "holdout_from": "2024-02-08",
+                        "to": "2026-10-01"
                     },
                     {
                         "strategy": "Equal-weight buy & hold of the same stocks",
                         "baseline": true,
                         "train": {
-                            "cagr_pct": 35,
+                            "cagr_pct": 34.8,
                             "max_dd_pct": -38.9,
-                            "growth_pct": 389
+                            "growth_pct": 385.1
                         },
                         "holdout": {
-                            "cagr_pct": 7.3,
+                            "cagr_pct": 6.8,
                             "max_dd_pct": -26.3,
-                            "growth_pct": 20.6
+                            "growth_pct": 19
                         },
-                        "from": "2018-10-23",
-                        "holdout_from": "2024-02-07",
-                        "to": "2026-09-30"
+                        "from": "2018-10-24",
+                        "holdout_from": "2024-02-08",
+                        "to": "2026-10-01"
                     }
                 ],
                 "results": [
@@ -1426,20 +1434,20 @@
                         "strategy": "App swing score (live rule)",
                         "slots": 2,
                         "train": {
-                            "cagr_pct": -17.5,
-                            "max_dd_pct": -77.9,
-                            "growth_pct": -63.9,
-                            "trades": 211,
-                            "win_pct": 34.6,
-                            "avg_net_ret_pct": -0.88
+                            "cagr_pct": -16.1,
+                            "max_dd_pct": -78.4,
+                            "growth_pct": -60.5,
+                            "trades": 214,
+                            "win_pct": 35.5,
+                            "avg_net_ret_pct": -0.6
                         },
                         "holdout": {
-                            "cagr_pct": -21.2,
-                            "max_dd_pct": -47.3,
-                            "growth_pct": -46.7,
-                            "trades": 68,
-                            "win_pct": 30.9,
-                            "avg_net_ret_pct": -1.83
+                            "cagr_pct": -23,
+                            "max_dd_pct": -53.6,
+                            "growth_pct": -50,
+                            "trades": 67,
+                            "win_pct": 28.4,
+                            "avg_net_ret_pct": -2.38
                         }
                     },
                     {
@@ -1447,11 +1455,11 @@
                         "slots": 4,
                         "train": {
                             "cagr_pct": -15.8,
-                            "max_dd_pct": -62.5,
+                            "max_dd_pct": -62.1,
                             "growth_pct": -59.7,
-                            "trades": 344,
-                            "win_pct": 34.9,
-                            "avg_net_ret_pct": -1.02
+                            "trades": 343,
+                            "win_pct": 35,
+                            "avg_net_ret_pct": -1
                         },
                         "holdout": {
                             "cagr_pct": -0.7,
@@ -1466,37 +1474,37 @@
                         "strategy": "App swing score (live rule)",
                         "slots": 6,
                         "train": {
-                            "cagr_pct": -8.4,
-                            "max_dd_pct": -45.9,
-                            "growth_pct": -37.2,
-                            "trades": 222,
-                            "win_pct": 34.2,
-                            "avg_net_ret_pct": -1.73
+                            "cagr_pct": -9.9,
+                            "max_dd_pct": -49.1,
+                            "growth_pct": -42.3,
+                            "trades": 203,
+                            "win_pct": 31,
+                            "avg_net_ret_pct": -2.16
                         },
                         "holdout": {
-                            "cagr_pct": -2,
-                            "max_dd_pct": -8.7,
-                            "growth_pct": -5.1,
-                            "trades": 16,
-                            "win_pct": 6.3,
-                            "avg_net_ret_pct": -6.81
+                            "cagr_pct": 1.2,
+                            "max_dd_pct": -4.7,
+                            "growth_pct": 3.2,
+                            "trades": 11,
+                            "win_pct": 0,
+                            "avg_net_ret_pct": -6.47
                         }
                     },
                     {
                         "strategy": "20-day breakout in uptrend",
                         "slots": 2,
                         "train": {
-                            "cagr_pct": 41.5,
+                            "cagr_pct": 41,
                             "max_dd_pct": -46.3,
-                            "growth_pct": 526.8,
+                            "growth_pct": 516.8,
                             "trades": 143,
                             "win_pct": 39.9,
                             "avg_net_ret_pct": 3.27
                         },
                         "holdout": {
-                            "cagr_pct": -12.6,
+                            "cagr_pct": -12.5,
                             "max_dd_pct": -43.9,
-                            "growth_pct": -29.9,
+                            "growth_pct": -29.8,
                             "trades": 79,
                             "win_pct": 30.4,
                             "avg_net_ret_pct": -0.35
@@ -1506,17 +1514,17 @@
                         "strategy": "20-day breakout in uptrend",
                         "slots": 4,
                         "train": {
-                            "cagr_pct": 28.1,
+                            "cagr_pct": 28.2,
                             "max_dd_pct": -40.1,
-                            "growth_pct": 271.2,
+                            "growth_pct": 273,
                             "trades": 289,
                             "win_pct": 36,
                             "avg_net_ret_pct": 2.45
                         },
                         "holdout": {
-                            "cagr_pct": -20.4,
-                            "max_dd_pct": -45.5,
-                            "growth_pct": -45.3,
+                            "cagr_pct": -20.7,
+                            "max_dd_pct": -45.9,
+                            "growth_pct": -45.9,
                             "trades": 166,
                             "win_pct": 25.9,
                             "avg_net_ret_pct": -1.34
@@ -1526,17 +1534,17 @@
                         "strategy": "20-day breakout in uptrend",
                         "slots": 6,
                         "train": {
-                            "cagr_pct": 13.9,
+                            "cagr_pct": 14,
                             "max_dd_pct": -35.7,
-                            "growth_pct": 99.2,
+                            "growth_pct": 99.9,
                             "trades": 447,
                             "win_pct": 33.3,
                             "avg_net_ret_pct": 1.04
                         },
                         "holdout": {
-                            "cagr_pct": -17.8,
-                            "max_dd_pct": -40.7,
-                            "growth_pct": -40.5,
+                            "cagr_pct": -18,
+                            "max_dd_pct": -40.8,
+                            "growth_pct": -40.8,
                             "trades": 228,
                             "win_pct": 26.3,
                             "avg_net_ret_pct": -1.36
@@ -1546,19 +1554,19 @@
                         "strategy": "RSI(2) pullback in uptrend",
                         "slots": 2,
                         "train": {
-                            "cagr_pct": 39.2,
-                            "max_dd_pct": -41.3,
-                            "growth_pct": 475.3,
-                            "trades": 915,
-                            "win_pct": 63.4,
-                            "avg_net_ret_pct": 0.45
+                            "cagr_pct": 41.1,
+                            "max_dd_pct": -40.7,
+                            "growth_pct": 519.2,
+                            "trades": 914,
+                            "win_pct": 63.5,
+                            "avg_net_ret_pct": 0.48
                         },
                         "holdout": {
-                            "cagr_pct": -8.5,
-                            "max_dd_pct": -50.4,
-                            "growth_pct": -20.9,
-                            "trades": 398,
-                            "win_pct": 58.3,
+                            "cagr_pct": -7.5,
+                            "max_dd_pct": -49.7,
+                            "growth_pct": -18.7,
+                            "trades": 399,
+                            "win_pct": 58.4,
                             "avg_net_ret_pct": -0.05
                         }
                     },
@@ -1566,57 +1574,57 @@
                         "strategy": "RSI(2) pullback in uptrend",
                         "slots": 4,
                         "train": {
-                            "cagr_pct": -16.5,
-                            "max_dd_pct": -66.9,
-                            "growth_pct": -61.5,
-                            "trades": 1340,
-                            "win_pct": 50.9,
-                            "avg_net_ret_pct": -0.32
+                            "cagr_pct": 8.6,
+                            "max_dd_pct": -43.1,
+                            "growth_pct": 54.7,
+                            "trades": 1750,
+                            "win_pct": 56.2,
+                            "avg_net_ret_pct": 0.1
                         },
                         "holdout": {
-                            "cagr_pct": 1.5,
-                            "max_dd_pct": -5.3,
-                            "growth_pct": 4,
-                            "trades": 23,
-                            "win_pct": 30.4,
-                            "avg_net_ret_pct": -1.93
+                            "cagr_pct": -36.9,
+                            "max_dd_pct": -73,
+                            "growth_pct": -70.5,
+                            "trades": 771,
+                            "win_pct": 49.3,
+                            "avg_net_ret_pct": -0.75
                         }
                     },
                     {
                         "strategy": "RSI(2) pullback in uptrend",
                         "slots": 6,
                         "train": {
-                            "cagr_pct": -9.2,
-                            "max_dd_pct": -46.6,
-                            "growth_pct": -40.1,
-                            "trades": 694,
+                            "cagr_pct": -9.5,
+                            "max_dd_pct": -48.5,
+                            "growth_pct": -41.2,
+                            "trades": 642,
                             "win_pct": 42.5,
-                            "avg_net_ret_pct": -0.67
+                            "avg_net_ret_pct": -0.74
                         },
                         "holdout": {
-                            "cagr_pct": -0.3,
+                            "cagr_pct": 0.5,
                             "max_dd_pct": -10.8,
-                            "growth_pct": -0.7,
-                            "trades": 64,
-                            "win_pct": 42.2,
-                            "avg_net_ret_pct": -1.44
+                            "growth_pct": 1.2,
+                            "trades": 61,
+                            "win_pct": 34.4,
+                            "avg_net_ret_pct": -1.34
                         }
                     },
                     {
                         "strategy": "Monthly momentum rotation",
                         "slots": 2,
                         "train": {
-                            "cagr_pct": 68.9,
+                            "cagr_pct": 69.4,
                             "max_dd_pct": -50.2,
-                            "growth_pct": 1499.6,
+                            "growth_pct": 1524.9,
                             "trades": 21,
                             "win_pct": 52.4,
                             "avg_net_ret_pct": 58.42
                         },
                         "holdout": {
-                            "cagr_pct": -0.4,
+                            "cagr_pct": -1.2,
                             "max_dd_pct": -65.6,
-                            "growth_pct": -1.1,
+                            "growth_pct": -3.2,
                             "trades": 12,
                             "win_pct": 33.3,
                             "avg_net_ret_pct": -7.71
@@ -1626,17 +1634,17 @@
                         "strategy": "Monthly momentum rotation",
                         "slots": 4,
                         "train": {
-                            "cagr_pct": 67,
+                            "cagr_pct": 67.6,
                             "max_dd_pct": -33.2,
-                            "growth_pct": 1408.7,
+                            "growth_pct": 1439,
                             "trades": 44,
                             "win_pct": 61.4,
                             "avg_net_ret_pct": 57.69
                         },
                         "holdout": {
-                            "cagr_pct": 1.7,
+                            "cagr_pct": 0.5,
                             "max_dd_pct": -53.5,
-                            "growth_pct": 4.6,
+                            "growth_pct": 1.4,
                             "trades": 22,
                             "win_pct": 31.8,
                             "avg_net_ret_pct": -6.87
@@ -1646,17 +1654,17 @@
                         "strategy": "Monthly momentum rotation",
                         "slots": 6,
                         "train": {
-                            "cagr_pct": 64.8,
+                            "cagr_pct": 65.2,
                             "max_dd_pct": -35.9,
-                            "growth_pct": 1308.1,
+                            "growth_pct": 1324.4,
                             "trades": 63,
                             "win_pct": 66.7,
                             "avg_net_ret_pct": 52.21
                         },
                         "holdout": {
-                            "cagr_pct": 1,
+                            "cagr_pct": -0.1,
                             "max_dd_pct": -48.7,
-                            "growth_pct": 2.5,
+                            "growth_pct": -0.2,
                             "trades": 30,
                             "win_pct": 33.3,
                             "avg_net_ret_pct": -5.34
@@ -1666,17 +1674,17 @@
                         "strategy": "Momentum rotation + market filter",
                         "slots": 2,
                         "train": {
-                            "cagr_pct": 53.3,
+                            "cagr_pct": 53.5,
                             "max_dd_pct": -40.5,
-                            "growth_pct": 860.4,
+                            "growth_pct": 864.7,
                             "trades": 23,
                             "win_pct": 65.2,
                             "avg_net_ret_pct": 34.03
                         },
                         "holdout": {
-                            "cagr_pct": 5.6,
+                            "cagr_pct": 5.4,
                             "max_dd_pct": -22.6,
-                            "growth_pct": 15.4,
+                            "growth_pct": 14.9,
                             "trades": 9,
                             "win_pct": 33.3,
                             "avg_net_ret_pct": -0.57
@@ -1686,17 +1694,17 @@
                         "strategy": "Momentum rotation + market filter",
                         "slots": 4,
                         "train": {
-                            "cagr_pct": 47,
+                            "cagr_pct": 47.4,
                             "max_dd_pct": -23.9,
-                            "growth_pct": 667.8,
+                            "growth_pct": 679.5,
                             "trades": 49,
                             "win_pct": 65.3,
                             "avg_net_ret_pct": 25.17
                         },
                         "holdout": {
-                            "cagr_pct": 3.3,
-                            "max_dd_pct": -21.8,
-                            "growth_pct": 9.1,
+                            "cagr_pct": 2.6,
+                            "max_dd_pct": -21.9,
+                            "growth_pct": 7,
                             "trades": 18,
                             "win_pct": 38.9,
                             "avg_net_ret_pct": -0.86
@@ -1706,17 +1714,17 @@
                         "strategy": "Momentum rotation + market filter",
                         "slots": 6,
                         "train": {
-                            "cagr_pct": 51.2,
+                            "cagr_pct": 51.5,
                             "max_dd_pct": -19.8,
-                            "growth_pct": 791.9,
+                            "growth_pct": 801.2,
                             "trades": 73,
                             "win_pct": 67.1,
                             "avg_net_ret_pct": 27.01
                         },
                         "holdout": {
-                            "cagr_pct": 10.3,
+                            "cagr_pct": 9.9,
                             "max_dd_pct": -22.9,
-                            "growth_pct": 29.6,
+                            "growth_pct": 28.3,
                             "trades": 27,
                             "win_pct": 40.7,
                             "avg_net_ret_pct": 2
@@ -1726,17 +1734,17 @@
                         "strategy": "Low-volatility rotation + market filter",
                         "slots": 2,
                         "train": {
-                            "cagr_pct": 15.5,
+                            "cagr_pct": 15.2,
                             "max_dd_pct": -25.8,
-                            "growth_pct": 114.2,
+                            "growth_pct": 111.4,
                             "trades": 23,
                             "win_pct": 52.2,
                             "avg_net_ret_pct": 9.68
                         },
                         "holdout": {
-                            "cagr_pct": 4.7,
+                            "cagr_pct": 5.2,
                             "max_dd_pct": -14.6,
-                            "growth_pct": 12.9,
+                            "growth_pct": 14.3,
                             "trades": 6,
                             "win_pct": 16.7,
                             "avg_net_ret_pct": -5.39
@@ -1746,17 +1754,17 @@
                         "strategy": "Low-volatility rotation + market filter",
                         "slots": 4,
                         "train": {
-                            "cagr_pct": 12.6,
+                            "cagr_pct": 12.3,
                             "max_dd_pct": -19.6,
-                            "growth_pct": 87.2,
+                            "growth_pct": 85.2,
                             "trades": 54,
                             "win_pct": 40.7,
                             "avg_net_ret_pct": 5.96
                         },
                         "holdout": {
-                            "cagr_pct": 5.1,
+                            "cagr_pct": 5.5,
                             "max_dd_pct": -15.5,
-                            "growth_pct": 14,
+                            "growth_pct": 15.3,
                             "trades": 12,
                             "win_pct": 8.3,
                             "avg_net_ret_pct": -4.43
@@ -1766,17 +1774,17 @@
                         "strategy": "Low-volatility rotation + market filter",
                         "slots": 6,
                         "train": {
-                            "cagr_pct": 11.5,
+                            "cagr_pct": 11.2,
                             "max_dd_pct": -14.3,
-                            "growth_pct": 77.7,
+                            "growth_pct": 75.8,
                             "trades": 85,
                             "win_pct": 47.1,
                             "avg_net_ret_pct": 5.97
                         },
                         "holdout": {
-                            "cagr_pct": 5.4,
+                            "cagr_pct": 5.8,
                             "max_dd_pct": -11.5,
-                            "growth_pct": 14.8,
+                            "growth_pct": 16.1,
                             "trades": 20,
                             "win_pct": 30,
                             "avg_net_ret_pct": -2.41
@@ -1788,7 +1796,7 @@
                         "train": {
                             "cagr_pct": 32.3,
                             "max_dd_pct": -30.7,
-                            "growth_pct": 340.7,
+                            "growth_pct": 340.6,
                             "trades": 24,
                             "win_pct": 45.8,
                             "avg_net_ret_pct": 21.95
@@ -1796,7 +1804,7 @@
                         "holdout": {
                             "cagr_pct": -6.2,
                             "max_dd_pct": -30.4,
-                            "growth_pct": -15.7,
+                            "growth_pct": -15.6,
                             "trades": 9,
                             "win_pct": 33.3,
                             "avg_net_ret_pct": -6.45
@@ -1806,17 +1814,17 @@
                         "strategy": "Risk-adjusted momentum + market filter",
                         "slots": 4,
                         "train": {
-                            "cagr_pct": 43.1,
+                            "cagr_pct": 43,
                             "max_dd_pct": -26.5,
-                            "growth_pct": 566.4,
+                            "growth_pct": 565.1,
                             "trades": 50,
                             "win_pct": 50,
                             "avg_net_ret_pct": 25.68
                         },
                         "holdout": {
-                            "cagr_pct": -0.8,
+                            "cagr_pct": -0.7,
                             "max_dd_pct": -31.6,
-                            "growth_pct": -2.2,
+                            "growth_pct": -1.9,
                             "trades": 19,
                             "win_pct": 47.4,
                             "avg_net_ret_pct": -2.24
@@ -1826,20 +1834,20 @@
                         "strategy": "Risk-adjusted momentum + market filter",
                         "slots": 6,
                         "train": {
-                            "cagr_pct": 51.6,
-                            "max_dd_pct": -22.1,
-                            "growth_pct": 803,
-                            "trades": 73,
-                            "win_pct": 58.9,
-                            "avg_net_ret_pct": 28.85
+                            "cagr_pct": 52.3,
+                            "max_dd_pct": -21.7,
+                            "growth_pct": 826.9,
+                            "trades": 71,
+                            "win_pct": 60.6,
+                            "avg_net_ret_pct": 30.6
                         },
                         "holdout": {
-                            "cagr_pct": 1.7,
-                            "max_dd_pct": -21.9,
-                            "growth_pct": 4.4,
+                            "cagr_pct": -0.1,
+                            "max_dd_pct": -22.6,
+                            "growth_pct": -0.2,
                             "trades": 31,
                             "win_pct": 38.7,
-                            "avg_net_ret_pct": -1.16
+                            "avg_net_ret_pct": -1.81
                         }
                     },
                     {
@@ -1848,7 +1856,7 @@
                         "train": {
                             "cagr_pct": 53.2,
                             "max_dd_pct": -19.4,
-                            "growth_pct": 855.9,
+                            "growth_pct": 857.4,
                             "trades": 77,
                             "win_pct": 53.2,
                             "avg_net_ret_pct": 6.7
@@ -1856,7 +1864,7 @@
                         "holdout": {
                             "cagr_pct": 8.1,
                             "max_dd_pct": -18.1,
-                            "growth_pct": 22.9,
+                            "growth_pct": 22.7,
                             "trades": 31,
                             "win_pct": 54.8,
                             "avg_net_ret_pct": 1.62
@@ -1866,17 +1874,17 @@
                         "strategy": "Near 52-week high + market filter",
                         "slots": 4,
                         "train": {
-                            "cagr_pct": 27.9,
+                            "cagr_pct": 27.5,
                             "max_dd_pct": -16.5,
-                            "growth_pct": 267.6,
+                            "growth_pct": 261.9,
                             "trades": 153,
                             "win_pct": 48.4,
                             "avg_net_ret_pct": 3.48
                         },
                         "holdout": {
-                            "cagr_pct": 3.3,
-                            "max_dd_pct": -17.1,
-                            "growth_pct": 8.9,
+                            "cagr_pct": 3.4,
+                            "max_dd_pct": -16.9,
+                            "growth_pct": 9.2,
                             "trades": 60,
                             "win_pct": 43.3,
                             "avg_net_ret_pct": 0.4
@@ -1886,17 +1894,17 @@
                         "strategy": "Near 52-week high + market filter",
                         "slots": 6,
                         "train": {
-                            "cagr_pct": 22.8,
+                            "cagr_pct": 23,
                             "max_dd_pct": -16.7,
-                            "growth_pct": 196.8,
+                            "growth_pct": 198.8,
                             "trades": 234,
                             "win_pct": 45.3,
                             "avg_net_ret_pct": 3.01
                         },
                         "holdout": {
-                            "cagr_pct": 10.8,
+                            "cagr_pct": 10.5,
                             "max_dd_pct": -10.8,
-                            "growth_pct": 31.2,
+                            "growth_pct": 30.3,
                             "trades": 86,
                             "win_pct": 48.8,
                             "avg_net_ret_pct": 1.38
@@ -1906,17 +1914,17 @@
                         "strategy": "Weekly reversal in uptrend",
                         "slots": 2,
                         "train": {
-                            "cagr_pct": -0.6,
-                            "max_dd_pct": -55.9,
-                            "growth_pct": -2.9,
+                            "cagr_pct": -0.8,
+                            "max_dd_pct": -56,
+                            "growth_pct": -3.9,
                             "trades": 399,
                             "win_pct": 44.6,
                             "avg_net_ret_pct": 0.12
                         },
                         "holdout": {
-                            "cagr_pct": -37.9,
+                            "cagr_pct": -37.5,
                             "max_dd_pct": -72,
-                            "growth_pct": -71.7,
+                            "growth_pct": -71.1,
                             "trades": 193,
                             "win_pct": 34.7,
                             "avg_net_ret_pct": -1.53
@@ -1926,20 +1934,20 @@
                         "strategy": "Weekly reversal in uptrend",
                         "slots": 4,
                         "train": {
-                            "cagr_pct": -16.1,
+                            "cagr_pct": -16,
                             "max_dd_pct": -64.2,
-                            "growth_pct": -60.5,
-                            "trades": 293,
-                            "win_pct": 37.2,
-                            "avg_net_ret_pct": -1.44
+                            "growth_pct": -60.2,
+                            "trades": 307,
+                            "win_pct": 37.8,
+                            "avg_net_ret_pct": -1.36
                         },
                         "holdout": {
-                            "cagr_pct": 0.7,
-                            "max_dd_pct": -8.5,
-                            "growth_pct": 1.9,
-                            "trades": 19,
-                            "win_pct": 26.3,
-                            "avg_net_ret_pct": -2.7
+                            "cagr_pct": 0.1,
+                            "max_dd_pct": -8.4,
+                            "growth_pct": 0.4,
+                            "trades": 15,
+                            "win_pct": 26.7,
+                            "avg_net_ret_pct": -3.88
                         }
                     },
                     {
@@ -1954,29 +1962,29 @@
                             "avg_net_ret_pct": -1.68
                         },
                         "holdout": {
-                            "cagr_pct": 0.1,
+                            "cagr_pct": 0.5,
                             "max_dd_pct": -12.8,
-                            "growth_pct": 0.3,
-                            "trades": 36,
-                            "win_pct": 38.9,
-                            "avg_net_ret_pct": -2.34
+                            "growth_pct": 1.3,
+                            "trades": 34,
+                            "win_pct": 38.2,
+                            "avg_net_ret_pct": -2.32
                         }
                     },
                     {
                         "strategy": "Turtle 55/20 breakout + market filter",
                         "slots": 2,
                         "train": {
-                            "cagr_pct": 44.8,
+                            "cagr_pct": 46,
                             "max_dd_pct": -38.2,
-                            "growth_pct": 610.2,
+                            "growth_pct": 641.8,
                             "trades": 75,
                             "win_pct": 32,
                             "avg_net_ret_pct": 7.08
                         },
                         "holdout": {
-                            "cagr_pct": -2.8,
+                            "cagr_pct": -4.4,
                             "max_dd_pct": -30.8,
-                            "growth_pct": -7.2,
+                            "growth_pct": -11.2,
                             "trades": 25,
                             "win_pct": 28,
                             "avg_net_ret_pct": 0.75
@@ -1986,17 +1994,17 @@
                         "strategy": "Turtle 55/20 breakout + market filter",
                         "slots": 4,
                         "train": {
-                            "cagr_pct": 22.7,
+                            "cagr_pct": 23.1,
                             "max_dd_pct": -34.8,
-                            "growth_pct": 194.9,
+                            "growth_pct": 200.6,
                             "trades": 152,
                             "win_pct": 27.6,
                             "avg_net_ret_pct": 3.15
                         },
                         "holdout": {
-                            "cagr_pct": -2.7,
+                            "cagr_pct": -3.4,
                             "max_dd_pct": -22.8,
-                            "growth_pct": -6.9,
+                            "growth_pct": -8.7,
                             "trades": 51,
                             "win_pct": 27.5,
                             "avg_net_ret_pct": 0.7
@@ -2006,17 +2014,17 @@
                         "strategy": "Turtle 55/20 breakout + market filter",
                         "slots": 6,
                         "train": {
-                            "cagr_pct": 33.5,
-                            "max_dd_pct": -35.1,
-                            "growth_pct": 361.1,
+                            "cagr_pct": 33.6,
+                            "max_dd_pct": -35.2,
+                            "growth_pct": 362.3,
                             "trades": 210,
                             "win_pct": 27.1,
                             "avg_net_ret_pct": 6.69
                         },
                         "holdout": {
-                            "cagr_pct": -3.7,
+                            "cagr_pct": -3.8,
                             "max_dd_pct": -21.4,
-                            "growth_pct": -9.5,
+                            "growth_pct": -9.7,
                             "trades": 78,
                             "win_pct": 25.6,
                             "avg_net_ret_pct": -0.15
@@ -2026,17 +2034,17 @@
                         "strategy": "Low-vol momentum + market filter",
                         "slots": 2,
                         "train": {
-                            "cagr_pct": 13,
+                            "cagr_pct": 13.8,
                             "max_dd_pct": -17.7,
-                            "growth_pct": 91.2,
+                            "growth_pct": 98.1,
                             "trades": 30,
                             "win_pct": 53.3,
                             "avg_net_ret_pct": 8.6
                         },
                         "holdout": {
-                            "cagr_pct": 24.1,
+                            "cagr_pct": 22.5,
                             "max_dd_pct": -20.5,
-                            "growth_pct": 77,
+                            "growth_pct": 70.9,
                             "trades": 11,
                             "win_pct": 27.3,
                             "avg_net_ret_pct": 3.24
@@ -2046,17 +2054,17 @@
                         "strategy": "Low-vol momentum + market filter",
                         "slots": 4,
                         "train": {
-                            "cagr_pct": 15.1,
+                            "cagr_pct": 15.6,
                             "max_dd_pct": -11.6,
-                            "growth_pct": 110.4,
+                            "growth_pct": 115.7,
                             "trades": 57,
                             "win_pct": 63.2,
                             "avg_net_ret_pct": 11.05
                         },
                         "holdout": {
-                            "cagr_pct": 23.1,
+                            "cagr_pct": 22,
                             "max_dd_pct": -10.3,
-                            "growth_pct": 73.3,
+                            "growth_pct": 69.1,
                             "trades": 15,
                             "win_pct": 33.3,
                             "avg_net_ret_pct": 3.06
@@ -2066,17 +2074,17 @@
                         "strategy": "Low-vol momentum + market filter",
                         "slots": 6,
                         "train": {
-                            "cagr_pct": 17,
+                            "cagr_pct": 17.3,
                             "max_dd_pct": -11.4,
-                            "growth_pct": 129.7,
+                            "growth_pct": 132.4,
                             "trades": 81,
                             "win_pct": 58,
                             "avg_net_ret_pct": 9.95
                         },
                         "holdout": {
-                            "cagr_pct": 10.9,
+                            "cagr_pct": 10.4,
                             "max_dd_pct": -10.6,
-                            "growth_pct": 31.6,
+                            "growth_pct": 30,
                             "trades": 36,
                             "win_pct": 22.2,
                             "avg_net_ret_pct": -0.69
@@ -2086,17 +2094,17 @@
                         "strategy": "Sector rotation + market filter",
                         "slots": 2,
                         "train": {
-                            "cagr_pct": 24.5,
+                            "cagr_pct": 25,
                             "max_dd_pct": -42.9,
-                            "growth_pct": 218.6,
+                            "growth_pct": 225.6,
                             "trades": 63,
                             "win_pct": 46,
                             "avg_net_ret_pct": 6.49
                         },
                         "holdout": {
-                            "cagr_pct": 11.2,
+                            "cagr_pct": 10.3,
                             "max_dd_pct": -29.2,
-                            "growth_pct": 32.3,
+                            "growth_pct": 29.5,
                             "trades": 20,
                             "win_pct": 60,
                             "avg_net_ret_pct": 2.74
@@ -2106,17 +2114,17 @@
                         "strategy": "Sector rotation + market filter",
                         "slots": 4,
                         "train": {
-                            "cagr_pct": 18.2,
+                            "cagr_pct": 18.6,
                             "max_dd_pct": -37.8,
-                            "growth_pct": 141.9,
+                            "growth_pct": 146.8,
                             "trades": 120,
                             "win_pct": 44.2,
                             "avg_net_ret_pct": 4.53
                         },
                         "holdout": {
-                            "cagr_pct": 10.3,
+                            "cagr_pct": 9.5,
                             "max_dd_pct": -20.1,
-                            "growth_pct": 29.6,
+                            "growth_pct": 27,
                             "trades": 38,
                             "win_pct": 55.3,
                             "avg_net_ret_pct": 2.65
@@ -2126,17 +2134,17 @@
                         "strategy": "Sector rotation + market filter",
                         "slots": 6,
                         "train": {
-                            "cagr_pct": 17.4,
-                            "max_dd_pct": -29.9,
-                            "growth_pct": 134.1,
+                            "cagr_pct": 18.1,
+                            "max_dd_pct": -30,
+                            "growth_pct": 140.8,
                             "trades": 179,
                             "win_pct": 45.8,
                             "avg_net_ret_pct": 4.24
                         },
                         "holdout": {
-                            "cagr_pct": 5.6,
+                            "cagr_pct": 4.5,
                             "max_dd_pct": -17.9,
-                            "growth_pct": 15.5,
+                            "growth_pct": 12.3,
                             "trades": 62,
                             "win_pct": 50,
                             "avg_net_ret_pct": 0.7
@@ -2146,17 +2154,17 @@
                         "strategy": "1-month dip in 12-month winners + market filter",
                         "slots": 2,
                         "train": {
-                            "cagr_pct": 29.4,
+                            "cagr_pct": 28.9,
                             "max_dd_pct": -29.2,
-                            "growth_pct": 290.5,
+                            "growth_pct": 283.7,
                             "trades": 85,
                             "win_pct": 57.6,
                             "avg_net_ret_pct": 3.44
                         },
                         "holdout": {
-                            "cagr_pct": -16.7,
-                            "max_dd_pct": -53.6,
-                            "growth_pct": -38.3,
+                            "cagr_pct": -16.1,
+                            "max_dd_pct": -53.7,
+                            "growth_pct": -37.2,
                             "trades": 31,
                             "win_pct": 35.5,
                             "avg_net_ret_pct": -2.89
@@ -2166,17 +2174,17 @@
                         "strategy": "1-month dip in 12-month winners + market filter",
                         "slots": 4,
                         "train": {
-                            "cagr_pct": 32.5,
+                            "cagr_pct": 32.2,
                             "max_dd_pct": -16.2,
-                            "growth_pct": 344.1,
+                            "growth_pct": 338.3,
                             "trades": 175,
                             "win_pct": 58.9,
                             "avg_net_ret_pct": 3.51
                         },
                         "holdout": {
-                            "cagr_pct": -7.4,
+                            "cagr_pct": -6.9,
                             "max_dd_pct": -37.9,
-                            "growth_pct": -18.4,
+                            "growth_pct": -17.3,
                             "trades": 63,
                             "win_pct": 42.9,
                             "avg_net_ret_pct": -1.4
@@ -2186,17 +2194,17 @@
                         "strategy": "1-month dip in 12-month winners + market filter",
                         "slots": 6,
                         "train": {
-                            "cagr_pct": 26.5,
+                            "cagr_pct": 26.1,
                             "max_dd_pct": -21.9,
-                            "growth_pct": 246.8,
+                            "growth_pct": 241.5,
                             "trades": 261,
                             "win_pct": 57.9,
                             "avg_net_ret_pct": 2.96
                         },
                         "holdout": {
-                            "cagr_pct": 0.9,
+                            "cagr_pct": 1.5,
                             "max_dd_pct": -26.4,
-                            "growth_pct": 2.4,
+                            "growth_pct": 4,
                             "trades": 97,
                             "win_pct": 48.5,
                             "avg_net_ret_pct": -0.23
@@ -2206,9 +2214,9 @@
                         "strategy": "Weekly momentum rotation + market filter",
                         "slots": 2,
                         "train": {
-                            "cagr_pct": 50.3,
+                            "cagr_pct": 50.2,
                             "max_dd_pct": -41.3,
-                            "growth_pct": 763,
+                            "growth_pct": 762.3,
                             "trades": 37,
                             "win_pct": 37.8,
                             "avg_net_ret_pct": 21.4
@@ -2216,7 +2224,7 @@
                         "holdout": {
                             "cagr_pct": -10.8,
                             "max_dd_pct": -48.6,
-                            "growth_pct": -26.2,
+                            "growth_pct": -26.1,
                             "trades": 13,
                             "win_pct": 30.8,
                             "avg_net_ret_pct": -3.51
@@ -2226,17 +2234,17 @@
                         "strategy": "Weekly momentum rotation + market filter",
                         "slots": 4,
                         "train": {
-                            "cagr_pct": 48.4,
+                            "cagr_pct": 48.8,
                             "max_dd_pct": -28.9,
-                            "growth_pct": 708.5,
+                            "growth_pct": 718.8,
                             "trades": 79,
                             "win_pct": 39.2,
                             "avg_net_ret_pct": 18.36
                         },
                         "holdout": {
-                            "cagr_pct": -3.3,
+                            "cagr_pct": -3.8,
                             "max_dd_pct": -33,
-                            "growth_pct": -8.6,
+                            "growth_pct": -9.8,
                             "trades": 27,
                             "win_pct": 48.1,
                             "avg_net_ret_pct": -1.57
@@ -2246,17 +2254,17 @@
                         "strategy": "Weekly momentum rotation + market filter",
                         "slots": 6,
                         "train": {
-                            "cagr_pct": 49.4,
+                            "cagr_pct": 49.7,
                             "max_dd_pct": -22.8,
-                            "growth_pct": 738.3,
+                            "growth_pct": 745.3,
                             "trades": 126,
                             "win_pct": 44.4,
                             "avg_net_ret_pct": 16.11
                         },
                         "holdout": {
-                            "cagr_pct": 1.5,
+                            "cagr_pct": 1.2,
                             "max_dd_pct": -31.5,
-                            "growth_pct": 4,
+                            "growth_pct": 3.2,
                             "trades": 40,
                             "win_pct": 47.5,
                             "avg_net_ret_pct": -0.58
@@ -2266,17 +2274,17 @@
                         "strategy": "Quarterly momentum rotation + market filter",
                         "slots": 2,
                         "train": {
-                            "cagr_pct": 24.5,
+                            "cagr_pct": 24.7,
                             "max_dd_pct": -37.9,
-                            "growth_pct": 219.1,
+                            "growth_pct": 222.1,
                             "trades": 15,
                             "win_pct": 60,
                             "avg_net_ret_pct": 23.34
                         },
                         "holdout": {
-                            "cagr_pct": 6.1,
+                            "cagr_pct": 5.7,
                             "max_dd_pct": -30.4,
-                            "growth_pct": 16.8,
+                            "growth_pct": 15.7,
                             "trades": 6,
                             "win_pct": 50,
                             "avg_net_ret_pct": 4
@@ -2286,17 +2294,17 @@
                         "strategy": "Quarterly momentum rotation + market filter",
                         "slots": 4,
                         "train": {
-                            "cagr_pct": 30.8,
+                            "cagr_pct": 31,
                             "max_dd_pct": -37.6,
-                            "growth_pct": 313.7,
+                            "growth_pct": 317,
                             "trades": 29,
                             "win_pct": 58.6,
                             "avg_net_ret_pct": 31.64
                         },
                         "holdout": {
-                            "cagr_pct": 4.2,
+                            "cagr_pct": 3.9,
                             "max_dd_pct": -27.6,
-                            "growth_pct": 11.6,
+                            "growth_pct": 10.7,
                             "trades": 12,
                             "win_pct": 33.3,
                             "avg_net_ret_pct": -2.13
@@ -2306,17 +2314,17 @@
                         "strategy": "Quarterly momentum rotation + market filter",
                         "slots": 6,
                         "train": {
-                            "cagr_pct": 19.2,
+                            "cagr_pct": 19.5,
                             "max_dd_pct": -38.2,
-                            "growth_pct": 152.8,
+                            "growth_pct": 156.3,
                             "trades": 44,
                             "win_pct": 56.8,
                             "avg_net_ret_pct": 20.44
                         },
                         "holdout": {
-                            "cagr_pct": 3.5,
+                            "cagr_pct": 2.9,
                             "max_dd_pct": -27.5,
-                            "growth_pct": 9.5,
+                            "growth_pct": 8,
                             "trades": 19,
                             "win_pct": 26.3,
                             "avg_net_ret_pct": -3.37
@@ -2328,15 +2336,15 @@
                         "train": {
                             "cagr_pct": 9.8,
                             "max_dd_pct": -20.4,
-                            "growth_pct": 64.2,
+                            "growth_pct": 64.4,
                             "trades": 23,
                             "win_pct": 69.6,
                             "avg_net_ret_pct": 5.4
                         },
                         "holdout": {
-                            "cagr_pct": 19.9,
+                            "cagr_pct": 19.8,
                             "max_dd_pct": -14.3,
-                            "growth_pct": 61.6,
+                            "growth_pct": 61.4,
                             "trades": 6,
                             "win_pct": 66.7,
                             "avg_net_ret_pct": 15.38
@@ -2346,17 +2354,17 @@
                         "strategy": "Momentum + low-vol combined rank + market filter",
                         "slots": 4,
                         "train": {
-                            "cagr_pct": 8.6,
+                            "cagr_pct": 8.5,
                             "max_dd_pct": -17.6,
-                            "growth_pct": 54.9,
+                            "growth_pct": 54.3,
                             "trades": 46,
                             "win_pct": 56.5,
                             "avg_net_ret_pct": 4.8
                         },
                         "holdout": {
-                            "cagr_pct": 11.9,
+                            "cagr_pct": 12.1,
                             "max_dd_pct": -12.8,
-                            "growth_pct": 34.7,
+                            "growth_pct": 35.2,
                             "trades": 14,
                             "win_pct": 57.1,
                             "avg_net_ret_pct": 6.97
@@ -2366,17 +2374,17 @@
                         "strategy": "Momentum + low-vol combined rank + market filter",
                         "slots": 6,
                         "train": {
-                            "cagr_pct": 20,
+                            "cagr_pct": 20.1,
                             "max_dd_pct": -15.6,
-                            "growth_pct": 162.1,
+                            "growth_pct": 163.7,
                             "trades": 75,
                             "win_pct": 60,
                             "avg_net_ret_pct": 9.42
                         },
                         "holdout": {
-                            "cagr_pct": 4.9,
+                            "cagr_pct": 4.6,
                             "max_dd_pct": -12.3,
-                            "growth_pct": 13.4,
+                            "growth_pct": 12.8,
                             "trades": 27,
                             "win_pct": 48.1,
                             "avg_net_ret_pct": 1.29
@@ -2386,17 +2394,17 @@
                         "strategy": "52-week-high breakout on volume + market filter",
                         "slots": 2,
                         "train": {
-                            "cagr_pct": 19.5,
+                            "cagr_pct": 19.3,
                             "max_dd_pct": -32.3,
-                            "growth_pct": 156.9,
+                            "growth_pct": 154,
                             "trades": 54,
                             "win_pct": 48.1,
                             "avg_net_ret_pct": 4.57
                         },
                         "holdout": {
-                            "cagr_pct": -2.9,
+                            "cagr_pct": -2.5,
                             "max_dd_pct": -25.6,
-                            "growth_pct": -7.4,
+                            "growth_pct": -6.4,
                             "trades": 24,
                             "win_pct": 50,
                             "avg_net_ret_pct": -0.14
@@ -2406,17 +2414,17 @@
                         "strategy": "52-week-high breakout on volume + market filter",
                         "slots": 4,
                         "train": {
-                            "cagr_pct": 30.1,
+                            "cagr_pct": 30,
                             "max_dd_pct": -27.3,
-                            "growth_pct": 303.2,
+                            "growth_pct": 300.2,
                             "trades": 105,
                             "win_pct": 41,
                             "avg_net_ret_pct": 7.35
                         },
                         "holdout": {
-                            "cagr_pct": -4.3,
+                            "cagr_pct": -4,
                             "max_dd_pct": -20,
-                            "growth_pct": -10.9,
+                            "growth_pct": -10.2,
                             "trades": 49,
                             "win_pct": 38.8,
                             "avg_net_ret_pct": -0.89
@@ -2426,17 +2434,17 @@
                         "strategy": "52-week-high breakout on volume + market filter",
                         "slots": 6,
                         "train": {
-                            "cagr_pct": 31.7,
+                            "cagr_pct": 31.4,
                             "max_dd_pct": -24.5,
-                            "growth_pct": 328.7,
+                            "growth_pct": 324.9,
                             "trades": 154,
                             "win_pct": 40.3,
                             "avg_net_ret_pct": 6.47
                         },
                         "holdout": {
-                            "cagr_pct": -4.4,
+                            "cagr_pct": -4.1,
                             "max_dd_pct": -15.8,
-                            "growth_pct": -11.2,
+                            "growth_pct": -10.4,
                             "trades": 69,
                             "win_pct": 39.1,
                             "avg_net_ret_pct": -0.89
@@ -2446,17 +2454,17 @@
                         "strategy": "Nifty ETF above its 200-DMA",
                         "slots": 1,
                         "train": {
-                            "cagr_pct": 9.8,
+                            "cagr_pct": 9.6,
                             "max_dd_pct": -18.7,
-                            "growth_pct": 64,
+                            "growth_pct": 62.3,
                             "trades": 24,
                             "win_pct": 25,
                             "avg_net_ret_pct": 2.67
                         },
                         "holdout": {
-                            "cagr_pct": 0.3,
+                            "cagr_pct": 0.7,
                             "max_dd_pct": -18.4,
-                            "growth_pct": 0.8,
+                            "growth_pct": 1.8,
                             "trades": 7,
                             "win_pct": 14.3,
                             "avg_net_ret_pct": -1.68
@@ -2466,17 +2474,17 @@
                         "strategy": "Nifty ETF 50/200-DMA cross",
                         "slots": 1,
                         "train": {
-                            "cagr_pct": 5.3,
-                            "max_dd_pct": -38.4,
-                            "growth_pct": 31.6,
+                            "cagr_pct": 5.4,
+                            "max_dd_pct": -38.3,
+                            "growth_pct": 32.1,
                             "trades": 6,
                             "win_pct": 50,
-                            "avg_net_ret_pct": 7.22
+                            "avg_net_ret_pct": 7.47
                         },
                         "holdout": {
-                            "cagr_pct": 2.2,
-                            "max_dd_pct": -15,
-                            "growth_pct": 6.1,
+                            "cagr_pct": 2.6,
+                            "max_dd_pct": -14.9,
+                            "growth_pct": 7.1,
                             "trades": 1,
                             "win_pct": 0,
                             "avg_net_ret_pct": -5.19
@@ -2488,15 +2496,15 @@
                         "train": {
                             "cagr_pct": 13.9,
                             "max_dd_pct": -17.2,
-                            "growth_pct": 99.1,
+                            "growth_pct": 99.2,
                             "trades": 64,
                             "win_pct": 64.1,
                             "avg_net_ret_pct": 0.8
                         },
                         "holdout": {
-                            "cagr_pct": 1.7,
+                            "cagr_pct": 1.3,
                             "max_dd_pct": -8.4,
-                            "growth_pct": 4.5,
+                            "growth_pct": 3.5,
                             "trades": 31,
                             "win_pct": 41.9,
                             "avg_net_ret_pct": -0.12
@@ -2506,17 +2514,17 @@
                         "strategy": "Nifty ETF / gold ETF switch",
                         "slots": 1,
                         "train": {
-                            "cagr_pct": 15.8,
+                            "cagr_pct": 15.6,
                             "max_dd_pct": -19.8,
-                            "growth_pct": 117.2,
+                            "growth_pct": 115,
                             "trades": 13,
                             "win_pct": 53.8,
                             "avg_net_ret_pct": 7.89
                         },
                         "holdout": {
-                            "cagr_pct": 8.9,
+                            "cagr_pct": 9.2,
                             "max_dd_pct": -19.9,
-                            "growth_pct": 25.3,
+                            "growth_pct": 26.4,
                             "trades": 3,
                             "win_pct": 66.7,
                             "avg_net_ret_pct": 5.59
@@ -2527,73 +2535,73 @@
         }
     },
     "intraday_hold": {
-        "tested": "2026-10-01",
+        "tested": "2026-10-02",
         "passed": [],
         "results": [
             {
                 "strategy": "Top 10, open→close",
-                "tuning": -0.191,
-                "holdout": -0.158,
-                "holdout_pf": 0.76
+                "tuning": -0.192,
+                "holdout": -0.155,
+                "holdout_pf": 0.77
             },
             {
                 "strategy": "Top 10, open→close + 1-ATR stop",
-                "tuning": -0.186,
-                "holdout": -0.174,
-                "holdout_pf": 0.74
+                "tuning": -0.188,
+                "holdout": -0.171,
+                "holdout_pf": 0.75
             },
             {
                 "strategy": "Top 5, open→close",
-                "tuning": -0.18,
+                "tuning": -0.182,
                 "holdout": -0.202,
-                "holdout_pf": 0.7
+                "holdout_pf": 0.71
             },
             {
                 "strategy": "Top 5, open→close + 1-ATR stop",
-                "tuning": -0.177,
+                "tuning": -0.178,
                 "holdout": -0.215,
                 "holdout_pf": 0.69
             },
             {
                 "strategy": "Top 3, open→close",
-                "tuning": -0.145,
-                "holdout": -0.123,
+                "tuning": -0.147,
+                "holdout": -0.122,
                 "holdout_pf": 0.81
             },
             {
                 "strategy": "Top 3, open→close + 1-ATR stop",
-                "tuning": -0.139,
-                "holdout": -0.142,
-                "holdout_pf": 0.78
+                "tuning": -0.141,
+                "holdout": -0.141,
+                "holdout_pf": 0.79
             },
             {
                 "strategy": "Top 10, longs only",
-                "tuning": -0.224,
-                "holdout": -0.187,
+                "tuning": -0.226,
+                "holdout": -0.189,
                 "holdout_pf": 0.73
             },
             {
                 "strategy": "Top 10, shorts only",
-                "tuning": -0.083,
-                "holdout": -0.095,
-                "holdout_pf": 0.85
+                "tuning": -0.084,
+                "holdout": -0.085,
+                "holdout_pf": 0.86
             },
             {
                 "strategy": "Gap fade (5 biggest gaps 1.5–5%, target = yesterday's close, 0.5-ATR stop)",
-                "tuning": 0.204,
-                "holdout": -0.11,
+                "tuning": 0.206,
+                "holdout": -0.116,
                 "holdout_pf": 0.87
             },
             {
                 "strategy": "Gap fade + 0.05% slippage each way",
-                "tuning": 0.104,
-                "holdout": -0.21,
+                "tuning": 0.106,
+                "holdout": -0.216,
                 "holdout_pf": 0.77
             },
             {
                 "strategy": "Gap and go (5 biggest gaps 1.5–5%, stop if the gap fills)",
-                "tuning": -0.608,
-                "holdout": -0.015,
+                "tuning": -0.611,
+                "holdout": -0.013,
                 "holdout_pf": 0.99
             }
         ]
@@ -2611,14 +2619,14 @@
                 "GOLD": 0.25
             }
         },
-        "tested": "2026-10-01",
+        "tested": "2026-10-02",
         "playbooks_tested": 29,
         "passed": [
             "Equal mix with Momentum 30 instead of Nifty",
-            "Equal weight: Nifty, midcap, Nasdaq, gold 25% each",
             "Equal mix, rebalanced every quarter",
-            "Equal mix, rebalanced once a year",
+            "Equal weight: Nifty, midcap, Nasdaq, gold 25% each",
             "Equal mix, rebalanced only on a 10-point drift",
+            "Equal mix, rebalanced once a year",
             "Equal mix with smallcap 250 instead of midcap",
             "Equal mix with Low-vol 30 instead of Nifty",
             "Risk parity: Nifty, midcap, Nasdaq, gold weighted by 1 / volatility",
@@ -2632,53 +2640,53 @@
                 "strategy": "Nifty 50 buy & hold",
                 "baseline": true,
                 "train": {
-                    "cagr_pct": 12.3,
+                    "cagr_pct": 12.4,
                     "max_dd_pct": -38.4,
                     "vol_pct": 17.7,
                     "return_per_risk": 0.36,
-                    "growth_pct": 115.9
+                    "growth_pct": 117.2
                 },
                 "holdout": {
-                    "cagr_pct": 6.1,
+                    "cagr_pct": 5.6,
                     "max_dd_pct": -15.8,
                     "vol_pct": 12.9,
-                    "return_per_risk": 0.01,
-                    "growth_pct": 21.6
+                    "return_per_risk": -0.03,
+                    "growth_pct": 19.8
                 },
                 "thirds": [
-                    "2016-10..2020-02 10.7",
-                    "2020-02..2023-06 14.1",
-                    "2023-06..2026-09 6.1"
+                    "2016-10..2020-02 10.5",
+                    "2020-02..2023-06 13.8",
+                    "2023-06..2026-10 5.6"
                 ],
                 "windows": {
                     "1y": {
                         "windows": 443,
                         "positive_pct": 84,
-                        "beat_6pct_pct": 65,
-                        "worst_pct": -24.9,
-                        "median_pct": 10.2,
-                        "best_pct": 79.5
+                        "beat_6pct_pct": 64,
+                        "worst_pct": -32.9,
+                        "median_pct": 10,
+                        "best_pct": 84
                     },
                     "3y": {
                         "windows": 342,
-                        "positive_pct": 98,
-                        "beat_6pct_pct": 90,
-                        "worst_pct": -3.8,
-                        "median_pct": 13.4,
-                        "best_pct": 28.9
+                        "positive_pct": 99,
+                        "beat_6pct_pct": 91,
+                        "worst_pct": -1.1,
+                        "median_pct": 13.5,
+                        "best_pct": 29.7
                     },
                     "5y": {
                         "windows": 241,
                         "positive_pct": 100,
                         "beat_6pct_pct": 100,
-                        "worst_pct": 6.1,
-                        "median_pct": 13.7,
-                        "best_pct": 24.2
+                        "worst_pct": 5.8,
+                        "median_pct": 13.6,
+                        "best_pct": 24.8
                     }
                 },
-                "from": "2016-10-26",
-                "holdout_from": "2023-06-12",
-                "to": "2026-09-30",
+                "from": "2016-10-27",
+                "holdout_from": "2023-06-13",
+                "to": "2026-10-01",
                 "instruments": {
                     "NIFTY": "Nifty 50 (index fund)",
                     "MID": "nifty midcap 150",
@@ -2693,17 +2701,17 @@
                     "GOLD": "GOLDBEES"
                 },
                 "first_dates": {
-                    "NIFTY": "2015-10-05",
-                    "MID": "2015-10-05",
-                    "MOM": "2015-10-05",
-                    "LOWVOL": "2015-10-05",
-                    "QUAL": "2015-10-05",
-                    "VALUE": "2015-10-05",
-                    "ALPLV": "2015-10-05",
-                    "NEXT50": "2015-10-05",
-                    "SMALL": "2015-10-05",
-                    "NASDAQ": "2015-10-05",
-                    "GOLD": "2015-10-05"
+                    "NIFTY": "2015-10-06",
+                    "MID": "2015-10-06",
+                    "MOM": "2015-10-06",
+                    "LOWVOL": "2015-10-06",
+                    "QUAL": "2015-10-06",
+                    "VALUE": "2015-10-06",
+                    "ALPLV": "2015-10-06",
+                    "NEXT50": "2015-10-06",
+                    "SMALL": "2015-10-06",
+                    "NASDAQ": "2015-10-06",
+                    "GOLD": "2015-10-06"
                 },
                 "missing": []
             },
@@ -2712,377 +2720,377 @@
                     "strategy": "Advisor classic: 60% Nifty / 20% gold / 20% debt",
                     "school": "financial advisors (strategic asset allocation, rebalancing)",
                     "train": {
-                        "cagr_pct": 11.1,
+                        "cagr_pct": 11.2,
                         "max_dd_pct": -23.6,
                         "vol_pct": 10.7,
                         "return_per_risk": 0.48,
-                        "growth_pct": 101
+                        "growth_pct": 101.9
                     },
                     "holdout": {
-                        "cagr_pct": 11.3,
+                        "cagr_pct": 11,
                         "max_dd_pct": -12.7,
                         "vol_pct": 9.6,
-                        "return_per_risk": 0.56,
-                        "growth_pct": 42.5
+                        "return_per_risk": 0.52,
+                        "growth_pct": 41.2
                     },
                     "beats_nifty_both": false,
                     "safer_than_nifty_both": true,
                     "thirds": [
-                        "2016-10..2020-02 9.4",
-                        "2020-02..2023-06 13",
-                        "2023-06..2026-09 11.3"
+                        "2016-10..2020-02 9.3",
+                        "2020-02..2023-06 12.7",
+                        "2023-06..2026-10 11"
                     ],
                     "trades": 14,
                     "costs_rs": 125,
-                    "end_value": 28639,
+                    "end_value": 28492,
                     "passed": false
                 },
                 {
                     "strategy": "Advisor growth: 50% Nifty / 20% midcap / 10% Nasdaq / 10% gold / 10% debt",
                     "school": "wealth managers (core-satellite, global diversification)",
                     "train": {
-                        "cagr_pct": 13.4,
-                        "max_dd_pct": -28,
+                        "cagr_pct": 13.6,
+                        "max_dd_pct": -27.9,
                         "vol_pct": 12.7,
-                        "return_per_risk": 0.58,
-                        "growth_pct": 129.5
+                        "return_per_risk": 0.59,
+                        "growth_pct": 132.5
                     },
                     "holdout": {
-                        "cagr_pct": 14.1,
+                        "cagr_pct": 13.6,
                         "max_dd_pct": -11.3,
                         "vol_pct": 11.1,
-                        "return_per_risk": 0.73,
-                        "growth_pct": 54.4
+                        "return_per_risk": 0.69,
+                        "growth_pct": 52.4
                     },
                     "beats_nifty_both": true,
                     "safer_than_nifty_both": true,
                     "thirds": [
                         "2016-10..2020-02 11.1",
-                        "2020-02..2023-06 15.8",
-                        "2023-06..2026-09 14.1"
+                        "2020-02..2023-06 15.6",
+                        "2023-06..2026-10 13.6"
                     ],
                     "trades": 11,
                     "costs_rs": 76,
-                    "end_value": 35430,
+                    "end_value": 35412,
                     "passed": true
                 },
                 {
                     "strategy": "Trend following: Nifty, midcap, Nasdaq, gold, each 25% only above its 10-month average",
                     "school": "Faber (2007) / Moskowitz-Ooi-Pedersen time-series momentum",
                     "train": {
-                        "cagr_pct": 9.3,
-                        "max_dd_pct": -22.4,
+                        "cagr_pct": 9.6,
+                        "max_dd_pct": -22.3,
                         "vol_pct": 9.6,
-                        "return_per_risk": 0.35,
-                        "growth_pct": 80.4
+                        "return_per_risk": 0.38,
+                        "growth_pct": 83.6
                     },
                     "holdout": {
-                        "cagr_pct": 20.8,
+                        "cagr_pct": 20.4,
                         "max_dd_pct": -11.1,
                         "vol_pct": 10.9,
-                        "return_per_risk": 1.36,
-                        "growth_pct": 86.9
+                        "return_per_risk": 1.32,
+                        "growth_pct": 84.7
                     },
                     "beats_nifty_both": false,
-                    "safer_than_nifty_both": false,
+                    "safer_than_nifty_both": true,
                     "thirds": [
-                        "2016-10..2020-02 5",
-                        "2020-02..2023-06 13.8",
-                        "2023-06..2026-09 20.8"
+                        "2016-10..2020-02 5.2",
+                        "2020-02..2023-06 13.6",
+                        "2023-06..2026-10 20.4"
                     ],
-                    "trades": 89,
-                    "costs_rs": 942,
-                    "end_value": 33702,
+                    "trades": 91,
+                    "costs_rs": 984,
+                    "end_value": 33880,
                     "passed": false
                 },
                 {
                     "strategy": "Dual momentum: best of Nifty / midcap / Nasdaq by 12-month return, else gold, else debt",
                     "school": "Antonacci dual momentum (relative + absolute)",
                     "train": {
-                        "cagr_pct": 5.4,
+                        "cagr_pct": 5.7,
                         "max_dd_pct": -39.6,
                         "vol_pct": 21.2,
-                        "return_per_risk": -0.03,
-                        "growth_pct": 41.8
+                        "return_per_risk": -0.01,
+                        "growth_pct": 44.8
                     },
                     "holdout": {
-                        "cagr_pct": 30.8,
+                        "cagr_pct": 30.4,
                         "max_dd_pct": -26,
                         "vol_pct": 20.8,
-                        "return_per_risk": 1.19,
-                        "growth_pct": 142.5
+                        "return_per_risk": 1.17,
+                        "growth_pct": 140
                     },
                     "beats_nifty_both": false,
                     "safer_than_nifty_both": false,
                     "thirds": [
-                        "2016-10..2020-02 -0.8",
-                        "2020-02..2023-06 12.3",
-                        "2023-06..2026-09 30.8"
+                        "2016-10..2020-02 -0.9",
+                        "2020-02..2023-06 12.4",
+                        "2023-06..2026-10 30.4"
                     ],
                     "trades": 57,
-                    "costs_rs": 948,
-                    "end_value": 34374,
+                    "costs_rs": 952,
+                    "end_value": 34737,
                     "passed": false
                 },
                 {
                     "strategy": "Multi-factor: momentum + low-vol + quality + value, 25% each",
                     "school": "business-school factor research (Fama-French, Carhart, Novy-Marx, AQR)",
                     "train": {
-                        "cagr_pct": 13.7,
+                        "cagr_pct": 14,
                         "max_dd_pct": -28.9,
                         "vol_pct": 16.4,
-                        "return_per_risk": 0.47,
-                        "growth_pct": 133.8
+                        "return_per_risk": 0.49,
+                        "growth_pct": 137.9
                     },
                     "holdout": {
-                        "cagr_pct": 7.3,
+                        "cagr_pct": 6.8,
                         "max_dd_pct": -23.3,
                         "vol_pct": 13.1,
-                        "return_per_risk": 0.1,
-                        "growth_pct": 26.3
+                        "return_per_risk": 0.06,
+                        "growth_pct": 24.4
                     },
                     "beats_nifty_both": true,
                     "safer_than_nifty_both": false,
                     "thirds": [
-                        "2016-10..2020-02 12",
-                        "2020-02..2023-06 15.3",
-                        "2023-06..2026-09 7.3"
+                        "2016-10..2020-02 12.3",
+                        "2020-02..2023-06 15.1",
+                        "2023-06..2026-10 6.8"
                     ],
                     "trades": 8,
                     "costs_rs": 41,
-                    "end_value": 29525,
+                    "end_value": 29572,
                     "passed": false
                 },
                 {
                     "strategy": "Multi-factor + trend: each factor 25% only above its 10-month average",
                     "school": "factor research + trend following",
                     "train": {
-                        "cagr_pct": 8,
-                        "max_dd_pct": -18.8,
-                        "vol_pct": 11.5,
-                        "return_per_risk": 0.18,
-                        "growth_pct": 66.8
+                        "cagr_pct": 8.3,
+                        "max_dd_pct": -18.9,
+                        "vol_pct": 11.6,
+                        "return_per_risk": 0.2,
+                        "growth_pct": 69.5
                     },
                     "holdout": {
-                        "cagr_pct": 7.5,
-                        "max_dd_pct": -20.4,
+                        "cagr_pct": 6.9,
+                        "max_dd_pct": -21.1,
                         "vol_pct": 9.7,
-                        "return_per_risk": 0.15,
-                        "growth_pct": 26.9
+                        "return_per_risk": 0.09,
+                        "growth_pct": 24.7
                     },
                     "beats_nifty_both": false,
                     "safer_than_nifty_both": false,
                     "thirds": [
-                        "2016-10..2020-02 5.2",
-                        "2020-02..2023-06 10.8",
-                        "2023-06..2026-09 7.5"
+                        "2016-10..2020-02 5.4",
+                        "2020-02..2023-06 10.6",
+                        "2023-06..2026-10 6.9"
                     ],
-                    "trades": 76,
-                    "costs_rs": 787,
-                    "end_value": 21155,
+                    "trades": 79,
+                    "costs_rs": 845,
+                    "end_value": 21128,
                     "passed": false
                 },
                 {
                     "strategy": "Factor momentum: the 2 strongest factors over 6 months, if above their 10-month average",
                     "school": "factor momentum (Gupta-Kelly 2019, Arnott et al.)",
                     "train": {
-                        "cagr_pct": 8.8,
+                        "cagr_pct": 9.1,
                         "max_dd_pct": -24.6,
                         "vol_pct": 13.2,
-                        "return_per_risk": 0.21,
-                        "growth_pct": 75.1
+                        "return_per_risk": 0.24,
+                        "growth_pct": 78.2
                     },
                     "holdout": {
-                        "cagr_pct": 6.3,
-                        "max_dd_pct": -24.1,
+                        "cagr_pct": 5.7,
+                        "max_dd_pct": -24.9,
                         "vol_pct": 11.9,
-                        "return_per_risk": 0.02,
-                        "growth_pct": 22.3
+                        "return_per_risk": -0.03,
+                        "growth_pct": 20
                     },
                     "beats_nifty_both": false,
                     "safer_than_nifty_both": false,
                     "thirds": [
-                        "2016-10..2020-02 9.1",
-                        "2020-02..2023-06 8.5",
-                        "2023-06..2026-09 6.3"
+                        "2016-10..2020-02 9.3",
+                        "2020-02..2023-06 8.3",
+                        "2023-06..2026-10 5.7"
                     ],
-                    "trades": 114,
-                    "costs_rs": 1506,
-                    "end_value": 21407,
+                    "trades": 117,
+                    "costs_rs": 1556,
+                    "end_value": 21382,
                     "passed": false
                 },
                 {
                     "strategy": "Risk parity: Nifty, midcap, Nasdaq, gold weighted by 1 / volatility",
                     "school": "Dalio all-weather / bank risk budgeting",
                     "train": {
-                        "cagr_pct": 13.9,
+                        "cagr_pct": 14.1,
                         "max_dd_pct": -25,
                         "vol_pct": 11.3,
-                        "return_per_risk": 0.7,
-                        "growth_pct": 136.5
+                        "return_per_risk": 0.72,
+                        "growth_pct": 139.6
                     },
                     "holdout": {
-                        "cagr_pct": 21.8,
+                        "cagr_pct": 21.3,
                         "max_dd_pct": -13.7,
                         "vol_pct": 11.8,
-                        "return_per_risk": 1.34,
-                        "growth_pct": 91.6
+                        "return_per_risk": 1.3,
+                        "growth_pct": 89.3
                     },
                     "beats_nifty_both": true,
                     "safer_than_nifty_both": true,
                     "thirds": [
-                        "2016-10..2020-02 12.2",
-                        "2020-02..2023-06 15.7",
-                        "2023-06..2026-09 21.8"
+                        "2016-10..2020-02 12.3",
+                        "2020-02..2023-06 15.4",
+                        "2023-06..2026-10 21.3"
                     ],
                     "trades": 32,
                     "costs_rs": 240,
-                    "end_value": 45294,
+                    "end_value": 45331,
                     "passed": true
                 },
                 {
                     "strategy": "Volatility target: Nifty sized to 12% yearly volatility, rest in debt",
                     "school": "bank risk desks (Moreira-Muir 2017 volatility-managed portfolios)",
                     "train": {
-                        "cagr_pct": 7.9,
+                        "cagr_pct": 8,
                         "max_dd_pct": -33.1,
                         "vol_pct": 13.6,
-                        "return_per_risk": 0.14,
-                        "growth_pct": 65.7
+                        "return_per_risk": 0.15,
+                        "growth_pct": 66.7
                     },
                     "holdout": {
-                        "cagr_pct": 5.2,
-                        "max_dd_pct": -15.4,
+                        "cagr_pct": 4.7,
+                        "max_dd_pct": -16.1,
                         "vol_pct": 11.8,
-                        "return_per_risk": -0.07,
-                        "growth_pct": 18.2
+                        "return_per_risk": -0.11,
+                        "growth_pct": 16.5
                     },
                     "beats_nifty_both": false,
                     "safer_than_nifty_both": false,
                     "thirds": [
-                        "2016-10..2020-02 9.1",
-                        "2020-02..2023-06 6.8",
-                        "2023-06..2026-09 5.2"
+                        "2016-10..2020-02 9",
+                        "2020-02..2023-06 6.5",
+                        "2023-06..2026-10 4.7"
                     ],
                     "trades": 44,
                     "costs_rs": 422,
-                    "end_value": 19579,
+                    "end_value": 19409,
                     "passed": false
                 },
                 {
                     "strategy": "Momentum 30 index + market filter (Nifty above its 200-DMA)",
                     "school": "momentum research; the index version of our monthly picks",
                     "train": {
-                        "cagr_pct": 10.7,
+                        "cagr_pct": 11.1,
                         "max_dd_pct": -19.8,
                         "vol_pct": 14.8,
-                        "return_per_risk": 0.32,
-                        "growth_pct": 96.3
+                        "return_per_risk": 0.34,
+                        "growth_pct": 100.8
                     },
                     "holdout": {
-                        "cagr_pct": 18.2,
+                        "cagr_pct": 18,
                         "max_dd_pct": -14.5,
                         "vol_pct": 15.1,
-                        "return_per_risk": 0.81,
-                        "growth_pct": 73.8
+                        "return_per_risk": 0.79,
+                        "growth_pct": 72.5
                     },
                     "beats_nifty_both": false,
                     "safer_than_nifty_both": false,
                     "thirds": [
-                        "2016-10..2020-02 5.5",
-                        "2020-02..2023-06 16.2",
-                        "2023-06..2026-09 18.2"
+                        "2016-10..2020-02 5.9",
+                        "2020-02..2023-06 15.8",
+                        "2023-06..2026-10 18"
                     ],
                     "trades": 22,
-                    "costs_rs": 388,
-                    "end_value": 34097,
+                    "costs_rs": 391,
+                    "end_value": 34616,
                     "passed": false
                 },
                 {
                     "strategy": "Momentum 30 index + market filter, sized to 15% volatility",
                     "school": "Barroso & Santa-Clara (2015) risk-managed momentum",
                     "train": {
-                        "cagr_pct": 9,
+                        "cagr_pct": 9.3,
                         "max_dd_pct": -19.9,
                         "vol_pct": 12.8,
-                        "return_per_risk": 0.23,
-                        "growth_pct": 76.7
+                        "return_per_risk": 0.26,
+                        "growth_pct": 80.8
                     },
                     "holdout": {
-                        "cagr_pct": 18.9,
+                        "cagr_pct": 18.7,
                         "max_dd_pct": -8.9,
                         "vol_pct": 12.8,
-                        "return_per_risk": 1.01,
-                        "growth_pct": 77.3
+                        "return_per_risk": 0.99,
+                        "growth_pct": 76
                     },
                     "beats_nifty_both": false,
                     "safer_than_nifty_both": false,
                     "thirds": [
-                        "2016-10..2020-02 4.6",
-                        "2020-02..2023-06 13.6",
-                        "2023-06..2026-09 18.9"
+                        "2016-10..2020-02 5",
+                        "2020-02..2023-06 13.2",
+                        "2023-06..2026-10 18.7"
                     ],
                     "trades": 42,
-                    "costs_rs": 509,
-                    "end_value": 31326,
+                    "costs_rs": 512,
+                    "end_value": 31808,
                     "passed": false
                 },
                 {
                     "strategy": "Factor dual momentum: 70% in the strongest of Momentum / Alpha-LowVol / Quality / Nifty (12-1), 15% gold, rest debt; equity to debt when Nifty < 200-DMA",
                     "school": "research synthesis: dual momentum on factor ETFs + gold + trend filter",
                     "train": {
-                        "cagr_pct": 6.8,
+                        "cagr_pct": 6.9,
                         "max_dd_pct": -13.3,
                         "vol_pct": 10,
-                        "return_per_risk": 0.08,
-                        "growth_pct": 54.2
+                        "return_per_risk": 0.09,
+                        "growth_pct": 56
                     },
                     "holdout": {
-                        "cagr_pct": 17.1,
+                        "cagr_pct": 16.9,
                         "max_dd_pct": -10.5,
                         "vol_pct": 10.9,
-                        "return_per_risk": 1.02,
-                        "growth_pct": 68.4
+                        "return_per_risk": 1,
+                        "growth_pct": 67.5
                     },
                     "beats_nifty_both": false,
                     "safer_than_nifty_both": false,
                     "thirds": [
-                        "2016-10..2020-02 4.9",
-                        "2020-02..2023-06 8.7",
-                        "2023-06..2026-09 17.1"
+                        "2016-10..2020-02 5",
+                        "2020-02..2023-06 8.4",
+                        "2023-06..2026-10 16.9"
                     ],
                     "trades": 56,
-                    "costs_rs": 781,
-                    "end_value": 25955,
+                    "costs_rs": 783,
+                    "end_value": 26119,
                     "passed": false
                 },
                 {
                     "strategy": "Risk parity without Nasdaq: Nifty, midcap, gold by 1 / volatility",
                     "school": "robustness check",
                     "train": {
-                        "cagr_pct": 12.4,
+                        "cagr_pct": 12.5,
                         "max_dd_pct": -25.8,
                         "vol_pct": 10.9,
-                        "return_per_risk": 0.58,
-                        "growth_pct": 116.6
+                        "return_per_risk": 0.6,
+                        "growth_pct": 118.4
                     },
                     "holdout": {
-                        "cagr_pct": 17.2,
+                        "cagr_pct": 16.8,
                         "max_dd_pct": -15.9,
                         "vol_pct": 12.1,
-                        "return_per_risk": 0.92,
-                        "growth_pct": 68.9
+                        "return_per_risk": 0.89,
+                        "growth_pct": 66.8
                     },
                     "beats_nifty_both": true,
                     "safer_than_nifty_both": false,
                     "thirds": [
-                        "2016-10..2020-02 9.5",
-                        "2020-02..2023-06 15.3",
-                        "2023-06..2026-09 17.2"
+                        "2016-10..2020-02 9.6",
+                        "2020-02..2023-06 14.9",
+                        "2023-06..2026-10 16.8"
                     ],
                     "trades": 32,
                     "costs_rs": 255,
-                    "end_value": 36571,
+                    "end_value": 36413,
                     "passed": false
                 },
                 {
@@ -3092,461 +3100,461 @@
                         "cagr_pct": 11.4,
                         "max_dd_pct": -21.1,
                         "vol_pct": 10.2,
-                        "return_per_risk": 0.53,
-                        "growth_pct": 104.4
+                        "return_per_risk": 0.54,
+                        "growth_pct": 105.1
                     },
                     "holdout": {
-                        "cagr_pct": 16.7,
+                        "cagr_pct": 16.4,
                         "max_dd_pct": -18,
-                        "vol_pct": 12.4,
-                        "return_per_risk": 0.86,
-                        "growth_pct": 66.7
+                        "vol_pct": 12.5,
+                        "return_per_risk": 0.84,
+                        "growth_pct": 65.2
                     },
                     "beats_nifty_both": false,
                     "safer_than_nifty_both": false,
                     "thirds": [
-                        "2016-10..2020-02 10.3",
-                        "2020-02..2023-06 12.5",
-                        "2023-06..2026-09 16.7"
+                        "2016-10..2020-02 10.4",
+                        "2020-02..2023-06 12",
+                        "2023-06..2026-10 16.4"
                     ],
                     "trades": 32,
                     "costs_rs": 275,
-                    "end_value": 34053,
+                    "end_value": 33864,
                     "passed": false
                 },
                 {
                     "strategy": "Advisor growth without Nasdaq: 60% Nifty / 20% midcap / 10% gold / 10% debt",
                     "school": "robustness check",
                     "train": {
-                        "cagr_pct": 11.9,
+                        "cagr_pct": 12.1,
                         "max_dd_pct": -31.1,
                         "vol_pct": 13.9,
-                        "return_per_risk": 0.43,
-                        "growth_pct": 110.9
+                        "return_per_risk": 0.44,
+                        "growth_pct": 112.8
                     },
                     "holdout": {
-                        "cagr_pct": 11.1,
+                        "cagr_pct": 10.6,
                         "max_dd_pct": -12.9,
                         "vol_pct": 11.3,
-                        "return_per_risk": 0.45,
-                        "growth_pct": 41.4
+                        "return_per_risk": 0.41,
+                        "growth_pct": 39.5
                     },
                     "beats_nifty_both": false,
                     "safer_than_nifty_both": true,
                     "thirds": [
-                        "2016-10..2020-02 9.3",
-                        "2020-02..2023-06 14.7",
-                        "2023-06..2026-09 11.1"
+                        "2016-10..2020-02 9.2",
+                        "2020-02..2023-06 14.4",
+                        "2023-06..2026-10 10.6"
                     ],
                     "trades": 6,
                     "costs_rs": 41,
-                    "end_value": 29818,
+                    "end_value": 29663,
                     "passed": false
                 },
                 {
                     "strategy": "Equal weight: Nifty, midcap, Nasdaq, gold 25% each",
                     "school": "economists (1/N diversification, DeMiguel-Garlappi-Uppal 2009) + advisors (spread and rebalance)",
                     "train": {
-                        "cagr_pct": 16.2,
+                        "cagr_pct": 16.5,
                         "max_dd_pct": -25.4,
                         "vol_pct": 12.3,
-                        "return_per_risk": 0.83,
-                        "growth_pct": 170.4
+                        "return_per_risk": 0.85,
+                        "growth_pct": 175.3
                     },
                     "holdout": {
-                        "cagr_pct": 23.7,
+                        "cagr_pct": 23.2,
                         "max_dd_pct": -13.1,
                         "vol_pct": 12.5,
-                        "return_per_risk": 1.41,
-                        "growth_pct": 101.7
+                        "return_per_risk": 1.37,
+                        "growth_pct": 99.1
                     },
                     "beats_nifty_both": true,
                     "safer_than_nifty_both": true,
                     "thirds": [
-                        "2016-10..2020-02 14.2",
-                        "2020-02..2023-06 18.3",
-                        "2023-06..2026-09 23.7"
+                        "2016-10..2020-02 14.3",
+                        "2020-02..2023-06 18.1",
+                        "2023-06..2026-10 23.2"
                     ],
                     "trades": 22,
                     "costs_rs": 169,
-                    "end_value": 54505,
+                    "end_value": 54783,
                     "passed": true
                 },
                 {
                     "strategy": "Equal mix, rebalanced every quarter",
                     "school": "stress test: rebalancing frequency",
                     "train": {
-                        "cagr_pct": 16,
-                        "max_dd_pct": -25,
-                        "vol_pct": 12.5,
-                        "return_per_risk": 0.8,
-                        "growth_pct": 167.4
+                        "cagr_pct": 16.7,
+                        "max_dd_pct": -25.3,
+                        "vol_pct": 12.4,
+                        "return_per_risk": 0.86,
+                        "growth_pct": 177.6
                     },
                     "holdout": {
-                        "cagr_pct": 23.3,
+                        "cagr_pct": 23,
                         "max_dd_pct": -13.4,
-                        "vol_pct": 12.3,
-                        "return_per_risk": 1.41,
-                        "growth_pct": 99.8
+                        "vol_pct": 12.6,
+                        "return_per_risk": 1.35,
+                        "growth_pct": 98.2
                     },
                     "beats_nifty_both": true,
                     "safer_than_nifty_both": true,
                     "thirds": [
-                        "2016-10..2020-02 13.5",
-                        "2020-02..2023-06 18.6",
-                        "2023-06..2026-09 23.3"
+                        "2016-10..2020-02 14.5",
+                        "2020-02..2023-06 18.2",
+                        "2023-06..2026-10 23"
                     ],
-                    "trades": 18,
-                    "costs_rs": 133,
-                    "end_value": 53391,
+                    "trades": 20,
+                    "costs_rs": 150,
+                    "end_value": 54994,
                     "passed": true
                 },
                 {
                     "strategy": "Equal mix, rebalanced once a year",
                     "school": "stress test: rebalancing frequency",
                     "train": {
-                        "cagr_pct": 14.9,
-                        "max_dd_pct": -24.5,
-                        "vol_pct": 11.9,
-                        "return_per_risk": 0.74,
-                        "growth_pct": 150.4
+                        "cagr_pct": 15.2,
+                        "max_dd_pct": -25.3,
+                        "vol_pct": 12.2,
+                        "return_per_risk": 0.75,
+                        "growth_pct": 155.3
                     },
                     "holdout": {
-                        "cagr_pct": 23.2,
-                        "max_dd_pct": -13.1,
-                        "vol_pct": 12.3,
-                        "return_per_risk": 1.4,
-                        "growth_pct": 99.3
+                        "cagr_pct": 22,
+                        "max_dd_pct": -14.3,
+                        "vol_pct": 12.8,
+                        "return_per_risk": 1.25,
+                        "growth_pct": 93
                     },
                     "beats_nifty_both": true,
                     "safer_than_nifty_both": true,
                     "thirds": [
-                        "2016-10..2020-02 13.3",
-                        "2020-02..2023-06 16.5",
-                        "2023-06..2026-09 23.2"
+                        "2016-10..2020-02 13.7",
+                        "2020-02..2023-06 16.1",
+                        "2023-06..2026-10 22"
                     ],
-                    "trades": 11,
-                    "costs_rs": 79,
-                    "end_value": 49883,
+                    "trades": 10,
+                    "costs_rs": 59,
+                    "end_value": 49265,
                     "passed": true
                 },
                 {
                     "strategy": "Equal mix, bought once and never rebalanced",
                     "school": "stress test: rebalancing frequency",
                     "train": {
-                        "cagr_pct": 15,
+                        "cagr_pct": 15.3,
                         "max_dd_pct": -26.6,
                         "vol_pct": 13.1,
-                        "return_per_risk": 0.69,
-                        "growth_pct": 152.5
+                        "return_per_risk": 0.71,
+                        "growth_pct": 157.4
                     },
                     "holdout": {
-                        "cagr_pct": 25.2,
-                        "max_dd_pct": -13.5,
+                        "cagr_pct": 24.8,
+                        "max_dd_pct": -13.6,
                         "vol_pct": 13.7,
-                        "return_per_risk": 1.4,
-                        "growth_pct": 110
+                        "return_per_risk": 1.37,
+                        "growth_pct": 107.7
                     },
                     "beats_nifty_both": true,
                     "safer_than_nifty_both": true,
                     "thirds": [
-                        "2016-10..2020-02 13.6",
-                        "2020-02..2023-06 16.4",
-                        "2023-06..2026-09 25.2"
+                        "2016-10..2020-02 13.7",
+                        "2020-02..2023-06 16.3",
+                        "2023-06..2026-10 24.8"
                     ],
                     "trades": 4,
                     "costs_rs": 7,
-                    "end_value": 52989,
+                    "end_value": 53437,
                     "passed": true
                 },
                 {
                     "strategy": "Equal mix, rebalanced only on a 10-point drift",
                     "school": "stress test: rebalancing band",
                     "train": {
-                        "cagr_pct": 14.5,
-                        "max_dd_pct": -23.9,
+                        "cagr_pct": 14.8,
+                        "max_dd_pct": -23.8,
                         "vol_pct": 11.6,
-                        "return_per_risk": 0.73,
-                        "growth_pct": 144.8
+                        "return_per_risk": 0.76,
+                        "growth_pct": 148.9
                     },
                     "holdout": {
-                        "cagr_pct": 22.1,
+                        "cagr_pct": 21.6,
                         "max_dd_pct": -12.7,
                         "vol_pct": 12.4,
-                        "return_per_risk": 1.3,
-                        "growth_pct": 93.5
+                        "return_per_risk": 1.26,
+                        "growth_pct": 90.9
                     },
                     "beats_nifty_both": true,
                     "safer_than_nifty_both": true,
                     "thirds": [
-                        "2016-10..2020-02 13.6",
-                        "2020-02..2023-06 15.3",
-                        "2023-06..2026-09 22.1"
+                        "2016-10..2020-02 13.8",
+                        "2020-02..2023-06 15.1",
+                        "2023-06..2026-10 21.6"
                     ],
                     "trades": 7,
                     "costs_rs": 46,
-                    "end_value": 47333,
+                    "end_value": 47497,
                     "passed": true
                 },
                 {
                     "strategy": "Equal mix with Momentum 30 instead of Nifty",
                     "school": "stress test: add the momentum factor",
                     "train": {
-                        "cagr_pct": 16.6,
+                        "cagr_pct": 17,
                         "max_dd_pct": -25,
                         "vol_pct": 12.6,
-                        "return_per_risk": 0.84,
-                        "growth_pct": 177.2
+                        "return_per_risk": 0.87,
+                        "growth_pct": 183.2
                     },
                     "holdout": {
-                        "cagr_pct": 24.6,
-                        "max_dd_pct": -14,
-                        "vol_pct": 13.9,
-                        "return_per_risk": 1.34,
-                        "growth_pct": 106.8
+                        "cagr_pct": 23.6,
+                        "max_dd_pct": -14.8,
+                        "vol_pct": 14.2,
+                        "return_per_risk": 1.24,
+                        "growth_pct": 101.5
                     },
                     "beats_nifty_both": true,
                     "safer_than_nifty_both": true,
                     "thirds": [
-                        "2016-10..2020-02 15.2",
-                        "2020-02..2023-06 18.1",
-                        "2023-06..2026-09 24.6"
+                        "2016-10..2020-02 15.5",
+                        "2020-02..2023-06 17.9",
+                        "2023-06..2026-10 23.6"
                     ],
-                    "trades": 21,
-                    "costs_rs": 167,
-                    "end_value": 57309,
+                    "trades": 17,
+                    "costs_rs": 130,
+                    "end_value": 57041,
                     "passed": true
                 },
                 {
                     "strategy": "Equal mix of 5: Nifty, Next 50, midcap, Nasdaq, gold",
                     "school": "stress test: broader Indian equity",
                     "train": {
-                        "cagr_pct": 14.4,
-                        "max_dd_pct": -26.5,
+                        "cagr_pct": 14.7,
+                        "max_dd_pct": -26.4,
                         "vol_pct": 12.5,
-                        "return_per_risk": 0.67,
-                        "growth_pct": 143.7
+                        "return_per_risk": 0.69,
+                        "growth_pct": 148
                     },
                     "holdout": {
-                        "cagr_pct": 21.8,
+                        "cagr_pct": 21.3,
                         "max_dd_pct": -11.7,
                         "vol_pct": 12.6,
-                        "return_per_risk": 1.26,
-                        "growth_pct": 91.7
+                        "return_per_risk": 1.22,
+                        "growth_pct": 89.2
                     },
                     "beats_nifty_both": true,
                     "safer_than_nifty_both": true,
                     "thirds": [
-                        "2016-10..2020-02 12.1",
-                        "2020-02..2023-06 16.8",
-                        "2023-06..2026-09 21.8"
+                        "2016-10..2020-02 12.2",
+                        "2020-02..2023-06 16.5",
+                        "2023-06..2026-10 21.3"
                     ],
                     "trades": 19,
                     "costs_rs": 146,
-                    "end_value": 46693,
+                    "end_value": 46890,
                     "passed": true
                 },
                 {
                     "strategy": "Equal mix with smallcap 250 instead of midcap",
                     "school": "stress test: smaller companies",
                     "train": {
-                        "cagr_pct": 14.7,
+                        "cagr_pct": 15,
                         "max_dd_pct": -26.1,
                         "vol_pct": 12,
-                        "return_per_risk": 0.72,
-                        "growth_pct": 148.2
+                        "return_per_risk": 0.75,
+                        "growth_pct": 151.8
                     },
                     "holdout": {
-                        "cagr_pct": 23.6,
+                        "cagr_pct": 23.2,
                         "max_dd_pct": -12.6,
                         "vol_pct": 12.3,
-                        "return_per_risk": 1.43,
-                        "growth_pct": 101.3
+                        "return_per_risk": 1.4,
+                        "growth_pct": 98.9
                     },
                     "beats_nifty_both": true,
                     "safer_than_nifty_both": true,
                     "thirds": [
-                        "2016-10..2020-02 11.6",
-                        "2020-02..2023-06 18",
-                        "2023-06..2026-09 23.6"
+                        "2016-10..2020-02 11.7",
+                        "2020-02..2023-06 17.7",
+                        "2023-06..2026-10 23.2"
                     ],
                     "trades": 23,
-                    "costs_rs": 183,
-                    "end_value": 49925,
+                    "costs_rs": 184,
+                    "end_value": 50072,
                     "passed": true
                 },
                 {
                     "strategy": "Equal mix with Low-vol 30 instead of Nifty",
                     "school": "stress test: add the low-volatility factor",
                     "train": {
-                        "cagr_pct": 15.7,
+                        "cagr_pct": 16.1,
                         "max_dd_pct": -23.7,
                         "vol_pct": 13.8,
-                        "return_per_risk": 0.71,
-                        "growth_pct": 163.4
+                        "return_per_risk": 0.73,
+                        "growth_pct": 168.7
                     },
                     "holdout": {
-                        "cagr_pct": 23.2,
+                        "cagr_pct": 22.7,
                         "max_dd_pct": -13.5,
-                        "vol_pct": 12,
-                        "return_per_risk": 1.44,
-                        "growth_pct": 99.3
+                        "vol_pct": 11.9,
+                        "return_per_risk": 1.4,
+                        "growth_pct": 96.7
                     },
                     "beats_nifty_both": true,
                     "safer_than_nifty_both": true,
                     "thirds": [
-                        "2016-10..2020-02 14.2",
-                        "2020-02..2023-06 17.3",
-                        "2023-06..2026-09 23.2"
+                        "2016-10..2020-02 14.5",
+                        "2020-02..2023-06 17.1",
+                        "2023-06..2026-10 22.7"
                     ],
                     "trades": 21,
                     "costs_rs": 148,
-                    "end_value": 52479,
+                    "end_value": 52821,
                     "passed": true
                 },
                 {
                     "strategy": "50% Nifty / 50% gold",
                     "school": "stress test: the simplest two-asset mix",
                     "train": {
-                        "cagr_pct": 11.8,
+                        "cagr_pct": 11.9,
                         "max_dd_pct": -22.3,
                         "vol_pct": 10.5,
-                        "return_per_risk": 0.55,
-                        "growth_pct": 109.7
+                        "return_per_risk": 0.56,
+                        "growth_pct": 110.4
                     },
                     "holdout": {
-                        "cagr_pct": 18.3,
+                        "cagr_pct": 18,
                         "max_dd_pct": -18.3,
                         "vol_pct": 13.5,
-                        "return_per_risk": 0.91,
-                        "growth_pct": 74.1
+                        "return_per_risk": 0.89,
+                        "growth_pct": 72.8
                     },
                     "beats_nifty_both": false,
                     "safer_than_nifty_both": false,
                     "thirds": [
                         "2016-10..2020-02 10",
-                        "2020-02..2023-06 13.7",
-                        "2023-06..2026-09 18.3"
+                        "2020-02..2023-06 13.3",
+                        "2023-06..2026-10 18"
                     ],
                     "trades": 18,
                     "costs_rs": 148,
-                    "end_value": 36491,
+                    "end_value": 36334,
                     "passed": false
                 },
                 {
                     "strategy": "Equal mix + drawdown brake: halve a sleeve while it is 20% below its 1-year high",
                     "school": "bank risk rule (drawdown control)",
                     "train": {
-                        "cagr_pct": 14,
+                        "cagr_pct": 14.3,
                         "max_dd_pct": -25,
-                        "vol_pct": 11.7,
-                        "return_per_risk": 0.69,
-                        "growth_pct": 138.7
+                        "vol_pct": 11.6,
+                        "return_per_risk": 0.71,
+                        "growth_pct": 142.5
                     },
                     "holdout": {
-                        "cagr_pct": 22.4,
+                        "cagr_pct": 22,
                         "max_dd_pct": -12.7,
                         "vol_pct": 12,
-                        "return_per_risk": 1.36,
-                        "growth_pct": 95.1
+                        "return_per_risk": 1.33,
+                        "growth_pct": 92.8
                     },
                     "beats_nifty_both": true,
                     "safer_than_nifty_both": true,
                     "thirds": [
-                        "2016-10..2020-02 12.2",
-                        "2020-02..2023-06 15.9",
-                        "2023-06..2026-09 22.4"
+                        "2016-10..2020-02 12.4",
+                        "2020-02..2023-06 15.7",
+                        "2023-06..2026-10 22"
                     ],
                     "trades": 40,
-                    "costs_rs": 379,
-                    "end_value": 46558,
+                    "costs_rs": 380,
+                    "end_value": 46746,
                     "passed": true
                 },
                 {
                     "strategy": "Council (balanced): advisors + trend + dual momentum + factors + risk desk, averaged",
                     "school": "all of the above, equal say",
                     "train": {
-                        "cagr_pct": 7.6,
+                        "cagr_pct": 7.8,
                         "max_dd_pct": -26.9,
                         "vol_pct": 11.4,
-                        "return_per_risk": 0.14,
-                        "growth_pct": 62
+                        "return_per_risk": 0.16,
+                        "growth_pct": 64.2
                     },
                     "holdout": {
-                        "cagr_pct": 15.5,
+                        "cagr_pct": 15,
                         "max_dd_pct": -11.3,
                         "vol_pct": 11,
-                        "return_per_risk": 0.86,
-                        "growth_pct": 60.7
+                        "return_per_risk": 0.82,
+                        "growth_pct": 58.5
                     },
                     "beats_nifty_both": false,
                     "safer_than_nifty_both": false,
                     "thirds": [
                         "2016-10..2020-02 4.2",
-                        "2020-02..2023-06 11.1",
-                        "2023-06..2026-09 15.5"
+                        "2020-02..2023-06 10.9",
+                        "2023-06..2026-10 15"
                     ],
-                    "trades": 178,
-                    "costs_rs": 1561,
-                    "end_value": 26036,
+                    "trades": 182,
+                    "costs_rs": 1628,
+                    "end_value": 26014,
                     "passed": false
                 },
                 {
                     "strategy": "Council (growth): trend + dual momentum + factors + factor momentum + momentum 30, averaged",
                     "school": "the return-seeking schools, equal say",
                     "train": {
-                        "cagr_pct": 6.9,
-                        "max_dd_pct": -26.1,
+                        "cagr_pct": 7.2,
+                        "max_dd_pct": -26,
                         "vol_pct": 11.8,
-                        "return_per_risk": 0.07,
-                        "growth_pct": 55.4
+                        "return_per_risk": 0.1,
+                        "growth_pct": 58.6
                     },
                     "holdout": {
-                        "cagr_pct": 16.6,
+                        "cagr_pct": 16.1,
                         "max_dd_pct": -10.8,
                         "vol_pct": 11.7,
-                        "return_per_risk": 0.91,
-                        "growth_pct": 66.2
+                        "return_per_risk": 0.86,
+                        "growth_pct": 63.7
                     },
                     "beats_nifty_both": false,
                     "safer_than_nifty_both": false,
                     "thirds": [
-                        "2016-10..2020-02 2.6",
-                        "2020-02..2023-06 11.3",
-                        "2023-06..2026-09 16.6"
+                        "2016-10..2020-02 2.8",
+                        "2020-02..2023-06 11.2",
+                        "2023-06..2026-10 16.1"
                     ],
-                    "trades": 272,
-                    "costs_rs": 2475,
-                    "end_value": 25820,
+                    "trades": 277,
+                    "costs_rs": 2564,
+                    "end_value": 25961,
                     "passed": false
                 },
                 {
                     "strategy": "Council (all 12 playbooks averaged)",
                     "school": "every school above, equal say",
                     "train": {
-                        "cagr_pct": 9.6,
+                        "cagr_pct": 9.8,
                         "max_dd_pct": -20.7,
                         "vol_pct": 11.4,
-                        "return_per_risk": 0.31,
-                        "growth_pct": 83.2
+                        "return_per_risk": 0.33,
+                        "growth_pct": 85.7
                     },
                     "holdout": {
-                        "cagr_pct": 15.1,
+                        "cagr_pct": 14.7,
                         "max_dd_pct": -10.9,
                         "vol_pct": 10.8,
-                        "return_per_risk": 0.84,
-                        "growth_pct": 59
+                        "return_per_risk": 0.8,
+                        "growth_pct": 57.1
                     },
                     "beats_nifty_both": false,
                     "safer_than_nifty_both": false,
                     "thirds": [
                         "2016-10..2020-02 7",
-                        "2020-02..2023-06 12.3",
-                        "2023-06..2026-09 15.1"
+                        "2020-02..2023-06 12.1",
+                        "2023-06..2026-10 14.7"
                     ],
-                    "trades": 149,
-                    "costs_rs": 1305,
-                    "end_value": 29128,
+                    "trades": 151,
+                    "costs_rs": 1340,
+                    "end_value": 29160,
                     "passed": false
                 }
             ]
