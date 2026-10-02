@@ -1,13 +1,13 @@
 {
     "version": 1,
-    "tried_total": 341407,
-    "runs": 7,
+    "tried_total": 393335,
+    "runs": 8,
     "per_family": {
-        "dip": 68283,
-        "rot": 68282,
-        "trend": 68282,
-        "mix": 68280,
-        "mixdip": 68280
+        "dip": 78669,
+        "rot": 78668,
+        "trend": 78668,
+        "mix": 78665,
+        "mixdip": 78665
     },
     "seeds": {
         "dip": [
@@ -467,6 +467,18 @@
             {
                 "p": {
                     "band": 0.1,
+                    "every": 21,
+                    "w": {
+                        "GOLD": 0.25,
+                        "MOM": 0.43,
+                        "NASDAQ": 0.32
+                    }
+                },
+                "score": 0.899
+            },
+            {
+                "p": {
+                    "band": 0.1,
                     "every": 252,
                     "w": {
                         "GOLD": 0.32,
@@ -499,6 +511,30 @@
                     }
                 },
                 "score": 0.886
+            },
+            {
+                "p": {
+                    "band": 0.1,
+                    "every": 252,
+                    "w": {
+                        "GOLD": 0.25,
+                        "MOM": 0.43,
+                        "NASDAQ": 0.32
+                    }
+                },
+                "score": 0.88
+            },
+            {
+                "p": {
+                    "band": 0.05,
+                    "every": 252,
+                    "w": {
+                        "GOLD": 0.25,
+                        "MOM": 0.43,
+                        "NASDAQ": 0.32
+                    }
+                },
+                "score": 0.872
             },
             {
                 "p": {
@@ -535,43 +571,6 @@
                     }
                 },
                 "score": 0.859
-            },
-            {
-                "p": {
-                    "band": 0.03,
-                    "every": 63,
-                    "w": {
-                        "GOLD": 0.32,
-                        "MOM": 0.37,
-                        "NASDAQ": 0.31
-                    }
-                },
-                "score": 0.856
-            },
-            {
-                "p": {
-                    "band": 0.1,
-                    "every": 252,
-                    "w": {
-                        "GOLD": 0.25,
-                        "MOM": 0.31,
-                        "NASDAQ": 0.41,
-                        "NEXT50": 0.03
-                    }
-                },
-                "score": 0.854
-            },
-            {
-                "p": {
-                    "band": 0.03,
-                    "every": 21,
-                    "w": {
-                        "GOLD": 0.32,
-                        "MOM": 0.37,
-                        "NASDAQ": 0.31
-                    }
-                },
-                "score": 0.852
             }
         ],
         "mixdip": [
@@ -2295,6 +2294,12 @@
     ],
     "recent_runs": [
         {
+            "at": "2026-10-02 18:35 IST",
+            "tried": 51928,
+            "new_candidates": 43,
+            "seconds": 900
+        },
+        {
             "at": "2026-10-02 11:37 IST",
             "tried": 60525,
             "new_candidates": 50,
@@ -2384,7 +2389,7 @@
             "GOLD"
         ]
     },
-    "last_run": "2026-10-02 11:37 IST",
+    "last_run": "2026-10-02 18:35 IST",
     "summary": {
         "confirmed": 0,
         "failed": 0,
