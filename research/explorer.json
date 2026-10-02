@@ -1,13 +1,13 @@
 {
     "version": 1,
-    "tried_total": 280882,
-    "runs": 6,
+    "tried_total": 341407,
+    "runs": 7,
     "per_family": {
-        "dip": 56178,
-        "rot": 56177,
-        "trend": 56177,
-        "mix": 56175,
-        "mixdip": 56175
+        "dip": 68283,
+        "rot": 68282,
+        "trend": 68282,
+        "mix": 68280,
+        "mixdip": 68280
     },
     "seeds": {
         "dip": [
@@ -269,6 +269,44 @@
                         "LOWVOL",
                         "NASDAQ",
                         "NEXT50",
+                        "NIFTY",
+                        "QUAL",
+                        "SMALL"
+                    ],
+                    "every": 63,
+                    "wt": "iv"
+                },
+                "score": 1.142
+            },
+            {
+                "p": {
+                    "K": 1,
+                    "R": 63,
+                    "S": 21,
+                    "abs": "cash",
+                    "assets": [
+                        "LOWVOL",
+                        "NASDAQ",
+                        "NEXT50",
+                        "NIFTY",
+                        "QUAL",
+                        "SMALL"
+                    ],
+                    "every": 63,
+                    "wt": "eq"
+                },
+                "score": 1.142
+            },
+            {
+                "p": {
+                    "K": 1,
+                    "R": 63,
+                    "S": 21,
+                    "abs": "cash",
+                    "assets": [
+                        "LOWVOL",
+                        "NASDAQ",
+                        "NEXT50",
                         "SMALL"
                     ],
                     "every": 63,
@@ -292,46 +330,6 @@
                     "wt": "eq"
                 },
                 "score": 1.141
-            },
-            {
-                "p": {
-                    "K": 1,
-                    "R": 63,
-                    "S": 21,
-                    "abs": "cash",
-                    "assets": [
-                        "LOWVOL",
-                        "MID",
-                        "NASDAQ",
-                        "NEXT50",
-                        "NIFTY",
-                        "QUAL",
-                        "SMALL"
-                    ],
-                    "every": 63,
-                    "wt": "eq"
-                },
-                "score": 1.126
-            },
-            {
-                "p": {
-                    "K": 1,
-                    "R": 63,
-                    "S": 21,
-                    "abs": "cash",
-                    "assets": [
-                        "LOWVOL",
-                        "MID",
-                        "NASDAQ",
-                        "NEXT50",
-                        "NIFTY",
-                        "QUAL",
-                        "SMALL"
-                    ],
-                    "every": 63,
-                    "wt": "iv"
-                },
-                "score": 1.126
             }
         ],
         "trend": [
@@ -1423,6 +1421,53 @@
             }
         },
         {
+            "id": "eb1072fb5b",
+            "f": "rot",
+            "p": {
+                "K": 2,
+                "R": 126,
+                "S": 21,
+                "abs": "pos",
+                "assets": [
+                    "BANK",
+                    "GOLD",
+                    "LOWVOL",
+                    "MID",
+                    "MOM",
+                    "NASDAQ",
+                    "NEXT50",
+                    "NIFTY",
+                    "QUAL",
+                    "SMALL",
+                    "VALUE"
+                ],
+                "every": 63,
+                "wt": "iv"
+            },
+            "label": "Every 63 days hold the 2 strongest of BANK+GOLD+LOWVOL+MID+MOM+NASDAQ+NEXT50+NIFTY+QUAL+SMALL+VALUE by 126-day return (skipping the last 21), only if rising, calmer ones bigger",
+            "found_on": "2026-10-02",
+            "found_data_end": "2026-10-01",
+            "tried_before": 292094,
+            "train": {
+                "cagr": 19.05,
+                "dd": -21.5,
+                "rpr": 0.89,
+                "ret": 389.2
+            },
+            "gate": {
+                "cagr": 30.21,
+                "dd": -15.3,
+                "rpr": 1.398,
+                "ret": 393.19
+            },
+            "trades": 169,
+            "costs": 3691,
+            "status": "forward testing",
+            "forward": {
+                "days": 0
+            }
+        },
+        {
             "id": "498df94d6d",
             "f": "trend",
             "p": {
@@ -2246,43 +2291,15 @@
             "forward": {
                 "days": 0
             }
-        },
-        {
-            "id": "ed41242b28",
-            "f": "trend",
-            "p": {
-                "assets": [
-                    "MOM",
-                    "NASDAQ"
-                ],
-                "every": 5,
-                "sma": 100
-            },
-            "label": "Equal slices of MOM+NASDAQ, each only above its 100-day average (checked every 5 days)",
-            "found_on": "2026-10-01",
-            "found_data_end": "2026-09-30",
-            "tried_before": 4503,
-            "train": {
-                "cagr": 13.18,
-                "dd": -9.7,
-                "rpr": 0.696,
-                "ret": 208.78
-            },
-            "gate": {
-                "cagr": 22.71,
-                "dd": -10,
-                "rpr": 1.342,
-                "ret": 244.92
-            },
-            "trades": 374,
-            "costs": 4691,
-            "status": "forward testing",
-            "forward": {
-                "days": 0
-            }
         }
     ],
     "recent_runs": [
+        {
+            "at": "2026-10-02 11:37 IST",
+            "tried": 60525,
+            "new_candidates": 50,
+            "seconds": 900
+        },
         {
             "at": "2026-10-02 04:31 IST",
             "tried": 54758,
@@ -2367,7 +2384,7 @@
             "GOLD"
         ]
     },
-    "last_run": "2026-10-02 04:31 IST",
+    "last_run": "2026-10-02 11:37 IST",
     "summary": {
         "confirmed": 0,
         "failed": 0,
