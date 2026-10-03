@@ -136,6 +136,14 @@
   .plan div { background: var(--surface-2); border-radius: 8px; padding: 7px 9px; }
   .plan b { display: block; font-size: 15px; font-variant-numeric: tabular-nums; }
   .plan span { font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: .04em; }
+  .inshort { border-left: 5px solid var(--text-faint); }
+  .inshort.yes { border-left-color: var(--bull); } .inshort.no { border-left-color: var(--bear); }
+  .inshort .ans { font-size: 22px; font-weight: 800; margin: 4px 0 6px; }
+  .inshort.yes .ans { color: var(--bull); } .inshort.no .ans { color: var(--bear); }
+  .inshort .hz { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; margin-top: 10px; }
+  .inshort .hz > div { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; }
+  .inshort .hz span { display: block; font-size: 11.5px; color: var(--text-dim); } .inshort .hz b { font-size: 14px; }
+  .inshort .hz em { display: block; font-style: normal; font-size: 11px; color: var(--text-faint); margin-top: 2px; }
   .warnbox { background: var(--warn-bg); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; margin-top: 8px; }
   .warnbox li { margin: 2px 0; }
   .okbox { background: color-mix(in oklab, var(--bull) 14%, var(--surface)); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; margin-top: 8px; }
@@ -1001,6 +1009,58 @@
       <div><span>Qty</span><b>${p.qty == null ? "—" : fmt(p.qty, 0)}</b></div><div><span>Max loss</span><b>${inr(p.max_loss, 0)}</b></div></div>
       <div class="tiny faint">${L(`Risk ${inr(p.risk_per_share)}/share (${p.risk_pct}%) · capital used ${inr(p.capital_used, 0)}`, `जोखिम ${inr(p.risk_per_share)}/शेयर (${p.risk_pct}%) · लगी पूंजी ${inr(p.capital_used, 0)}`)}</div>`;
   }
+  /* "In short": one plain answer to "should I buy?", led by what passed the tests
+     (Core portfolio ETFs, this month's Monthly picks, the market filter), then the page's own ratings */
+  let momErr = false, momLoading = null;
+  function inShort(A, M) {
+    const V = A.verdicts, I = V.intraday, S = V.swing, LT = V.long, r = LT.rating || "";
+    const base = A.symbol.replace(/\.(NS|BO)$/i, ""), isIdx = A.symbol[0] === "^";
+    const isCore = ["NIFTYBEES", "SETFNIF50", "MID150BEES", "MIDCAPETF", "MID150CASE", "MON100", "MAFANG", "GOLDBEES", "SETFGOLD"].includes(base);
+    const pos = r === "STRONG BUY" || r === "BUY", neg = /REDUCE|SELL/.test(r);
+    const R = M && M.rank, mOn = R ? R.market_on : null;
+    const held = M && (M.holdings || []).some(x => x.symbol === base);
+    const rk = R ? (R.top || []).findIndex(x => x.symbol === base) : -1;
+    const rt = esc(I18N.t(r)); let cls, ans; const why = [];
+    if (isIdx) { cls = "wait"; ans = L("You can't buy an index directly", "इंडेक्स सीधे नहीं खरीद सकते");
+      why.push(L("To own the Nifty, buy NIFTYBEES — it is part of the tested Core portfolio.", "निफ्टी में निवेश के लिए NIFTYBEES खरीदें — यह परखे हुए कोर पोर्टफ़ोलियो का हिस्सा है।")); }
+    else if (isCore) { cls = "yes"; ans = L("BUY — as part of the Core portfolio", "खरीदें — कोर पोर्टफ़ोलियो के हिस्से के तौर पर");
+      why.push(L("One of the four ETFs in the tested Core portfolio (25% each, rebalanced only when one drifts 5 points). Hold it for years; don't trade it.", "परखे हुए कोर पोर्टफ़ोलियो के चार ETF में से एक (हर एक 25%, सिर्फ़ 5 अंक हटने पर संतुलन)। सालों तक रखें; इसमें ट्रेडिंग न करें।")); }
+    else if (held) { cls = "yes"; ans = L("BUY — it's in this month's Monthly picks", "खरीदें — यह इस महीने के मासिक चयन में है");
+      why.push(L(`The tested Monthly picks rule holds it this month (equal amount, delivery/CNC). It is checked again on ${esc(M.next_rebalance || "the next month's first trading day")}.`, `परखा हुआ मासिक चयन नियम इसे इस महीने रखता है (बराबर रकम, डिलीवरी/CNC)। अगली जाँच ${esc(M.next_rebalance || "अगले महीने के पहले ट्रेडिंग दिन")} को।`)); }
+    else if (neg) { cls = "no"; ans = L("DON'T BUY", "न खरीदें");
+      why.push(L(`Long-term rating is ${rt}: the trend and/or the business numbers are weak.`, `लंबी अवधि की रेटिंग “${rt}” है: ट्रेंड और/या कारोबार के आंकड़े कमज़ोर हैं।`)); }
+    else if (mOn === false) { cls = "wait"; ans = L("WAIT — don't buy now", "रुकें — अभी न खरीदें");
+      why.push(L(`The Nifty (${fmt(R.nifty, 0)}) is below its 200-day average (${fmt(R.nifty_200dma, 0)}). In this phase our tested rule holds cash, not stocks.`, `निफ्टी (${fmt(R.nifty, 0)}) अपने 200-दिन औसत (${fmt(R.nifty_200dma, 0)}) से नीचे है। इस दौर में परखा हुआ नियम शेयर नहीं, नकद रखता है।`));
+      if (pos) why.push(L("This stock's own long-term score is good — keep it on your watchlist for when the market turns up.", "इस शेयर का अपना लंबी अवधि का स्कोर अच्छा है — बाज़ार सुधरने तक इसे वॉचलिस्ट में रखें।")); }
+    else if (pos && S.action === "BUY") { cls = "yes"; ans = L("BUY — in 2–3 parts", "खरीदें — 2–3 किश्तों में");
+      why.push(L("Long-term and swing scores are both positive.", "लंबी अवधि और स्विंग, दोनों स्कोर सकारात्मक हैं।")); }
+    else if (pos) { cls = "yes"; ans = L("BUY ON DIPS", "गिरावट पर खरीदें");
+      why.push(L("The long-term score is positive, but the short-term trend isn't confirming yet — buy in parts on dips.", "लंबी अवधि का स्कोर सकारात्मक है, पर छोटी अवधि का ट्रेंड अभी साथ नहीं दे रहा — गिरावट पर किश्तों में खरीदें।")); }
+    else { cls = "wait"; ans = L("WAIT — no clear reason to buy", "रुकें — खरीदने की साफ़ वजह नहीं");
+      why.push(L(`Long-term rating is ${rt}: no strong edge either way.`, `लंबी अवधि की रेटिंग “${rt}” है: किसी तरफ़ ज़ोरदार बढ़त नहीं।`)); }
+    if (!isIdx && !isCore && cls !== "no" && LT.stop) why.push(L(`If you buy: long-term target ~${inr(LT.target, 0)} (${pct(LT.target_upside_pct, 1)}); exit if it closes below ${inr(LT.stop, 0)}.`, `खरीदें तो: लंबी अवधि का टारगेट ~${inr(LT.target, 0)} (${pct(LT.target_upside_pct, 1)}); ${inr(LT.stop, 0)} से नीचे बंद हो तो निकल जाएँ।`));
+    const own = isIdx ? "" : neg ? L("Sell or reduce, ideally on a bounce.", "बेचें या कम करें, बेहतर हो तो उछाल पर।")
+      : isCore ? L("Keep holding.", "रखे रहें।") : L(`Hold; exit if it closes below ${inr(LT.stop, 0)}.`, `रखे रहें; ${inr(LT.stop, 0)} से नीचे बंद हो तो निकल जाएँ।`);
+    const tested = isIdx || isCore ? L("Core portfolio: tested ✓", "कोर पोर्टफ़ोलियो: परखा हुआ ✓")
+      : !M ? (momErr ? L("Monthly picks check unavailable right now.", "मासिक चयन की जाँच अभी उपलब्ध नहीं।") : L("Checking the Monthly picks…", "मासिक चयन जाँच रहे हैं…"))
+      : held ? L("Monthly picks: held this month ✓", "मासिक चयन: इस महीने रखा गया ✓") : mOn === false ? L("Monthly picks: market filter OFF — cash", "मासिक चयन: बाज़ार फ़िल्टर बंद — नकद")
+      : rk >= 0 ? L(`Monthly picks: #${rk + 1} of the top 20, not held`, `मासिक चयन: टॉप 20 में #${rk + 1}, रखा नहीं गया`) : L("Monthly picks: not in the top 20", "मासिक चयन: टॉप 20 में नहीं");
+    const intra = I && !I.error ? esc(I18N.t(I.action)) : "—";
+    return `<div class="card mt inshort ${cls}" id="inShort"><div class="tiny faint" style="text-transform:uppercase;letter-spacing:.06em">${L("In short — should I buy?", "संक्षेप में — खरीदूँ या नहीं?")}</div>
+      <div class="ans">${cls === "yes" ? "▲" : cls === "no" ? "▼" : "●"} ${ans}</div>
+      <ul class="plain">${why.map(w => `<li class="small">${w}</li>`).join("")}${own ? `<li class="small"><b>${L("Already own it?", "पहले से है?")}</b> ${own}</li>` : ""}</ul>
+      <div class="hz"><div><span>${L("Tested rules", "परखे हुए नियम")}</span><b>${tested}</b></div>
+        <div><span>${L("Long-term · 6–18 months", "लंबी अवधि · 6–18 महीने")}</span><b>${rt || "—"}</b></div>
+        <div><span>${L("Swing · 2–6 weeks", "स्विंग · 2–6 हफ़्ते")}</span><b>${esc(I18N.t(S.action))}</b></div>
+        <div><span>${L("Intraday today", "आज इंट्राडे")}</span><b>${intra}</b><em>${L("Not recommended — no intraday rule made money after charges in our tests.", "सलाह नहीं — हमारी जाँच में कोई इंट्राडे नियम चार्ज के बाद मुनाफ़ा नहीं दे पाया।")}</em></div></div>
+      <p class="tiny faint" style="margin-top:8px">${L("Only the Core portfolio and the Monthly picks rule passed our tests; the long-term, swing and intraday ratings on this page are rule-based and untested. Not investment advice.", "सिर्फ़ कोर पोर्टफ़ोलियो और मासिक चयन नियम हमारी जाँच में पास हुए; इस पेज की लंबी अवधि, स्विंग और इंट्राडे रेटिंग नियमों पर आधारित हैं और परखी नहीं गईं। यह निवेश सलाह नहीं है।")}</p></div>`;
+  }
+  async function inShortLoad(A) {
+    if (lastMom || A.symbol[0] === "^") return;
+    momLoading = momLoading || api("mkt_momentum").then(M => { lastMom = M; momErr = false; }).catch(() => { momErr = true; }).finally(() => { momLoading = null; });
+    await momLoading;
+    if (STOCK === A && $("#inShort")) $("#inShort").outerHTML = inShort(A, lastMom);
+  }
   function renderStock() {
     const A = STOCK, V = A.verdicts, T = A.technical, F = A.fundamental, I = V.intraday, S = V.swing, L = V.long;
     charts.length = 0;
@@ -1009,6 +1069,7 @@
       <div class="small dim">${esc(A.symbol)} · ${esc(A.exchange || "")} · ${esc(I18N.t(A.sector.label))}${A.data_source && A.data_source.prices ? " · " + window.L("prices: ", "भाव: ") + esc(A.data_source.prices) + (A.data_source.fundamentals ? window.L(", fundamentals: ", ", फंडामेंटल्स: ") + esc(A.data_source.fundamentals) : "") : ""}${A.sector.industry ? " · " + esc(A.sector.industry) : ""}${A.stale ? " · <b>" + window.L("showing cached data — live fetch failed", "कैश किया डेटा दिखा रहे हैं — लाइव डेटा नहीं मिला") + "</b>" : ""}</div></div>
       <div style="text-align:right"><div style="font-size:26px;font-weight:750" class="num">${inr(T.price)}</div><div>${chg(T.change_pct)} <span class="tiny faint">· ${istTime(A.as_of)} IST</span></div></div></div>
       <div class="small dim" style="margin-top:6px">${window.L("Market regime:", "बाज़ार का माहौल:")} <b>${esc(I18N.t(A.macro.label || "—"))}</b> (${sc(A.macro.score)}) · India VIX ${fmt(A.macro.india_vix)} · ${window.L("Sector", "सेक्टर")} ${esc(I18N.t(A.sector.label))} ${A.sector.view ? window.L("tailwind ", "रुख ") + sc(A.sector.view.score) : ""}</div></div>`;
+    h += inShort(A, lastMom);
     /* three verdicts */
     const iPlan = I && !I.error ? I : null;
     h += `<div class="grid g3 mt">
@@ -1096,7 +1157,7 @@
     /* news */
     if (A.news) h += `<div class="card mt news"><div class="ch"><h2>${window.L("News", "ख़बरें")} · ${esc(A.name)}</h2><span class="dim small">${window.L(`sentiment ${sc(A.news.score)} · ${A.news.scored} scored`, `भावना ${sc(A.news.score)} · ${A.news.scored} आंकी गईं`)}</span></div>${newsList(A.news, 15)}</div>`;
     h += `<div id="stockNote"></div>`;
-    $("#stockBody").innerHTML = h;
+    $("#stockBody").innerHTML = h; inShortLoad(A);
     /* draw charts */
     const C = A.chart;
     makeChart($("#chDaily"), { t: C.t, o: C.o, h: C.h, l: C.l, c: C.c, v: C.v, aria: "Daily candlestick chart of " + A.symbol, height: 330,
