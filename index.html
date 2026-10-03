@@ -512,8 +512,8 @@
   const meter = (v, big) => { v = Math.max(-1, Math.min(1, Number(v) || 0)); const w = Math.abs(v) * 50;
     return `<div class="meter${big ? " big" : ""}" role="img" aria-label="score ${sc(v)}"><i class="${v >= 0 ? "p" : "n"}" style="width:${w}%"></i></div>`; };
   const ago = ts => { if (!ts) return ""; const s = Math.round(Date.now() / 1000 - ts); return s < 60 ? "just now" : s < 3600 ? Math.round(s / 60) + " min ago" : Math.round(s / 3600) + " h ago"; };
-  const istTime = ts => new Date(ts * 1000).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-  const istDate = ts => new Date(ts * 1000).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "2-digit" });
+  const istTime = ts => new Date(ts * 1000).toLocaleString(I18N.lang === "hi" ? "hi-IN" : "en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  const istDate = ts => new Date(ts * 1000).toLocaleDateString(I18N.lang === "hi" ? "hi-IN" : "en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "2-digit" });
   function badge(action) {
     const a = String(action || "—"); const up = /BUY|LONG|ACCUMULATE/.test(a) && !/SELL/.test(a); const dn = /SELL|REDUCE|SHORT|WEAK|AVOID/.test(a);
     return `<span class="badge ${up ? "bull" : dn ? "bear" : ""}"><span class="ico">${up ? "▲" : dn ? "▼" : "●"}</span>${esc(a)}</span>`;
@@ -845,7 +845,7 @@
     /* time axis */
     const ticks = Math.max(2, Math.floor(plotW / 110)); const every = Math.max(1, Math.round(n / ticks));
     for (let i = 0; i < n; i += every) {
-      const t = S.t[i]; const lab = S.intraday ? new Date(t * 1000).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }) : istDate(t);
+      const t = S.t[i]; const lab = S.intraday ? new Date(t * 1000).toLocaleString(I18N.lang === "hi" ? "hi-IN" : "en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }) : istDate(t);
       txt(X(i), H - 5, lab, { "text-anchor": "middle" });
     }
     /* crosshair + tooltip */
@@ -987,7 +987,7 @@
   $("#recent").onclick = e => { const c = e.target.closest("[data-sym]"); if (c) analyze(c.dataset.sym); };
   async function analyze(sym, refresh) {
     sym = String(sym || "").trim(); if (!sym) return; showTab("stock"); $("#symIn").value = sym.replace(/\.NS$/, ""); hideSugg(); curSym = sym;
-    $("#stockBody").innerHTML = `<div class="loading"><span class="spin"></span>Analyzing ${esc(sym)} — 2 years of daily bars, 5- and 15-minute bars, fundamentals, sector, macro, news, backtests…</div>`;
+    $("#stockBody").innerHTML = `<div class="loading"><span class="spin"></span>${L(`Analyzing ${esc(sym)} — 2 years of daily bars, 5- and 15-minute bars, fundamentals, sector, macro, news, backtests…`, `${esc(sym)} का विश्लेषण — 2 साल की दैनिक कैंडल, 5 और 15 मिनट की कैंडल, फंडामेंटल्स, सेक्टर, आर्थिक माहौल, ख़बरें, बैकटेस्ट…`)}</div>`;
     $("#stockAi").disabled = $("#stockRefresh").disabled = true;
     try { const p = money(); STOCK = await api("mkt_analyze", Object.assign({ symbol: sym }, p, refresh ? { refresh: 1 } : {})); recent(STOCK.symbol.replace(/\.NS$/, "")); renderStock(); setMarket(STOCK.market);
       history.replaceState(null, "", "#stock=" + encodeURIComponent(STOCK.symbol.replace(/\.NS$/, ""))); }
@@ -997,33 +997,33 @@
   function planBlock(p, note) {
     if (!p) return `<p class="small dim">${note || "No trade plan — the edge isn't strong enough."}</p>`;
     return `<div class="plan"><div><span>${p.side === "SHORT" ? "Sell / short at" : "Entry"}</span><b>${inr(p.entry)}</b></div><div><span>Stop-loss</span><b>${inr(p.stop)}</b></div>
-      ${p.targets.map((t, i) => `<div><span>Target ${i + 1} (${p.rr[i]}R)</span><b>${inr(t)}</b></div>`).join("")}
+      ${p.targets.map((t, i) => `<div><span>${L("Target", "टारगेट")} ${i + 1} (${p.rr[i]}R)</span><b>${inr(t)}</b></div>`).join("")}
       <div><span>Qty</span><b>${p.qty == null ? "—" : fmt(p.qty, 0)}</b></div><div><span>Max loss</span><b>${inr(p.max_loss, 0)}</b></div></div>
-      <div class="tiny faint">Risk ${inr(p.risk_per_share)}/share (${p.risk_pct}%) · capital used ${inr(p.capital_used, 0)}</div>`;
+      <div class="tiny faint">${L(`Risk ${inr(p.risk_per_share)}/share (${p.risk_pct}%) · capital used ${inr(p.capital_used, 0)}`, `जोखिम ${inr(p.risk_per_share)}/शेयर (${p.risk_pct}%) · लगी पूंजी ${inr(p.capital_used, 0)}`)}</div>`;
   }
   function renderStock() {
     const A = STOCK, V = A.verdicts, T = A.technical, F = A.fundamental, I = V.intraday, S = V.swing, L = V.long;
     charts.length = 0;
     const isIdx = A.symbol[0] === "^";
     let h = `<div class="card"><div class="ch" style="align-items:center"><div style="flex:1;min-width:220px"><h2 style="font-size:20px">${esc(A.name)}</h2>
-      <div class="small dim">${esc(A.symbol)} · ${esc(A.exchange || "")} · ${esc(A.sector.label)}${A.data_source && A.data_source.prices ? " · prices: " + esc(A.data_source.prices) + (A.data_source.fundamentals ? ", fundamentals: " + esc(A.data_source.fundamentals) : "") : ""}${A.sector.industry ? " · " + esc(A.sector.industry) : ""}${A.stale ? ' · <b>showing cached data — live fetch failed</b>' : ""}</div></div>
+      <div class="small dim">${esc(A.symbol)} · ${esc(A.exchange || "")} · ${esc(I18N.t(A.sector.label))}${A.data_source && A.data_source.prices ? " · " + window.L("prices: ", "भाव: ") + esc(A.data_source.prices) + (A.data_source.fundamentals ? window.L(", fundamentals: ", ", फंडामेंटल्स: ") + esc(A.data_source.fundamentals) : "") : ""}${A.sector.industry ? " · " + esc(A.sector.industry) : ""}${A.stale ? " · <b>" + window.L("showing cached data — live fetch failed", "कैश किया डेटा दिखा रहे हैं — लाइव डेटा नहीं मिला") + "</b>" : ""}</div></div>
       <div style="text-align:right"><div style="font-size:26px;font-weight:750" class="num">${inr(T.price)}</div><div>${chg(T.change_pct)} <span class="tiny faint">· ${istTime(A.as_of)} IST</span></div></div></div>
-      <div class="small dim" style="margin-top:6px">Market regime: <b>${esc(A.macro.label || "—")}</b> (${sc(A.macro.score)}) · India VIX ${fmt(A.macro.india_vix)} · Sector ${esc(A.sector.label)} ${A.sector.view ? "tailwind " + sc(A.sector.view.score) : ""}</div></div>`;
+      <div class="small dim" style="margin-top:6px">${window.L("Market regime:", "बाज़ार का माहौल:")} <b>${esc(I18N.t(A.macro.label || "—"))}</b> (${sc(A.macro.score)}) · India VIX ${fmt(A.macro.india_vix)} · ${window.L("Sector", "सेक्टर")} ${esc(I18N.t(A.sector.label))} ${A.sector.view ? window.L("tailwind ", "रुख ") + sc(A.sector.view.score) : ""}</div></div>`;
     /* three verdicts */
     const iPlan = I && !I.error ? I : null;
     h += `<div class="grid g3 mt">
       <div class="card verdict"><h3>Intraday <span class="spacer"></span>${iPlan ? badge(I.action) : badge("NO DATA")}</h3>
-        ${iPlan ? `<div class="sc">score ${meter(I.score)} <b class="num">${sc(I.score)}</b> · ${I.confidence}% conf.</div>
-        <div class="tiny faint">Session ${esc(I.session.date)}${I.session.is_today ? "" : " (last session)"} · last bar ${esc(I.session.last_bar_ist)} IST · VWAP ${fmt(I.session.vwap)} · ORB ${fmt(I.session.or_low)}–${fmt(I.session.or_high)}${I.session.rvol ? " · RVOL " + I.session.rvol + "x" : ""}</div>
+        ${iPlan ? `<div class="sc">${window.L("score", "स्कोर")} ${meter(I.score)} <b class="num">${sc(I.score)}</b> · ${I.confidence}% ${window.L("conf.", "भरोसा")}</div>
+        <div class="tiny faint">${window.L("Session", "सत्र")} ${esc(I.session.date)}${I.session.is_today ? "" : window.L(" (last session)", " (पिछला सत्र)")} · ${window.L("last bar", "आखिरी कैंडल")} ${esc(I.session.last_bar_ist)} IST · VWAP ${fmt(I.session.vwap)} · ORB ${fmt(I.session.or_low)}–${fmt(I.session.or_high)}${I.session.rvol ? " · RVOL " + I.session.rvol + "x" : ""}</div>
         ${planBlock(I.plan, "No intraday edge right now — wait for price to clear VWAP / the opening range with volume.")}
         ${I.context.length ? `<ul class="plain">${I.context.map(c => `<li class="small">${esc(c)}</li>`).join("")}</ul>` : ""}
         ${I.warnings.length ? `<div class="warnbox"><b>⚠ Before you trade</b><ul class="plain">${I.warnings.map(w => `<li>${esc(w)}</li>`).join("")}</ul></div>` : ""}` : `<p class="dim small">${esc((I && I.error) || "No intraday data.")}</p>`}</div>
       <div class="card verdict"><h3>Swing · 2–6 weeks <span class="spacer"></span>${badge(S.action)}</h3>
-        <div class="sc">score ${meter(S.score)} <b class="num">${sc(S.score)}</b> · ${S.confidence}% conf.</div>
+        <div class="sc">${window.L("score", "स्कोर")} ${meter(S.score)} <b class="num">${sc(S.score)}</b> · ${S.confidence}% ${window.L("conf.", "भरोसा")}</div>
         ${planBlock(S.plan, S.score <= -0.3 ? "Trend and momentum are negative — avoid fresh longs; holders can exit or trail a tight stop." : "No swing entry — wait for the daily score to turn clearly positive.")}
-        <p class="tiny faint">Daily technical score ${sc(T.score)} · ${esc(T.structure.label)}</p></div>
+        <p class="tiny faint">${window.L("Daily technical score", "दैनिक तकनीकी स्कोर")} ${sc(T.score)} · ${esc(I18N.t(T.structure.label))}</p></div>
       <div class="card verdict"><h3>Long-term · 6–18 months <span class="spacer"></span>${badge(L.rating)}</h3>
-        <div class="sc">score ${meter(L.score)} <b class="num">${sc(L.score)}</b> · ${L.confidence}% conf.</div>
+        <div class="sc">${window.L("score", "स्कोर")} ${meter(L.score)} <b class="num">${sc(L.score)}</b> · ${L.confidence}% ${window.L("conf.", "भरोसा")}</div>
         <div class="plan"><div><span>Target</span><b>${inr(L.target)}</b></div><div><span>Upside</span><b>${pct(L.target_upside_pct, 1)}</b></div><div><span>Stop</span><b>${inr(L.stop)}</b></div><div><span>Qty</span><b>${L.qty == null ? "—" : fmt(L.qty, 0)}</b></div></div>
         <p class="small">${esc(L.entry_plan)}</p>
         ${L.components.map(c => `<div class="factor" style="grid-template-columns:1fr 90px 44px;padding:4px 0"><div class="small">${esc(c.label)} <span class="faint">${Math.round(c.weight * 100)}%</span></div>${meter(c.score)}<div class="num small" style="text-align:right">${sc(c.score)}</div></div>`).join("")}</div>
@@ -1032,18 +1032,18 @@
     h += `<div class="grid g2 mt"><div class="card"><h2>▲ What's working for it</h2><ul class="plain">${L.pros.length ? L.pros.map(p => `<li>${esc(p)}</li>`).join("") : "<li class='dim'>Nothing strongly positive.</li>"}</ul></div>
       <div class="card"><h2>▼ What's against it</h2><ul class="plain">${L.cons.length ? L.cons.map(p => `<li>${esc(p)}</li>`).join("") : "<li class='dim'>Nothing strongly negative.</li>"}</ul></div></div>`;
     /* charts */
-    h += `<div class="card mt"><div class="ch"><h2>Daily chart</h2><span class="dim small">last ${A.chart.c.length} sessions · hover for values</span></div>
+    h += `<div class="card mt"><div class="ch"><h2>Daily chart</h2><span class="dim small">${window.L(`last ${A.chart.c.length} sessions · hover for values`, `पिछले ${A.chart.c.length} सत्र · मान देखने के लिए होवर करें`)}</span></div>
       <div class="legend"><span><i class="box" style="background:var(--bull)"></i>up day</span><span><i class="box" style="background:var(--bear)"></i>down day</span><span><i style="background:var(--s1)"></i>20-DMA</span><span><i style="background:var(--s2)"></i>50-DMA</span><span><i style="background:var(--s3)"></i>200-DMA</span><span><i class="box" style="background:var(--s2);opacity:.25"></i>Bollinger (20,2)</span></div>
       <div id="chDaily"></div></div>`;
     if (A.intraday_chart) h += `<div class="card mt"><div class="ch"><h2>Intraday · 5-minute</h2><span class="dim small">plan levels drawn on the chart</span></div>
       <div class="legend"><span><i style="background:var(--s1)"></i>${iPlan && I.session.vwap_is_volume ? "VWAP" : "Session avg"}</span><span><i style="background:var(--s2)"></i>EMA 9</span><span><i style="background:var(--s3)"></i>EMA 21</span></div><div id="chIntra"></div></div>`;
     /* technicals */
     const ind = T.indicators;
-    h += `<div class="grid g2 mt"><div class="card"><div class="ch"><h2>Technical factors</h2><span class="dim small">score ${sc(T.score)}</span></div>${factorRows(T.factors, true)}</div>
+    h += `<div class="grid g2 mt"><div class="card"><div class="ch"><h2>Technical factors</h2><span class="dim small">${window.L("score", "स्कोर")} ${sc(T.score)}</span></div>${factorRows(T.factors, true)}</div>
       <div class="card"><h2>Indicators &amp; levels</h2><div class="kv mt">
         <div><span>RSI 14</span><b>${fmt(ind.rsi, 1)}</b></div><div><span>MACD / signal</span><b>${fmt(ind.macd)} / ${fmt(ind.macd_signal)}</b></div><div><span>ADX / +DI / −DI</span><b>${fmt(ind.adx, 0)} / ${fmt(ind.plus_di, 0)} / ${fmt(ind.minus_di, 0)}</b></div>
         <div><span>Supertrend</span><b>${fmt(ind.supertrend)} ${ind.supertrend_dir > 0 ? "▲" : "▼"}</b></div><div><span>20 / 50 / 200 DMA</span><b>${fmt(ind.sma20, 0)} / ${fmt(ind.sma50, 0)} / ${fmt(ind.sma200, 0)}</b></div>
-        <div><span>Bollinger %B</span><b>${fmt(ind.boll_pctb)}${ind.boll_squeeze ? " · squeeze" : ""}</b></div><div><span>ATR 14</span><b>${fmt(ind.atr)} (${fmt(ind.atr_pct)}%)</b></div>
+        <div><span>Bollinger %B</span><b>${fmt(ind.boll_pctb)}${ind.boll_squeeze ? window.L(" · squeeze", " · सिकुड़न") : ""}</b></div><div><span>ATR 14</span><b>${fmt(ind.atr)} (${fmt(ind.atr_pct)}%)</b></div>
         <div><span>Stoch %K / %D</span><b>${fmt(ind.stoch_k, 0)} / ${fmt(ind.stoch_d, 0)}</b></div><div><span>MFI / CCI</span><b>${fmt(ind.mfi, 0)} / ${fmt(ind.cci, 0)}</b></div><div><span>Williams %R</span><b>${fmt(ind.willr, 0)}</b></div>
         <div><span>Volume vs 20d</span><b>${ind.volume_ratio == null ? "—" : ind.volume_ratio + "x"}</b></div><div><span>52-wk high / low</span><b>${fmt(T.range52.high, 0)} / ${fmt(T.range52.low, 0)}</b></div>
         <div><span>Beta vs Nifty</span><b>${fmt(T.risk.beta)}</b></div><div><span>Volatility (ann.)</span><b>${fmt(T.risk.volatility_ann_pct, 1)}%</b></div><div><span>Max drawdown 1y</span><b>${fmt(T.risk.max_drawdown_1y_pct, 1)}%</b></div>
@@ -1053,13 +1053,13 @@
       <table class="small"><thead><tr><th>Support</th><th class="r">dist</th><th class="r">touches</th><th>Resistance</th><th class="r">dist</th><th class="r">touches</th></tr></thead><tbody>
       ${[0, 1, 2, 3].map(i => { const s = T.levels.support[i], r = T.levels.resistance[i]; if (!s && !r) return ""; return `<tr><td class="num">${s ? fmt(s.level) : ""}</td><td class="r num">${s ? pct(s.dist_pct, 1) : ""}</td><td class="r">${s ? s.touches : ""}</td><td class="num">${r ? fmt(r.level) : ""}</td><td class="r num">${r ? pct(r.dist_pct, 1) : ""}</td><td class="r">${r ? r.touches : ""}</td></tr>`; }).join("")}
       </tbody></table>
-      ${T.pivots_daily ? `<p class="small dim">Today's pivots: S2 ${fmt(T.pivots_daily.S2)} · S1 ${fmt(T.pivots_daily.S1)} · P ${fmt(T.pivots_daily.P)} · R1 ${fmt(T.pivots_daily.R1)} · R2 ${fmt(T.pivots_daily.R2)} · CPR ${fmt(T.pivots_daily.BC)}–${fmt(T.pivots_daily.TC)}</p>` : ""}
-      <p class="small"><b>Structure:</b> ${esc(T.structure.label)}${T.patterns.length ? "<br><b>Candles:</b> " + T.patterns.map(p => `${p.bias > 0 ? "▲" : p.bias < 0 ? "▼" : "●"} ${esc(p.name)} — ${esc(p.note)}`).join("<br>") : ""}</p></div></div>`;
+      ${T.pivots_daily ? `<p class="small dim">${window.L("Today's pivots:", "आज के पिवट:")} S2 ${fmt(T.pivots_daily.S2)} · S1 ${fmt(T.pivots_daily.S1)} · P ${fmt(T.pivots_daily.P)} · R1 ${fmt(T.pivots_daily.R1)} · R2 ${fmt(T.pivots_daily.R2)} · CPR ${fmt(T.pivots_daily.BC)}–${fmt(T.pivots_daily.TC)}</p>` : ""}
+      <p class="small"><b>Structure:</b> ${esc(T.structure.label)}${T.patterns.length ? "<br><b>Candles:</b> " + T.patterns.map(p => `${p.bias > 0 ? "▲" : p.bias < 0 ? "▼" : "●"} ${esc(I18N.t(p.name))} — ${esc(I18N.t(p.note))}`).join("<br>") : ""}</p></div></div>`;
     /* fundamentals */
     if (!isIdx) {
       if (F && F.available) {
         const v = F.values; const rt = v.rec_trend;
-        h += `<div class="grid g2 mt"><div class="card"><div class="ch"><h2>Fundamentals</h2><span class="dim small">score ${sc(F.score)} · coverage ${Math.round(F.coverage * 100)}%</span></div>
+        h += `<div class="grid g2 mt"><div class="card"><div class="ch"><h2>Fundamentals</h2><span class="dim small">${window.L(`score ${sc(F.score)} · coverage ${Math.round(F.coverage * 100)}%`, `स्कोर ${sc(F.score)} · कवरेज ${Math.round(F.coverage * 100)}%`)}</span></div>
           <div class="kv" style="margin-bottom:10px">${Object.entries(F.group_scores).map(([g, s]) => `<div><span>${esc(g)}</span><b>${sc(s)}</b>${meter(s)}</div>`).join("")}</div>${factorRows(F.factors, true)}</div>
           <div class="card"><h2>Key numbers</h2><div class="kv mt">
             <div><span>Market cap</span><b>${v.market_cap ? "₹" + fmt(v.market_cap / 1e7, 0) + " cr" : "—"}</b></div><div><span>P/E · fwd P/E</span><b>${fmt(v.pe, 1)} · ${fmt(v.forward_pe, 1)}</b></div>
@@ -1069,20 +1069,20 @@
             <div><span>Revenue / EPS growth</span><b>${pct(v.rev_growth == null ? null : v.rev_growth * 100, 1)} · ${pct(v.earn_growth == null ? null : v.earn_growth * 100, 1)}</b></div>
             <div><span>Debt/Equity</span><b>${v.de == null ? "—" : fmt(v.de / 100)}</b></div><div><span>Dividend yield</span><b>${pct(v.div_yield == null ? null : v.div_yield * 100, 2)}</b></div>
             <div><span>Promoter / inst.</span><b>${pct(v.insiders == null ? null : v.insiders * 100, 0)} · ${pct(v.institutions == null ? null : v.institutions * 100, 0)}</b></div>
-            <div><span>Analyst target</span><b>${v.target_mean ? inr(v.target_mean, 0) : "—"}</b></div><div><span>Consensus</span><b>${v.rec_mean ? fmt(v.rec_mean) + " " + esc(v.rec_key || "") : "—"}</b></div>
+            <div><span>Analyst target</span><b>${v.target_mean ? inr(v.target_mean, 0) : "—"}</b></div><div><span>Consensus</span><b>${v.rec_mean ? fmt(v.rec_mean) + " " + esc(I18N.t(v.rec_key || "")) : "—"}</b></div>
             <div><span>Next results</span><b>${esc(v.next_earnings || "—")}</b></div><div><span>EPS ttm / fwd</span><b>${fmt(v.eps_ttm)} / ${fmt(v.eps_fwd)}</b></div>
           </div>
-          ${rt ? `<p class="small dim mt">Analysts: ${rt.strong_buy} strong buy · ${rt.buy} buy · ${rt.hold} hold · ${rt.sell} sell · ${rt.strong_sell} strong sell</p>` : ""}
-          ${v.summary ? `<details class="mt"><summary class="small">About the business</summary><p class="small dim">${esc(v.summary)}…</p></details>` : ""}</div></div>`;
+          ${rt ? `<p class="small dim mt">${window.L(`Analysts: ${rt.strong_buy} strong buy · ${rt.buy} buy · ${rt.hold} hold · ${rt.sell} sell · ${rt.strong_sell} strong sell`, `विश्लेषक: ${rt.strong_buy} ज़ोरदार खरीद · ${rt.buy} खरीद · ${rt.hold} होल्ड · ${rt.sell} बेचें · ${rt.strong_sell} ज़ोरदार बिक्री`)}</p>` : ""}
+          ${v.summary ? `<details class="mt"><summary class="small">About the business</summary><p class="small dim">${esc(v.summary)}…${window.L("", " (Yahoo से — अंग्रेज़ी में)")}</p></details>` : ""}</div></div>`;
       } else h += `<div class="card mt"><h2>Fundamentals</h2><p class="dim small">Yahoo Finance didn't return fundamentals for this symbol right now, so the long-term rating leans on trend, momentum, sector and macro only. Try ↻ later.</p></div>`;
     }
     /* sector & macro fit */
     const sv = A.sector.view;
-    h += `<div class="grid g2 mt"><div class="card"><div class="ch"><h2>Sector &amp; macro fit — ${esc(A.sector.label)}</h2>${sv ? `<span class="dim small">tailwind ${sc(sv.score)}</span>` : ""}</div>
+    h += `<div class="grid g2 mt"><div class="card"><div class="ch"><h2>${window.L("Sector &amp; macro fit", "सेक्टर और आर्थिक माहौल से मेल")} — ${esc(I18N.t(A.sector.label))}</h2>${sv ? `<span class="dim small">${window.L("tailwind", "रुख")} ${sc(sv.score)}</span>` : ""}</div>
       <p class="small dim">${esc(A.sector.story || "")}</p>
       ${A.sector.exposure.length ? `<table class="small"><thead><tr><th>Driver</th><th class="r">Sensitivity</th><th class="r">Move now</th><th>Effect</th><th>Reading</th></tr></thead><tbody>${A.sector.exposure.map(x => `<tr><td><b>${esc(x.driver)}</b></td><td class="r num">${sc(x.sensitivity)}</td><td class="r num">${sc(x.driver_move)}</td><td style="min-width:80px">${meter(x.effect == null ? 0 : x.effect * 2)}</td><td class="dim">${esc(x.note)}</td></tr>`).join("")}</tbody></table>` : ""}
-      ${sv && sv.momentum ? `<p class="small">Sector index vs Nifty: 1 month ${pct(sv.momentum.rs_1m, 1)} pts · 3 months ${pct(sv.momentum.rs_3m, 1)} pts.</p>` : ""}
-      <p class="small">Market regime ${sc(A.macro.score)} — ${esc(A.macro.advice || "")}</p></div>`;
+      ${sv && sv.momentum ? `<p class="small">${window.L(`Sector index vs Nifty: 1 month ${pct(sv.momentum.rs_1m, 1)} pts · 3 months ${pct(sv.momentum.rs_3m, 1)} pts.`, `निफ्टी के मुकाबले सेक्टर इंडेक्स: 1 महीना ${pct(sv.momentum.rs_1m, 1)} अंक · 3 महीने ${pct(sv.momentum.rs_3m, 1)} अंक।`)}</p>` : ""}
+      <p class="small">${window.L("Market regime", "बाज़ार का माहौल")} ${sc(A.macro.score)} — ${esc(I18N.t(A.macro.advice || ""))}</p></div>`;
     /* backtests */
     const bt = A.backtest; const btCard = b => !b ? "" : b.trades ? `<h3 class="small mt">${esc(b.label)}</h3><p class="tiny faint">${esc(b.period || "")}</p><div class="kv">
       <div><span>Trades</span><b>${b.trades}</b></div><div><span>Win rate</span><b>${b.win_rate}%</b></div><div><span>Avg trade</span><b>${pct(b.avg_ret)}</b></div><div><span>Avg win / loss</span><b>${pct(b.avg_win)} / ${pct(b.avg_loss)}</b></div>
@@ -1094,7 +1094,7 @@
     h += `<div class="card"><h2>Backtest — same rules, this stock's history</h2>${btCard(bt.swing)}<p class="small">${verdictBt(bt.swing)}</p>${btCard(bt.intraday)}<p class="small">${verdictBt(bt.intraday)}</p>
       <p class="tiny faint">Costs included (0.25% swing, 0.08% intraday). Past results do not guarantee future ones.</p></div></div>`;
     /* news */
-    if (A.news) h += `<div class="card mt news"><div class="ch"><h2>News · ${esc(A.name)}</h2><span class="dim small">sentiment ${sc(A.news.score)} · ${A.news.scored} scored</span></div>${newsList(A.news, 15)}</div>`;
+    if (A.news) h += `<div class="card mt news"><div class="ch"><h2>${window.L("News", "ख़बरें")} · ${esc(A.name)}</h2><span class="dim small">${window.L(`sentiment ${sc(A.news.score)} · ${A.news.scored} scored`, `भावना ${sc(A.news.score)} · ${A.news.scored} आंकी गईं`)}</span></div>${newsList(A.news, 15)}</div>`;
     h += `<div id="stockNote"></div>`;
     $("#stockBody").innerHTML = h;
     /* draw charts */
@@ -1102,20 +1102,20 @@
     makeChart($("#chDaily"), { t: C.t, o: C.o, h: C.h, l: C.l, c: C.c, v: C.v, aria: "Daily candlestick chart of " + A.symbol, height: 330,
       overlays: [{ label: "20-DMA", color: "var(--s1)", data: C.sma20 }, { label: "50-DMA", color: "var(--s2)", data: C.sma50 }, { label: "200-DMA", color: "var(--s3)", data: C.sma200 }],
       band: { up: C.bb_up, lo: C.bb_lo },
-      hlines: [].concat(S.plan ? [{ y: S.plan.stop, label: "Swing SL", color: "var(--bear)" }, { y: S.plan.targets[0], label: "T1", color: "var(--bull)" }] : [], [{ y: L.target, label: "LT target", color: "var(--bull)" }]),
+      hlines: [].concat(S.plan ? [{ y: S.plan.stop, label: window.L("Swing SL", "स्विंग SL"), color: "var(--bear)" }, { y: S.plan.targets[0], label: "T1", color: "var(--bull)" }] : [], [{ y: L.target, label: window.L("LT target", "लंबी अवधि टारगेट"), color: "var(--bull)" }]),
       panels: [{ label: "RSI 14", height: 70, min: 0, max: 100, refs: [30, 70], lines: [{ label: "RSI", color: "var(--s2)", data: C.rsi }] },
                { label: "MACD (12,26,9)", height: 80, symmetric: true, hist: C.macd_hist, lines: [{ label: "MACD", color: "var(--s1)", data: C.macd }, { label: "Signal", color: "var(--s2)", data: C.macd_signal }] }] });
     if (A.intraday_chart) { const X = A.intraday_chart, P = iPlan && I.plan; const pv = iPlan && I.session.pivots;
       makeChart($("#chIntra"), { t: X.t, o: X.o, h: X.h, l: X.l, c: X.c, v: X.v, intraday: true, aria: "5-minute chart of " + A.symbol, height: 300,
         overlays: [{ label: "VWAP", color: "var(--s1)", data: X.vwap }, { label: "EMA 9", color: "var(--s2)", data: X.ema9, width: 1.5 }, { label: "EMA 21", color: "var(--s3)", data: X.ema21, width: 1.5 }],
-        hlines: [].concat(P ? [{ y: P.entry, label: "Entry", color: "var(--text-dim)" }, { y: P.stop, label: "SL", color: "var(--bear)" }, { y: P.targets[0], label: "T1", color: "var(--bull)" }, { y: P.targets[1], label: "T2", color: "var(--bull)" }] : [],
+        hlines: [].concat(P ? [{ y: P.entry, label: window.L("Entry", "एंट्री"), color: "var(--text-dim)" }, { y: P.stop, label: "SL", color: "var(--bear)" }, { y: P.targets[0], label: "T1", color: "var(--bull)" }, { y: P.targets[1], label: "T2", color: "var(--bull)" }] : [],
           pv ? [{ y: pv.R1, label: "R1", color: "var(--text-faint)" }, { y: pv.S1, label: "S1", color: "var(--text-faint)" }] : []) }); }
   }
   $("#symGo").onclick = () => analyze($("#symIn").value);
   $("#stockRefresh").onclick = () => curSym && analyze(curSym, true);
   $("#stockAi").onclick = async () => {
     if (!STOCK) return; const btn = $("#stockAi"); btn.disabled = true; const box = $("#stockNote");
-    box.innerHTML = '<div class="card mt"><span class="spin"></span>Claude is writing a research note from this analysis…</div>'; box.scrollIntoView({ behavior: "smooth" });
+    box.innerHTML = '<div class="card mt"><span class="spin"></span>' + L("Claude is writing a research note from this analysis…", "Claude इस विश्लेषण से रिसर्च नोट लिख रहा है…") + '</div>'; box.scrollIntoView({ behavior: "smooth" });
     try { const j = await api("mkt_ai", Object.assign({ symbol: STOCK.symbol }, money())); box.innerHTML = `<div class="card mt note-md"><div class="ch"><h2>✨ AI research note — ${esc(STOCK.name)}</h2><span class="tiny faint">${esc(j.model)}</span></div>${markdown(j.note)}</div>`; }
     catch (e) { box.innerHTML = `<div class="err">${e.message}</div>`; }
     btn.disabled = false;
@@ -1460,7 +1460,8 @@
   $("#langBtn").onclick = () => { I18N.set(I18N.lang === "hi" ? "en" : "hi"); $("#langSel").value = I18N.lang; };
   langBtnLabel(); I18N.onChange(langBtnLabel);
   document.querySelectorAll(".langlink").forEach(a => a.onclick = e => { e.preventDefault(); I18N.set(a.dataset.lang); $("#langSel").value = I18N.lang; });
-  I18N.onChange(() => { if (T10) renderTop10(); if (lastMom) renderMom(lastMom); if (lastCore) renderCore(lastCore); if (lastTrack) renderTrack(lastTrack); });
+  I18N.onChange(() => { if (T10) renderTop10(); if (lastMom) renderMom(lastMom); if (lastCore) renderCore(lastCore); if (lastTrack) renderTrack(lastTrack);
+    if (STOCK) { const nt = $("#stockNote") ? $("#stockNote").innerHTML : ""; renderStock(); if (nt) $("#stockNote").innerHTML = nt; } });
   $("#themeBtn").onclick = () => {
     const cur = document.documentElement.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     const next = cur === "dark" ? "light" : "dark"; document.documentElement.setAttribute("data-theme", next); store.set("theme", next); setTimeout(redrawAll, 30);
