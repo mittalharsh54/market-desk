@@ -1,13 +1,13 @@
 {
     "version": 1,
-    "tried_total": 443808,
-    "runs": 9,
+    "tried_total": 542558,
+    "runs": 10,
     "per_family": {
-        "dip": 88764,
-        "rot": 88763,
-        "trend": 88763,
-        "mix": 88759,
-        "mixdip": 88759
+        "dip": 108514,
+        "rot": 108513,
+        "trend": 108513,
+        "mix": 108509,
+        "mixdip": 108509
     },
     "seeds": {
         "dip": [
@@ -813,6 +813,46 @@
             }
         },
         {
+            "id": "c23face4c6",
+            "f": "dip",
+            "p": {
+                "H": 15,
+                "L": 4,
+                "assets": [
+                    "BANK",
+                    "LOWVOL",
+                    "NEXT50",
+                    "NIFTY",
+                    "SMALL"
+                ],
+                "f": 0.06,
+                "slots": 1,
+                "sma": 200
+            },
+            "label": "Buy BANK+LOWVOL+NEXT50+NIFTY+SMALL after a 6% fall in 4 days, above the 200-day average, sell after 15 days, up to 1 at once",
+            "found_on": "2026-10-03",
+            "found_data_end": "2026-10-01",
+            "tried_before": 459754,
+            "train": {
+                "cagr": 9.97,
+                "dd": -6.4,
+                "rpr": 0.675,
+                "ret": 137.46
+            },
+            "gate": {
+                "cagr": 18.73,
+                "dd": -8.6,
+                "rpr": 1.73,
+                "ret": 182.38
+            },
+            "trades": 42,
+            "costs": 995,
+            "status": "forward testing",
+            "forward": {
+                "days": 0
+            }
+        },
+        {
             "id": "c1ba83480b",
             "f": "rot",
             "p": {
@@ -1043,6 +1083,45 @@
             },
             "trades": 123,
             "costs": 1440,
+            "status": "forward testing",
+            "forward": {
+                "days": 0
+            }
+        },
+        {
+            "id": "bca948b1fd",
+            "f": "rot",
+            "p": {
+                "K": 3,
+                "R": 189,
+                "S": 21,
+                "abs": "none",
+                "assets": [
+                    "GOLD",
+                    "MID",
+                    "NASDAQ"
+                ],
+                "every": 63,
+                "wt": "iv"
+            },
+            "label": "Every 63 days hold the 3 strongest of GOLD+MID+NASDAQ by 189-day return (skipping the last 21), calmer ones bigger",
+            "found_on": "2026-10-03",
+            "found_data_end": "2026-10-01",
+            "tried_before": 493950,
+            "train": {
+                "cagr": 13.64,
+                "dd": -23.7,
+                "rpr": 0.709,
+                "ret": 220.11
+            },
+            "gate": {
+                "cagr": 23.84,
+                "dd": -12.8,
+                "rpr": 1.51,
+                "ret": 264.26
+            },
+            "trades": 122,
+            "costs": 1192,
             "status": "forward testing",
             "forward": {
                 "days": 0
@@ -2202,101 +2281,15 @@
             "forward": {
                 "days": 0
             }
-        },
-        {
-            "id": "4673ca0a21",
-            "f": "rot",
-            "p": {
-                "K": 2,
-                "R": 126,
-                "S": 21,
-                "abs": "pos",
-                "assets": [
-                    "BANK",
-                    "GOLD",
-                    "LOWVOL",
-                    "MID",
-                    "MOM",
-                    "NASDAQ",
-                    "NIFTY",
-                    "QUAL",
-                    "SMALL",
-                    "VALUE"
-                ],
-                "every": 63,
-                "wt": "iv"
-            },
-            "label": "Every 63 days hold the 2 strongest of BANK+GOLD+LOWVOL+MID+MOM+NASDAQ+NIFTY+QUAL+SMALL+VALUE by 126-day return (skipping the last 21), only if rising, calmer ones bigger",
-            "found_on": "2026-10-01",
-            "found_data_end": "2026-09-30",
-            "tried_before": 14102,
-            "train": {
-                "cagr": 18.99,
-                "dd": -16.8,
-                "rpr": 0.89,
-                "ret": 386.9
-            },
-            "gate": {
-                "cagr": 28.09,
-                "dd": -15.2,
-                "rpr": 1.346,
-                "ret": 347.27
-            },
-            "trades": 167,
-            "costs": 3609,
-            "status": "forward testing",
-            "forward": {
-                "days": 0
-            }
-        },
-        {
-            "id": "c90b2acc18",
-            "f": "rot",
-            "p": {
-                "K": 2,
-                "R": 126,
-                "S": 21,
-                "abs": "cash",
-                "assets": [
-                    "BANK",
-                    "GOLD",
-                    "LOWVOL",
-                    "MID",
-                    "MOM",
-                    "NASDAQ",
-                    "NIFTY",
-                    "QUAL",
-                    "SMALL",
-                    "VALUE"
-                ],
-                "every": 63,
-                "wt": "iv"
-            },
-            "label": "Every 63 days hold the 2 strongest of BANK+GOLD+LOWVOL+MID+MOM+NASDAQ+NIFTY+QUAL+SMALL+VALUE by 126-day return (skipping the last 21), only if beating cash, calmer ones bigger",
-            "found_on": "2026-10-01",
-            "found_data_end": "2026-09-30",
-            "tried_before": 14942,
-            "train": {
-                "cagr": 18.18,
-                "dd": -19.1,
-                "rpr": 0.842,
-                "ret": 357.43
-            },
-            "gate": {
-                "cagr": 28.08,
-                "dd": -15.2,
-                "rpr": 1.346,
-                "ret": 347.1
-            },
-            "trades": 163,
-            "costs": 3426,
-            "status": "forward testing",
-            "forward": {
-                "days": 0
-            }
         }
     ],
     "recent_runs": [
+        {
+            "at": "2026-10-03 05:36 IST",
+            "tried": 98750,
+            "new_candidates": 78,
+            "seconds": 900
+        },
         {
             "at": "2026-10-03 01:09 IST",
             "tried": 50473,
@@ -2399,7 +2392,7 @@
             "GOLD"
         ]
     },
-    "last_run": "2026-10-03 01:09 IST",
+    "last_run": "2026-10-03 05:36 IST",
     "summary": {
         "confirmed": 0,
         "failed": 0,
