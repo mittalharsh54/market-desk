@@ -245,13 +245,23 @@ function mkt_news(array $feeds, $ck, $limit = 60) {
   $res = mkt_http_multi($reqs, 10); $all = []; $seen = []; $ok = [];
   foreach ($res as $name => $r) {
     if ($r['code'] !== 200) continue; $items = mkt_parse_rss($r['body'], $name); if ($items) $ok[] = $name;
-    foreach ($items as $it) { $k = preg_replace('/[^a-z0-9]/', '', strtolower($it['title'])); $k = substr($k, 0, 60); if (isset($seen[$k])) continue; $seen[$k] = 1; $all[] = $it; }
+    foreach ($items as $it) { $k = mb_substr(preg_replace('/[^\p{L}\p{N}]/u', '', mb_strtolower($it['title'])), 0, 60); /* Unicode-aware: Hindi headlines must not all collapse into one */ if (isset($seen[$k])) continue; $seen[$k] = 1; $all[] = $it; }
   }
   $cut = time() - 4 * 86400; $all = array_values(array_filter($all, function ($i) use ($cut) { return !$i['ts'] || $i['ts'] >= $cut; }));
   usort($all, function ($a, $b) { return ($b['ts'] ?? 0) <=> ($a['ts'] ?? 0); });
   $scored = mk_news_score(array_slice($all, 0, $limit)); $scored['sources_ok'] = $ok; $scored['sources_tried'] = array_keys($feeds);
   if ($all) mkt_cache_set($ck, $scored); else { $stale = mkt_cache_get($ck, null); if ($stale) return $stale; }
   return $scored;
+}
+/* Hindi headlines for the Hindi page: Google News' Hindi edition, searched by company name and by
+   NSE symbol (Hindi business sites usually keep the English name in the headline). Headlines only:
+   the sentiment word list is English, so these are not scored. */
+function mkt_stock_news_hi($name, $sym) {
+  $base = preg_replace('/\.(NS|BO)$/', '', $sym);
+  $clean = trim(preg_replace('/\b(limited|ltd\.?|corporation|corp\.?|industries|india)\b/i', '', (string) $name)) ?: $base;
+  $u = function ($q) { return 'https://news.google.com/rss/search?q=' . rawurlencode($q) . '&hl=hi&gl=IN&ceid=IN:hi'; };
+  $n = mkt_news(['Google News' => $u('"' . $clean . '" when:10d'), 'Google News ' => $u($base . ' शेयर when:10d')], 'newshi|' . $sym, 20);
+  return ['items' => array_map(function ($i) { return ['title' => $i['title'], 'link' => $i['link'] ?? null, 'source' => trim($i['source'] ?? ''), 'ts' => $i['ts'] ?? null]; }, $n['items'] ?? [])];
 }
 function mkt_stock_news($name, $sym) {
   $base = preg_replace('/\.(NS|BO)$/', '', $sym);
@@ -528,7 +538,7 @@ function mkt_search($q) {
 }
 
 /* ---------- Claude research note (key in config.php) ---------- */
-function mkt_ai_note($sym, $capital, $riskPct) {
+function mkt_ai_note($sym, $capital, $riskPct, $lang = 'en') {
   if (md_config()['anthropic_key'] === '' && !isset($GLOBALS['MD_CLAUDE_MOCK'])) throw new Exception('Add your Anthropic API key to config.php ($ANTHROPIC_API_KEY) to get written notes.');
   $macro = mkt_cache_get('macro_v1', 6 * 3600) ?: mkt_macro();
   $slimMacro = ['regime' => array_diff_key($macro['regime'], ['drivers' => 1]), 'instruments' => array_map(function ($i) { unset($i['spark']); return $i; }, $macro['instruments']),
@@ -551,7 +561,12 @@ function mkt_ai_note($sym, $capital, $riskPct) {
   $system = 'You are a senior sell-side equity strategist covering Indian markets (NSE/BSE). You write clear, specific, numbers-first notes for active traders and long-term investors. '
     . 'Use ONLY the JSON data provided — it was computed minutes ago from live market data, scored by a rule-based engine (scores run -1 bearish to +1 bullish). '
     . 'Do not invent prices, news or numbers not in the data; if something important is missing say so. Explain the reasoning, give levels in ₹, and be honest about uncertainty and conflicting signals. '
-    . 'Format in Markdown with ## headings and short bullet points. End with one line: "Not investment advice — rule-based analysis; verify before trading." Keep it under 900 words.';
+    . 'Format in Markdown with ## headings and short bullet points. Keep it under 900 words. '
+    . ($lang === 'hi'
+      ? 'Write the whole note in simple, everyday Hindi (Devanagari script) for a reader who does not know English: Hindi headings, short sentences, no English words or trading jargon. '
+        . 'If a technical term cannot be avoided (like RSI or P/E), explain it in plain Hindi in brackets the first time. Keep stock symbols, ₹ amounts and numbers as they are. '
+        . 'End with one line: "यह निवेश सलाह नहीं है — नियमों पर आधारित विश्लेषण; सौदे से पहले ख़ुद जाँच लें।"'
+      : 'End with one line: "Not investment advice — rule-based analysis; verify before trading."');
   return md_claude($system, $ask . "\n\nDATA:\n" . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 }
 
@@ -663,7 +678,10 @@ function mkt_dispatch($action) {
         $moved = false; foreach (['capital', 'risk_pct', 'leverage', 'long_only'] as $k) if ($old[$k] != $new[$k]) $moved = true;
         $ph = id_phase(); $dd = id_day_get($ph['date']); if ($moved && $dd && empty($dd['locked'])) md_store_set('id_day_' . str_replace('-', '', $ph['date']), '');
         $out = ['settings' => $new, 'pos_budget' => round(id_pos_budget($new))]; break;
-      case 'mkt_ai': $out = mkt_ai_note((string) $g('symbol', ''), $capital, $risk); break;
+      case 'mkt_ai': $out = mkt_ai_note((string) $g('symbol', ''), $capital, $risk, (string) $g('lang', 'en')); break;
+      case 'mkt_news_hi':
+        $sym = strtoupper((string) $g('symbol', '')); if (!preg_match('/^[A-Z0-9&\-]{1,20}(\.(NS|BO))?$/', $sym)) fail(400, 'Bad symbol.');
+        $out = mkt_stock_news_hi(mb_substr(preg_replace('/[^\p{L}\p{N} .&\-]/u', '', (string) $g('name', '')), 0, 80), $sym); break;
       default: fail(400, 'Unknown market action.');
     }
   } catch (Exception $e) { fail(400, $e->getMessage()); }

@@ -72,6 +72,11 @@ function dev_chart($url) {
     'timestamp' => $C['t'], 'indicators' => ['quote' => [['open' => $C['o'], 'high' => $C['h'], 'low' => $C['l'], 'close' => $C['c'], 'volume' => $C['v']]]]]]]])];
 }
 function dev_rss($name) {
+  if (strpos($name, 'hl=hi') !== false) {
+    $H = ['शेयर बाज़ार: सेंसेक्स-निफ्टी में तेज़ी, बैंक शेयर चढ़े', 'कंपनी के तिमाही नतीजे उम्मीद से बेहतर, शेयर 3% उछला', 'विदेशी निवेशकों की बिकवाली से बाज़ार पर दबाव'];
+    $items = ''; foreach ($H as $i => $h) $items .= '<item><title><![CDATA[' . $h . ' - दैनिक समाचार]]></title><link>https://example.com/hi' . $i . '</link><pubDate>' . gmdate('D, d M Y H:i:s', time() - $i * 5400) . ' GMT</pubDate></item>';
+    return [200, '<?xml version="1.0"?><rss version="2.0"><channel><title>hi</title>' . $items . '</channel></rss>'];
+  }
   $H = ['Sensex, Nifty climb as FIIs turn buyers; banks lead gains', 'Rupee slips to record low as crude oil prices surge', 'RBI keeps repo rate unchanged, stance neutral; inflation eases',
         'IT stocks rally after strong US tech earnings', 'Metal shares tumble as China demand fears grow', 'Fed signals rate cut path; Wall Street advances', 'Crude oil jumps on Middle East tensions',
         'Auto sales robust in festive season; Maruti, M&M gain', 'SEBI tightens F&O rules for retail traders', 'Q2 results: Reliance profit rises, beats estimates', 'Pharma stocks gain on weak rupee', 'GST collections grow 10% in September'];
