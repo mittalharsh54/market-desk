@@ -1,13 +1,13 @@
 {
     "version": 1,
-    "tried_total": 1007575,
-    "runs": 17,
+    "tried_total": 1107240,
+    "runs": 18,
     "per_family": {
-        "dip": 201521,
-        "rot": 201516,
-        "trend": 201516,
-        "mix": 201511,
-        "mixdip": 201511
+        "dip": 221454,
+        "rot": 221449,
+        "trend": 221449,
+        "mix": 221444,
+        "mixdip": 221444
     },
     "seeds": {
         "dip": [
@@ -639,6 +639,22 @@
                     "every": 21,
                     "f": 0.02,
                     "w": {
+                        "GOLD": 0.34,
+                        "MOM": 0.51,
+                        "NASDAQ": 0.14
+                    },
+                    "x": 0.1
+                },
+                "score": 0.828
+            },
+            {
+                "p": {
+                    "H": 20,
+                    "L": 10,
+                    "band": 0.05,
+                    "every": 21,
+                    "f": 0.02,
+                    "w": {
                         "GOLD": 0.46,
                         "MOM": 0.39,
                         "NASDAQ": 0.15
@@ -740,22 +756,6 @@
                     "f": 0.02,
                     "L": 10,
                     "H": 20
-                },
-                "score": 0.811
-            },
-            {
-                "p": {
-                    "H": 20,
-                    "L": 5,
-                    "band": 0.05,
-                    "every": 21,
-                    "f": 0.04,
-                    "w": {
-                        "GOLD": 0.39,
-                        "MOM": 0.32,
-                        "NASDAQ": 0.29
-                    },
-                    "x": 0.1
                 },
                 "score": 0.811
             }
@@ -1882,6 +1882,51 @@
             }
         },
         {
+            "id": "a2132bddd3",
+            "f": "rot",
+            "p": {
+                "K": 2,
+                "R": 63,
+                "S": 0,
+                "abs": "none",
+                "assets": [
+                    "GOLD",
+                    "LOWVOL",
+                    "MID",
+                    "MOM",
+                    "NASDAQ",
+                    "NIFTY",
+                    "QUAL",
+                    "SMALL",
+                    "VALUE"
+                ],
+                "every": 10,
+                "wt": "iv"
+            },
+            "label": "Every 10 days hold the 2 strongest of GOLD+LOWVOL+MID+MOM+NASDAQ+NIFTY+QUAL+SMALL+VALUE by 63-day return, calmer ones bigger",
+            "found_on": "2026-10-05",
+            "found_data_end": "2026-10-01",
+            "tried_before": 1086627,
+            "train": {
+                "cagr": 18.4,
+                "dd": -20.8,
+                "rpr": 0.657,
+                "ret": 365.1
+            },
+            "gate": {
+                "cagr": 28.26,
+                "dd": -20.3,
+                "rpr": 1.484,
+                "ret": 349.9
+            },
+            "trades": 764,
+            "costs": 13458,
+            "status": "forward testing",
+            "forward": {
+                "days": 0
+            }
+        },
+        {
             "id": "836728de2a",
             "f": "trend",
             "p": {
@@ -2247,43 +2292,15 @@
             "forward": {
                 "days": 0
             }
-        },
-        {
-            "id": "a0cbd2f3dd",
-            "f": "trend",
-            "p": {
-                "assets": [
-                    "MID",
-                    "NASDAQ"
-                ],
-                "every": 5,
-                "sma": 100
-            },
-            "label": "Equal slices of MID+NASDAQ, each only above its 100-day average (checked every 5 days)",
-            "found_on": "2026-10-04",
-            "found_data_end": "2026-10-01",
-            "tried_before": 747643,
-            "train": {
-                "cagr": 12.65,
-                "dd": -14.5,
-                "rpr": 0.637,
-                "ret": 195.68
-            },
-            "gate": {
-                "cagr": 23.38,
-                "dd": -9.2,
-                "rpr": 1.444,
-                "ret": 255.96
-            },
-            "trades": 393,
-            "costs": 5084,
-            "status": "forward testing",
-            "forward": {
-                "days": 0
-            }
         }
     ],
     "recent_runs": [
+        {
+            "at": "2026-10-05 01:27 IST",
+            "tried": 99665,
+            "new_candidates": 136,
+            "seconds": 900
+        },
         {
             "at": "2026-10-04 21:10 IST",
             "tried": 95618,
@@ -2434,7 +2451,7 @@
             "GOLD"
         ]
     },
-    "last_run": "2026-10-04 21:10 IST",
+    "last_run": "2026-10-05 01:27 IST",
     "summary": {
         "confirmed": 0,
         "failed": 0,
