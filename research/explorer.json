@@ -1,13 +1,13 @@
 {
     "version": 1,
-    "tried_total": 1107240,
-    "runs": 18,
+    "tried_total": 1167465,
+    "runs": 19,
     "per_family": {
-        "dip": 221454,
-        "rot": 221449,
-        "trend": 221449,
-        "mix": 221444,
-        "mixdip": 221444
+        "dip": 233499,
+        "rot": 233494,
+        "trend": 233494,
+        "mix": 233489,
+        "mixdip": 233489
     },
     "seeds": {
         "dip": [
@@ -2067,6 +2067,45 @@
             }
         },
         {
+            "id": "ead7f53691",
+            "f": "rot",
+            "p": {
+                "K": 3,
+                "R": 42,
+                "S": 5,
+                "abs": "none",
+                "assets": [
+                    "GOLD",
+                    "MID",
+                    "NASDAQ"
+                ],
+                "every": 21,
+                "wt": "iv"
+            },
+            "label": "Every 21 days hold the 3 strongest of GOLD+MID+NASDAQ by 42-day return (skipping the last 5), calmer ones bigger",
+            "found_on": "2026-10-05",
+            "found_data_end": "2026-10-01",
+            "tried_before": 1144722,
+            "train": {
+                "cagr": 13.11,
+                "dd": -24.7,
+                "rpr": 0.656,
+                "ret": 206.8
+            },
+            "gate": {
+                "cagr": 23.18,
+                "dd": -11.8,
+                "rpr": 1.472,
+                "ret": 252.45
+            },
+            "trades": 332,
+            "costs": 3063,
+            "status": "forward testing",
+            "forward": {
+                "days": 0
+            }
+        },
+        {
             "id": "e2a4067b80",
             "f": "rot",
             "p": {
@@ -2251,50 +2290,15 @@
             "forward": {
                 "days": 0
             }
-        },
-        {
-            "id": "7831eeba35",
-            "f": "rot",
-            "p": {
-                "K": 2,
-                "R": 42,
-                "S": 21,
-                "abs": "cash",
-                "assets": [
-                    "GOLD",
-                    "MOM",
-                    "NASDAQ",
-                    "SMALL",
-                    "VALUE"
-                ],
-                "every": 63,
-                "wt": "iv"
-            },
-            "label": "Every 63 days hold the 2 strongest of GOLD+MOM+NASDAQ+SMALL+VALUE by 42-day return (skipping the last 21), only if beating cash, calmer ones bigger",
-            "found_on": "2026-10-04",
-            "found_data_end": "2026-10-01",
-            "tried_before": 1003969,
-            "train": {
-                "cagr": 17.62,
-                "dd": -15.2,
-                "rpr": 0.837,
-                "ret": 337.82
-            },
-            "gate": {
-                "cagr": 27.56,
-                "dd": -18.4,
-                "rpr": 1.45,
-                "ret": 335.33
-            },
-            "trades": 163,
-            "costs": 3502,
-            "status": "forward testing",
-            "forward": {
-                "days": 0
-            }
         }
     ],
     "recent_runs": [
+        {
+            "at": "2026-10-05 05:02 IST",
+            "tried": 60225,
+            "new_candidates": 70,
+            "seconds": 900
+        },
         {
             "at": "2026-10-05 01:27 IST",
             "tried": 99665,
@@ -2451,7 +2455,7 @@
             "GOLD"
         ]
     },
-    "last_run": "2026-10-05 01:27 IST",
+    "last_run": "2026-10-05 05:02 IST",
     "summary": {
         "confirmed": 0,
         "failed": 0,
