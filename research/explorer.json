@@ -1,13 +1,13 @@
 {
     "version": 1,
-    "tried_total": 1220472,
-    "runs": 20,
+    "tried_total": 1271941,
+    "runs": 21,
     "per_family": {
-        "dip": 244101,
-        "rot": 244096,
-        "trend": 244095,
-        "mix": 244090,
-        "mixdip": 244090
+        "dip": 254395,
+        "rot": 254390,
+        "trend": 254389,
+        "mix": 254384,
+        "mixdip": 254383
     },
     "seeds": {
         "dip": [
@@ -2292,6 +2292,12 @@
     ],
     "recent_runs": [
         {
+            "at": "2026-10-05 20:42 IST",
+            "tried": 51469,
+            "new_candidates": 84,
+            "seconds": 900
+        },
+        {
             "at": "2026-10-05 11:38 IST",
             "tried": 53007,
             "new_candidates": 85,
@@ -2459,7 +2465,7 @@
             "GOLD"
         ]
     },
-    "last_run": "2026-10-05 11:38 IST",
+    "last_run": "2026-10-05 20:42 IST",
     "summary": {
         "confirmed": 0,
         "failed": 0,
