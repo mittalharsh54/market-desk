@@ -1,13 +1,13 @@
 {
     "version": 1,
-    "tried_total": 1167465,
-    "runs": 19,
+    "tried_total": 1220472,
+    "runs": 20,
     "per_family": {
-        "dip": 233499,
-        "rot": 233494,
-        "trend": 233494,
-        "mix": 233489,
-        "mixdip": 233489
+        "dip": 244101,
+        "rot": 244096,
+        "trend": 244095,
+        "mix": 244090,
+        "mixdip": 244090
     },
     "seeds": {
         "dip": [
@@ -1546,6 +1546,45 @@
             }
         },
         {
+            "id": "30cd3cd086",
+            "f": "rot",
+            "p": {
+                "K": 3,
+                "R": 252,
+                "S": 5,
+                "abs": "none",
+                "assets": [
+                    "GOLD",
+                    "MID",
+                    "NASDAQ"
+                ],
+                "every": 63,
+                "wt": "iv"
+            },
+            "label": "Every 63 days hold the 3 strongest of GOLD+MID+NASDAQ by 252-day return (skipping the last 5), calmer ones bigger",
+            "found_on": "2026-10-05",
+            "found_data_end": "2026-10-01",
+            "tried_before": 1204362,
+            "train": {
+                "cagr": 14.8,
+                "dd": -23.7,
+                "rpr": 0.842,
+                "ret": 251.19
+            },
+            "gate": {
+                "cagr": 23.93,
+                "dd": -12.6,
+                "rpr": 1.511,
+                "ret": 265.6
+            },
+            "trades": 127,
+            "costs": 1240,
+            "status": "forward testing",
+            "forward": {
+                "days": 0
+            }
+        },
+        {
             "id": "bca948b1fd",
             "f": "rot",
             "p": {
@@ -2249,50 +2288,15 @@
             "forward": {
                 "days": 0
             }
-        },
-        {
-            "id": "aebfc70f88",
-            "f": "rot",
-            "p": {
-                "K": 1,
-                "R": 63,
-                "S": 0,
-                "abs": "pos",
-                "assets": [
-                    "GOLD",
-                    "MID",
-                    "NASDAQ",
-                    "NEXT50",
-                    "SMALL"
-                ],
-                "every": 5,
-                "wt": "iv"
-            },
-            "label": "Every 5 days hold the 1 strongest of GOLD+MID+NASDAQ+NEXT50+SMALL by 63-day return, only if rising, calmer ones bigger",
-            "found_on": "2026-10-04",
-            "found_data_end": "2026-10-01",
-            "tried_before": 841142,
-            "train": {
-                "cagr": 22.6,
-                "dd": -30.6,
-                "rpr": 0.896,
-                "ret": 538.91
-            },
-            "gate": {
-                "cagr": 37.24,
-                "dd": -24.4,
-                "rpr": 1.452,
-                "ret": 577.08
-            },
-            "trades": 257,
-            "costs": 17795,
-            "status": "forward testing",
-            "forward": {
-                "days": 0
-            }
         }
     ],
     "recent_runs": [
+        {
+            "at": "2026-10-05 11:38 IST",
+            "tried": 53007,
+            "new_candidates": 85,
+            "seconds": 900
+        },
         {
             "at": "2026-10-05 05:02 IST",
             "tried": 60225,
@@ -2455,7 +2459,7 @@
             "GOLD"
         ]
     },
-    "last_run": "2026-10-05 05:02 IST",
+    "last_run": "2026-10-05 11:38 IST",
     "summary": {
         "confirmed": 0,
         "failed": 0,
